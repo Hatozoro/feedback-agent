@@ -1,9 +1,12 @@
 name: Daily App Feedback Analysis
 
 on:
-  workflow_dispatch:  # Erlaubt manuelles Starten per Klick
+  workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *' # Läuft jeden Tag um 06:00 UTC (ca. 07:00/08:00 DE Zeit)
+    - cron: '0 6 * * *'
+
+permissions:
+  contents: write
 
 jobs:
   run-agent:
@@ -19,10 +22,16 @@ jobs:
           python-version: '3.9'
 
       - name: Install Dependencies
-        run: |
-          pip install -r requirements.txt
+        run: pip install -r requirements.txt
 
       - name: Run Agent Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: python main.py
+
+      # NEU: Veröffentlicht den Ordner 'public' als GitHub Page
+      - name: Deploy to GitHub Pages
+        uses: peaceiris/actions-gh-pages@v3
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          publish_dir: ./public
