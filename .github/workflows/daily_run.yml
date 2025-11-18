@@ -1,0 +1,28 @@
+name: Daily App Feedback Analysis
+
+on:
+  workflow_dispatch:  # Erlaubt manuelles Starten per Klick
+  schedule:
+    - cron: '0 6 * * *' # Läuft jeden Tag um 06:00 UTC (ca. 07:00/08:00 DE Zeit)
+
+jobs:
+  run-agent:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v3
+
+      - name: Setup Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: '3.9'
+
+      - name: Install Dependencies
+        run: |
+          pip install -r requirements.txt
+
+      - name: Run Agent Script
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: python main.py
