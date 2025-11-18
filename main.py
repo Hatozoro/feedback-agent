@@ -44,13 +44,13 @@ APP_CONFIG = [
 # ---------------------------------------------------------
 # SCRAPING (Mit Pausen gegen Blockaden)
 # ---------------------------------------------------------
-def fetch_ios_reviews(app_name, app_id, country="de", count=20):
+def fetch_ios_reviews(app_name, app_id, country="de", count=10): # <-- Count auf 10
     print(f"   -> iOS: {app_name}...")
     try:
-        # Zufällige Pause, um wie ein Mensch zu wirken
-        time.sleep(random.uniform(2, 5))
+        # KEIN time.sleep mehr! Wir wollen Speed.
         app = AppStore(country=country, app_name=app_name, app_id=app_id)
         app.review(how_many=count)
+        # ... Rest bleibt gleich ...
 
         results = []
         for r in app.reviews:
@@ -66,7 +66,7 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
         print(f"      iOS Fehler: {e}")
         return []
 
-def fetch_android_reviews(app_name, app_id, country="de", count=20):
+def fetch_android_reviews(app_name, app_id, country="de", count=10):
     print(f"   -> Android: {app_name}...")
     try:
         result, _ = play_reviews(

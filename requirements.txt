@@ -1,9 +1,9 @@
 google-generativeai
-sentence-transformers==2.7.0
-faiss-cpu==1.8.0
-numpy==1.26.4
+sentence-transformers
+faiss-cpu
+numpy<2.0
 python-dotenv
 google-play-scraper
 app-store-scraper
-pandas==2.2.2
+pandas
 urllib3==1.26.18
