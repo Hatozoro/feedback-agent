@@ -3,3 +3,7 @@ sentence-transformers
 faiss-cpu
 numpy
 python-dotenv
+google-play-scraper
+app-store-scraper
+pandas
+urllib3==1.26.18
