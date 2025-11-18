@@ -1,4 +1,4 @@
-# App Feedback Agent - Finaler Live Test
+# App Feedback Agent - Finaler Test
 import os
 import json
 import google.generativeai as genai
