@@ -5,6 +5,10 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
+# HIER IST DER SCHLÜSSEL ZUM ERFOLG:
+permissions:
+  contents: write
+
 jobs:
   run-agent:
     runs-on: ubuntu-latest
@@ -21,13 +25,11 @@ jobs:
       - name: Install Dependencies (Brute Force)
         run: |
           python -m pip install --upgrade pip
-          # 1. Wir installieren erst die modernen Sachen
+          # 1. Moderne Sachen installieren
           pip install google-generativeai python-dotenv pandas google-play-scraper faiss-cpu sentence-transformers numpy
-          
-          # 2. Jetzt der Problembär: Wir installieren ihn OHNE seine alten Abhängigkeiten (--no-deps)
+          # 2. App-Store-Scraper OHNE alten Ballast
           pip install app-store-scraper --no-deps
-          
-          # 3. Wir installieren manuell die Verbindungsstücke, die er braucht (aber in neu!)
+          # 3. Verbindungsstücke manuell fixen
           pip install requests urllib3 certifi
 
       - name: Run Agent Script
