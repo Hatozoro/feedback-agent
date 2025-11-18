@@ -1,7 +1,7 @@
 google-generativeai
 sentence-transformers
 faiss-cpu
-numpy
+numpy<2.0
 python-dotenv
 google-play-scraper
 app-store-scraper
