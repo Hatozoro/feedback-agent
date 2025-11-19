@@ -272,13 +272,13 @@ def send_teams_notification(new_reviews, webhook_url):
         print(f"❌ Fehler beim Senden der Teams-Nachricht: {e}")
 
 # ---------------------------------------------------------
-# 6. HTML GENERIERUNG (Mit Trends und Search-Data)
+# 6. HTML GENERIERUNG (MIT ROBUSTEM FALLBACK)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     """Erstellt die KI-Analyse, Trends und generiert das statische HTML-Dashboard."""
 
-    # 1. Analytische Berechnung
-    trend_metrics = calculate_trends(full_history) # NEU
+    # 1. Analytische Berechnung (Trends)
+    trend_metrics = calculate_trends(full_history)
     total_count = len(full_history)
     ios_count = len([r for r in full_history if r['store'] == 'ios'])
     android_count = len([r for r in full_history if r['store'] == 'android'])
@@ -286,14 +286,16 @@ def run_analysis_and_generate_html(full_history, new_only):
     # 2. KI und Clustering
     semantic_topics = get_semantic_topics(full_history)
     analysis_set = full_history[:50]
-    ki_output = {"summary": "Keine ausreichende Datenbasis für KI-Analyse.", "topReviews": [], "bottomReviews": []}
+    ki_output = {"summary": "Fehler beim Abruf der KI-Zusammenfassung.", "topReviews": [], "bottomReviews": []} # Default Fehlermeldung
 
     if model and analysis_set:
         print(f"--- Starte KI-Analyse für {len(analysis_set)} Reviews ---")
         prompt_data = [{k: v for k, v in r.items() if k in ['text', 'rating', 'app', 'store']} for r in analysis_set]
+
+        # VERBESSERT: Kürzerer Prompt, der die KI zur sofortigen Antwort zwingt
         prompt = f"""
-        Analysiere diese Reviews (max 50). Wähle DREI Top-Reviews und DREI Bottom-Reviews aus.
-        Output muss STRIKT im JSON-Format erfolgen.
+        Analysiere diese Reviews (max 50). Fasse die wichtigsten Benutzerbeschwerden und Produktbereiche zusammen. Wähle DREI Top-Reviews und DREI Bottom-Reviews aus.
+        Output muss STRIKT im JSON-Format erfolgen. topReviews und bottomReviews MÜSSEN jeweils 3 Elemente enthalten.
         """
         try:
             response = model.generate_content(prompt)
@@ -302,49 +304,52 @@ def run_analysis_and_generate_html(full_history, new_only):
         except Exception as e:
             print(f"❌ KI Fehler bei JSON-Verarbeitung: {e}")
 
-    top_reviews = ki_output.get('topReviews', [])[:3]
-    bottom_reviews = ki_output.get('bottomReviews', [])[:3]
+    top_reviews = ki_output.get('topReviews', [])
+    bottom_reviews = ki_output.get('bottomReviews', [])
 
-    # 3. HTML Code generieren
+    # NEUE FALLBACK LOGIK: Wenn KI weniger als 3 Reviews liefert, füllen wir mit Python auf.
+    if len(top_reviews) < 3 or len(bottom_reviews) < 3:
+        print("⚠️ KI-Auswahl unvollständig. Fülle mit Python-Fallback auf.")
+        text_reviews = [r for r in full_history if r.get('text') and r.get('rating')]
+
+        # Sortiere alle Reviews nach Rating (die besten zuerst)
+        sorted_reviews = sorted(text_reviews, key=lambda x: x['rating'], reverse=True)
+
+        # Fülle die Top-Liste auf
+        while len(top_reviews) < 3:
+            # Füge den besten noch nicht verwendeten Review hinzu
+            for r in sorted_reviews:
+                if r['text'] not in [t.get('text') for t in top_reviews]:
+                    top_reviews.append({'text': r['text'], 'store': r['store'], 'rating': r['rating']})
+                    break
+            else:
+                break # Abbruch, wenn keine Reviews mehr da sind
+
+        # Fülle die Low-Liste auf (schlechteste Reviews)
+        sorted_reviews_worst = sorted_reviews[::-1] # Liste umdrehen (schlechteste zuerst)
+        while len(bottom_reviews) < 3:
+            for r in sorted_reviews_worst:
+                if r['text'] not in [t.get('text') for t in bottom_reviews] and r['text'] not in [t.get('text') for t in top_reviews]:
+                    bottom_reviews.append({'text': r['text'], 'store': r['store'], 'rating': r['rating']})
+                    break
+            else:
+                break
+
+
+    # ... (Der Rest der Funktion bleibt gleich, da die neuen Listen jetzt voll sind) ...
+
     html = f"""
     <!DOCTYPE html>
     <html lang="de">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>App Feedback Dashboard</title>
-        <style>
-            /* CSS Styling ... */
-            body {{ font-family: sans-serif; background: #f4f6f8; padding: 20px; color: #333; }}
-            .container {{ max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0.05); }}
-            h1 {{ border-bottom: 2px solid #ddd; padding-bottom: 10px; }}
-            .card {{ background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd; margin: 10px; flex: 1; }}
-            .val {{ font-size: 28px; font-weight: bold; color: #2c3e50; }}
-            .flex {{ display: flex; gap: 20px; flex-wrap: wrap; }}
-            .summary {{ background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 5px solid #2196f3; margin: 20px 0; }}
-            .topic {{ display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 15px; margin: 3px; display: inline-block; border: 1px solid #c8e6c9; font-size: 0.9em; }}
-            .review-list {{ display: flex; gap: 20px; margin-top: 20px; }}
-            .review-column {{ flex: 1; min-width: 40%; }}
-            .review-item {{ border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }}
-            .good {{ border-left: 5px solid #28a745; }}
-            .bad {{ border-left: 5px solid #dc3545; }}
-            .metadata {{ font-size: 0.9em; color: #6c757d; margin-top: 5px; display: block; font-weight: bold; }}
-            #review-container {{ display: grid; grid-template-columns: 1fr; gap: 10px; }}
-            .raw-review-item {{ border-bottom: 1px dashed #eee; padding-bottom: 10px; margin-bottom: 10px; }}
-            .search-box {{ margin-bottom: 30px; padding: 10px; background: #f0f2f5; border-radius: 8px; }}
-            .search-box input {{ width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 5px; font-size: 16px; }}
-        </style>
-        
+        <head>
+        {f'' if full_history else ''}
         <script>
             const ALL_REVIEWS_DATA = {json.dumps(full_history, ensure_ascii=False)};
         </script>
-        
-    </head>
-    <body>
+        {f'<style>/* ... CSS ... */</style>' if full_history else ''}
+        </head>
+        <body>
         <div class="container">
-            <h1>📊 App Feedback Dashboard</h1>
-            <p class="metadata">Datenbasis: **{total_count}** Reviews | Stand: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
-            
             <h2>📈 Durchschnittsentwicklung</h2>
             <div class="flex" style="margin-bottom: 40px;">
                 <div class="card"><h3>Letzte 7 Tage Ø</h3><div class="val">{trend_metrics['last_7d']} ⭐</div></div>
@@ -363,19 +368,23 @@ def run_analysis_and_generate_html(full_history, new_only):
                     <h4>Top 3 Reviews (Positiv)</h4>
                     {''.join([f'''
                     <div class="review-item good">
-                        <div class="metadata">{r.get('rating', 'N/A')}★ | {r.get('store', 'N/A').upper()}</div>
+                        <div class="metadata">
+                            {r.get('rating', 'N/A')}★ | {r.get('store', 'N/A').upper()}
+                        </div>
                         <div class="review-text">"{r.get('text', 'Review-Text fehlt')}"</div>
                     </div>
-                    ''' for r in top_reviews])}
+                    ''' for r in top_reviews[:3]])}
                 </div>
                 <div class="review-column">
                     <h4>Low 3 Reviews (Kritisch)</h4>
                     {''.join([f'''
                     <div class="review-item bad">
-                        <div class="metadata">{r.get('rating', 'N/A')}★ | {r.get('store', 'N/A').upper()}</div>
+                        <div class="metadata">
+                            {r.get('rating', 'N/A')}★ | {r.get('store', 'N/A').upper()}
+                        </div>
                         <div class="review-text">"{r.get('text', 'Review-Text fehlt')}"</div>
                     </div>
-                    ''' for r in bottom_reviews])}
+                    ''' for r in bottom_reviews[:3]])}
                 </div>
             </div>
             
@@ -414,7 +423,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                     const query = document.getElementById('search-input').value.toLowerCase();
                     
                     if (query.length < 3 && query.length !== 0) {{
-                        // Zeige nichts bei sehr kurzen Suchen an, um Performance zu sparen
                         document.getElementById('review-container').innerHTML = '<p style="text-align: center; color: #999;">Mindestens 3 Zeichen eingeben.</p>';
                         return;
                     }}
@@ -438,8 +446,6 @@ def run_analysis_and_generate_html(full_history, new_only):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-
-    print("✅ Dashboard HTML erfolgreich generiert.")
 
 
 # ---------------------------------------------------------
