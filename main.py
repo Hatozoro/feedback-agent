@@ -380,48 +380,49 @@ def run_analysis_and_generate_html(full_history, new_only):
 # 6. TEAMS BENACHRICHTIGUNG
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
-    """Sendet eine Benachrichtigung an Teams mit den neuen Reviews."""
+    """Sendet eine Nachricht an den Teams/Power Automate Webhook."""
     if not new_reviews:
-        print("-> Keine neuen Reviews zum Senden.")
+        print("Keine neuen Reviews, keine Teams Benachrichtigung notwendig.")
         return
 
-    # KI Analyse der neuen Reviews
-    summary = "Keine KI-Analyse verfügbar."
-    if model:
-        new_texts = [r['text'] for r in new_reviews]
-        prompt = f"Fasse die folgenden {len(new_texts)} neuen App-Reviews in einem deutschen Satz zusammen. Fokus auf positiv/negativ: {new_texts}"
-        try:
-            response = model.generate_content(prompt)
-            summary = response.text.strip()
-        except Exception as e:
-            print(f"KI Fehler bei Teams Summary: {e}")
-            summary = "Fehler beim Erstellen der KI-Zusammenfassung."
+    # Berechne die Metriken der NEUEN Reviews
+    positive_count = sum(1 for r in new_reviews if r['rating'] >= 4)
+    negative_count = sum(1 for r in new_reviews if r['rating'] <= 2)
 
-    # Benachrichtigungstext
-    notification_text = f"""
-    **🔔 Täglicher App Feedback Report**
-    **Neue Reviews:** {len(new_reviews)}
-    **KI-Zusammenfassung:** {summary}
-    
-    ---
-    
-    *Bitte prüfen Sie das Dashboard für Details:*
-    """
+    title = f"📢 NEUES FEEDBACK! ({len(new_reviews)} Reviews)"
 
-    # Teams-Payload (einfaches Textformat für Incoming Webhook)
-    payload = {
-        "text": notification_text,
+    # Liste der neuen Texte
+    review_list_text = ""
+    for r in new_reviews[:5]: # Zeige maximal 5 Reviews an
+        rating_star = "⭐" * r['rating']
+        review_list_text += f"* **{r['app']} ({r['store']})**: {rating_star} *\"{r['text'][:60]}...\"*\n"
+
+    # Erzeuge eine einfache Textnachricht für Teams
+    full_text_message = f"""
+**{title}**
+---
+👍 Positiv: {positive_count} | 🚨 Kritisch: {negative_count}
+
+**Neueste Nutzerstimmen (Auszug):**
+{review_list_text}
+
+[Zum vollständigen Dashboard](https://Hatozoro.github.io/feedback-agent/)
+"""
+    # Payload für den Webhook
+    teams_message = {
+        "text": full_text_message
     }
 
     try:
-        response = requests.post(webhook_url, json=payload)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(webhook_url, json=teams_message, headers=headers, timeout=10)
+
         response.raise_for_status()
         print("✅ Teams Benachrichtigung erfolgreich gesendet.")
-    except HTTPError as http_err:
-        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {http_err}")
-        print(f"   Response: {response.text}")
-    except Exception as err:
-        print(f"❌ Fehler beim Senden der Teams-Nachricht: {err}")
+    except HTTPError as e:
+        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {response.status_code} Client Error: {response.reason}. Prüfe den Webhook.")
+    except Exception as e:
+        print(f"❌ Allgemeiner Fehler beim Senden der Teams-Nachricht: {e}")
 
 # ---------------------------------------------------------
 # 7. MAIN BLOCK
