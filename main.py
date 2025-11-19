@@ -61,21 +61,46 @@ def save_history(data):
 # ---------------------------------------------------------
 # 3. SCRAPING
 # ---------------------------------------------------------
+# NEUE, STABILE SCRAPING FUNKTION FÜR iOS (über RSS-API)
+# ---------------------------------------------------------
 def fetch_ios_reviews(app_name, app_id, country="de", count=20):
-    print(f"   -> iOS: {app_name}...")
+    print(f"   -> iOS (RSS): {app_name}...")
+
+    # Apple RSS API Endpoint (holt die neuesten Reviews)
+    # Wir begrenzen auf 100, da die API keine dynamische Mengenbegrenzung erlaubt.
+    # Count wird später im Code gefiltert.
+    api_url = f"https://itunes.apple.com/de/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
+
     try:
-        app = AppStore(country=country, app_name=app_name, app_id=app_id)
-        app.review(how_many=count)
+        response = requests.get(api_url, timeout=10)
+        response.raise_for_status() # Prüft auf HTTP Fehler (4xx, 5xx)
+        data = response.json()
+
         results = []
-        for r in app.reviews:
-            rating = int(r.get('rating', 0))
+        # Die Apple RSS API hat eine verschachtelte Struktur: data['feed']['entry']
+        for entry in data.get('feed', {}).get('entry', [])[:count]:
+            # Ignoriere Einträge, die nur Metadaten sind (ohne 'content')
+            if 'im:rating' not in entry or 'content' not in entry:
+                continue
+
+            # Daten aus der verschachtelten Struktur extrahieren
+            rating = int(entry['im:rating']['label'])
+            text = entry['content']['label']
+            date_str = entry['updated']['label'][:10] # Datum extrahieren
+
             results.append({
-                "store": "ios", "app": app_name, "rating": rating,
-                "text": r['review'], "date": r['date'].strftime("%Y-%m-%d")
+                "store": "ios",
+                "app": app_name,
+                "rating": rating,
+                "text": text,
+                "date": date_str,
+                "id": generate_id({'app': app_name, 'store': 'ios', 'date': date_str, 'text': text})
             })
+
+        print(f"      ✅ iOS (RSS) fand {len(results)} Reviews.")
         return results
     except Exception as e:
-        print(f"      ❌ iOS Fehler: {e}")
+        print(f"      ❌ iOS (RSS) Fehler: {e}")
         return []
 
 def fetch_android_reviews(app_name, app_id, country="de", count=20):
