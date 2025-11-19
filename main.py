@@ -174,7 +174,7 @@ def calculate_trends(reviews):
 # 4. SEMANTISCHE CLUSTER-ANALYSE (Bleibt gleich)
 # ---------------------------------------------------------
 def get_semantic_topics(reviews, num_clusters=5):
-    # ... (Die komplette Funktion get_semantic_topics bleibt gleich) ...
+    """Führt KMeans Clustering durch und lässt die KI die Cluster benennen."""
     if not embedder:
         return ["Embedding Modell nicht geladen."]
 
@@ -184,13 +184,17 @@ def get_semantic_topics(reviews, num_clusters=5):
 
     texts = [r['text'] for r in text_reviews]
 
+    # 1. Vektorisierung
     embeddings = embedder.encode(texts)
 
+    # 2. Clustering (K-Means)
     num_clusters = min(num_clusters, len(texts))
     clustering = KMeans(n_clusters=num_clusters, random_state=0, n_init=10)
     clustering.fit(embeddings)
 
+    # 3. Finde das repräsentativste Review pro Cluster
     topic_reviews = []
+
     for i in range(num_clusters):
         cluster_indices = np.where(clustering.labels_ == i)[0]
         if not cluster_indices.size:
@@ -204,12 +208,14 @@ def get_semantic_topics(reviews, num_clusters=5):
 
         topic_reviews.append(text_reviews[closest_index_in_cluster])
 
+    # 4. KI-Benennung der Cluster (Hier war der Fehler)
     if not model or not topic_reviews:
         return ["Clustering erfolgreich, KI nicht verfügbar."]
 
-    prompt_reviews = [{"review": r['text'], "app": r['app'], "rating': r['rating']} for r in topic_reviews]
+    # KORRIGIERT: 'rating': r['rating']
+    prompt_reviews = [{"review": r['text'], "app": r['app'], "rating": r['rating']} for r in topic_reviews]
 
-        prompt = f"""
+    prompt = f"""
     You are an expert market analyst. Assign a single, concise German label (max 3 words) to each review's underlying topic.
     Output strictly in a JSON list of strings, containing ONLY the {len(topic_reviews)} topic labels.
 
