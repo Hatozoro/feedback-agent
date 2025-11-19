@@ -1,7 +1,8 @@
 import os
 import json
 import hashlib
-import requests # Für Teams Webhook
+import requests
+from requests.exceptions import HTTPError
 import google.generativeai as genai
 from dotenv import load_dotenv
 from datetime import datetime
@@ -18,7 +19,6 @@ API_KEY = os.getenv("GEMINI_API_KEY")
 
 if API_KEY:
     genai.configure(api_key=API_KEY)
-    # WICHTIG: KI wird auf JSON-Format eingestellt
     model = genai.GenerativeModel(
         model_name="gemini-2.0-flash",
         generation_config={"response_mime_type": "application/json"}
@@ -26,7 +26,7 @@ if API_KEY:
 else:
     model = None
 
-# Konfiguration der Apps
+# Konfiguration der Datenhaltung und Apps
 DATA_FILE = "data/reviews_history.json"
 APP_CONFIG = [
     {"name": "Nordkurier", "ios_id": "1250964862", "android_id": "de.nordkurier.live", "country": "de"},
@@ -38,7 +38,6 @@ APP_CONFIG = [
 # ---------------------------------------------------------
 def generate_id(review):
     """Erstellt eine eindeutige ID für jedes Review basierend auf Text & Datum"""
-    # Kürzen des Textes auf 50 Zeichen zur ID-Stabilität
     unique_str = f"{review['app']}{review['store']}{review['date']}{review['text'][:50]}"
     return hashlib.md5(unique_str.encode()).hexdigest()
 
@@ -66,11 +65,9 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
     print(f"   -> iOS: {app_name}...")
     try:
         app = AppStore(country=country, app_name=app_name, app_id=app_id)
-        # Wir holen die neuesten 20 Reviews
         app.review(how_many=count)
         results = []
         for r in app.reviews:
-            # Stelle sicher, dass 'rating' immer eine Zahl ist
             rating = int(r.get('rating', 0))
             results.append({
                 "store": "ios", "app": app_name, "rating": rating,
@@ -78,14 +75,12 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             })
         return results
     except Exception as e:
-        # iOS blockiert oft Cloud IPs, das ist normal
         print(f"      ❌ iOS Fehler: {e}")
         return []
 
 def fetch_android_reviews(app_name, app_id, country="de", count=20):
     print(f"   -> Android: {app_name}...")
     try:
-        # Wir holen die neuesten 20 Reviews
         result, _ = play_reviews(
             app_id, lang='de', country=country, sort=Sort.NEWEST, count=count
         )
@@ -122,11 +117,10 @@ def get_fresh_reviews():
 
     # Neue Reviews kommen ganz oben in die Historie
     updated_history = new_reviews + history
-    # Begrenzen auf z.B. die letzten 1000 Reviews, damit die Datei nicht zu groß wird
     return updated_history[:1000], new_reviews
 
 # ---------------------------------------------------------
-# 4. TEAMS NOTIFICATION (MVP)
+# 4. TEAMS NOTIFICATION (MVP) - FIX gegen 400 Error
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
     """Sendet eine Nachricht an den Teams/Power Automate Webhook."""
@@ -139,38 +133,37 @@ def send_teams_notification(new_reviews, webhook_url):
 
     title = f"📢 NEUES FEEDBACK! ({len(new_reviews)} Reviews)"
 
-    facts = []
-    if positive_count > 0:
-        facts.append({"name": "Positiv:", "value": f"{positive_count} 👍"})
-    if negative_count > 0:
-        facts.append({"name": "Kritisch:", "value": f"{negative_count} 🚨"})
-
     # Liste der neuen Texte
     review_list_text = ""
     for r in new_reviews[:5]: # Zeige maximal 5 Reviews an
         rating_star = "⭐" * r['rating']
         review_list_text += f"* **{r['app']} ({r['store']})**: {rating_star} *\"{r['text'][:60]}...\"*\n"
 
-    # Teams JSON Payload (Einfache Connector Card)
+    # NEU: Erzeuge eine einfache Textnachricht für Power Automate/Teams
+    full_text_message = f"""
+📢 **{title}**
+---
+👍 Positiv: {positive_count} | 🚨 Kritisch: {negative_count}
+
+**Neueste Nutzerstimmen (Auszug):**
+{review_list_text}
+
+[Zum vollständigen Dashboard](https://Hatozoro.github.io/feedback-agent/)
+"""
+
+    # Power Automate ist wählerisch und will oft nur einen einfachen Text-Body.
     teams_message = {
-        "text": title,
-        "attachments": [
-            {
-                "title": title,
-                "color": "0072C6", # Teams Farbe (Blau)
-                "facts": facts,
-                "text": f"Es sind neue Nutzerstimmen eingegangen (max. 5 dargestellt):\n\n{review_list_text}\n\n[Zum vollständigen Dashboard](https://Hatozoro.github.io/feedback-agent/)"
-            }
-        ]
+        "text": full_text_message
     }
 
     try:
-        response = requests.post(webhook_url, json=teams_message, timeout=10)
-        # Prueft auf HTTP Fehler (z.B. 400, 500)
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(webhook_url, json=teams_message, headers=headers, timeout=10)
+
         response.raise_for_status()
         print("✅ Teams Benachrichtigung erfolgreich gesendet.")
-    except requests.exceptions.HTTPError as e:
-        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {e}. URL möglicherweise falsch/ungültig.")
+    except HTTPError as e:
+        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {response.status_code} Client Error: {response.reason}. Prüfe den Power Automate Flow.")
     except Exception as e:
         print(f"❌ Allgemeiner Fehler beim Senden der Teams-Nachricht: {e}")
 
@@ -180,9 +173,7 @@ def send_teams_notification(new_reviews, webhook_url):
 def run_analysis_and_generate_html(full_history, new_only):
     """Erstellt die KI-Analyse und generiert das statische HTML-Dashboard."""
 
-    # Analysiere nur die neuesten 50 Reviews, um die KI-Kosten/Zeit gering zu halten
     analysis_set = full_history[:50]
-
     ki_output = {"summary": "Keine ausreichende Datenbasis für KI-Analyse.", "topics": [], "topReviews": [], "bottomReviews": []}
 
     if model and analysis_set:
@@ -195,26 +186,27 @@ def run_analysis_and_generate_html(full_history, new_only):
         {{
             "summary": "Management summary in German focusing on recent trends and main issues.",
             "topics": ["Login", "Absturz", "Performance", "Neue Artikel"],
-            "topReviews": [3 positive reviews (full text)],
-            "bottomReviews": [3 negative reviews (full text)]
+            "topReviews": [list of 3 positive review texts],
+            "bottomReviews": [list of 3 negative review texts]
         }}
         
         Review Data: {json.dumps(prompt_data, ensure_ascii=False)}
         """
         try:
             response = model.generate_content(prompt)
-            # Entferne Code-Blöcke, falls die KI sie hinzufügt
             text = response.text.replace("```json", "").replace("```", "").strip()
             ki_output = json.loads(text)
         except Exception as e:
             print(f"❌ KI Fehler bei JSON-Verarbeitung: {e}")
 
     # HTML Generierung
+    total_count = len(full_history)
+    ios_count = len([r for r in full_history if r['store'] == 'ios'])
+    android_count = len([r for r in full_history if r['store'] == 'android'])
     avg_rating = 0
-    if full_history:
-        avg_rating = round(sum(r['rating'] for r in full_history) / len(full_history), 2)
+    if total_count > 0:
+        avg_rating = round(sum(r['rating'] for r in full_history) / total_count, 2)
 
-    # Filtern der Top/Low Reviews
     top_reviews = ki_output.get('topReviews', [])[:3]
     bottom_reviews = ki_output.get('bottomReviews', [])[:3]
 
@@ -246,13 +238,15 @@ def run_analysis_and_generate_html(full_history, new_only):
     <body>
         <div class="container">
             <h1>📊 App Feedback Dashboard</h1>
-            <p class="metadata">Datenbasis: **{len(full_history)}** Reviews | Stand: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
+            <p class="metadata">Datenbasis: **{total_count}** Reviews | Stand: {datetime.now().strftime('%d.%m.%Y %H:%M')}</p>
             
             <div class="summary"><strong>KI Fazit & aktuelle Trends:</strong><br>{ki_output.get('summary')}</div>
             
             <div class="flex">
                 <div class="card"><h3>Ø Gesamt (History)</h3><div class="val">{avg_rating} ⭐</div></div>
                 <div class="card"><h3>Neue Reviews (Heute)</h3><div class="val">{len(new_only)}</div></div>
+                <div class="card"><h3>iOS Reviews</h3><div class="val">{ios_count}</div></div>
+                <div class="card"><h3>Android Reviews</h3><div class="val">{android_count}</div></div>
             </div>
 
             <h3>🔥 Themen Cluster (Semantische Analyse)</h3>
