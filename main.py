@@ -283,13 +283,21 @@ def run_analysis_and_generate_html(full_history, new_only):
 
         prompt = f"""
         Analysiere diese Reviews (max 50). Fasse die wichtigsten Benutzerbeschwerden und Produktbereiche zusammen.
-        Wähle das Top-Review und das Bottom-Review aus.
+        Wähle **DREI** Top-Reviews (höchste positive Bewertung, bester Text) und **DREI** Bottom-Reviews (niedrigste Bewertung, kritischster Text) aus.
         
-        Output muss STRIKT im JSON-Format erfolgen:
+        Output muss STRIKT im JSON-Format erfolgen. topReviews und bottomReviews **MÜSSEN** jeweils 3 Elemente enthalten:
         {{
             "summary": "Management Summary in deutscher Sprache mit Fokus auf aktuelle Trends und Hauptprobleme. (Max 50 Wörter)",
-            "topReviews": [{{ "text": "...", "store": "...", "rating": 5 }}],
-            "bottomReviews": [{{ "text": "...", "store": "...", "rating": 1 }}]
+            "topReviews": [
+                {{ "text": "...", "store": "...", "rating": 5 }}, 
+                {{ "text": "...", "store": "...", "rating": 5 }}, 
+                {{ "text": "...", "store": "...", "rating": 5 }}
+            ],
+            "bottomReviews": [
+                {{ "text": "...", "store": "...", "rating": 1 }}, 
+                {{ "text": "...", "store": "...", "rating": 1 }}, 
+                {{ "text": "...", "store": "...", "rating": 1 }}
+            ]
         }}
         
         Review Data: {json.dumps(prompt_data, ensure_ascii=False)}
@@ -396,7 +404,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
-        f.write(html) # <--- Korrigierter Befehl: Schreibe den HTML-String direkt
+        f.write(html) # F.write ist der korrekte Befehl für HTML
 
     print("✅ Dashboard HTML erfolgreich generiert.")
 
