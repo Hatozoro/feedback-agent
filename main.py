@@ -396,7 +396,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
-        json.dump(html, f, ensure_ascii=False) # FIX: Hier war vorher ein Fehler
+        f.write(html) # <--- Korrigierter Befehl: Schreibe den HTML-String direkt
 
     print("✅ Dashboard HTML erfolgreich generiert.")
 
