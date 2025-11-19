@@ -6,56 +6,54 @@
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
         <title>App Feedback Dashboard</title>
         <style>
-            body { font-family: sans-serif; background: #f4f6f8; color: #333; padding: 20px; }
+            body { font-family: sans-serif; background: #f4f6f8; padding: 20px; color: #333; }
             .container { max-width: 900px; margin: 0 auto; background: white; padding: 30px; border-radius: 12px; box-shadow: 0 4px 20px rgba(0,0,0,0.05); }
-            h1 { border-bottom: 2px solid #eee; padding-bottom: 15px; }
-            .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(150px, 1fr)); gap: 20px; margin: 30px 0; }
-            .card { background: #f8f9fa; padding: 20px; border-radius: 8px; text-align: center; border: 1px solid #ddd; }
-            .card h3 { margin: 0 0 10px 0; font-size: 14px; color: #666; text-transform: uppercase; }
-            .val { font-size: 32px; font-weight: bold; color: #2c3e50; }
-            .summary { background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 5px solid #2196f3; line-height: 1.6; }
-            .topics { margin: 20px 0; }
-            .topic { display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 15px; margin: 5px; border: 1px solid #c8e6c9; }
-            .review-box { border: 1px solid #eee; padding: 15px; margin-bottom: 10px; border-radius: 6px; }
-            .good { border-left: 5px solid #4caf50; }
-            .bad { border-left: 5px solid #f44336; }
-            footer { margin-top: 50px; text-align: center; font-size: 12px; color: #aaa; }
+            h1 { border-bottom: 2px solid #ddd; padding-bottom: 10px; }
+            .card { background: #f8f9fa; padding: 15px; border-radius: 8px; text-align: center; border: 1px solid #ddd; margin: 10px; flex: 1; }
+            .val { font-size: 28px; font-weight: bold; color: #2c3e50; }
+            .flex { display: flex; gap: 20px; flex-wrap: wrap; }
+            .summary { background: #e3f2fd; padding: 20px; border-radius: 8px; border-left: 5px solid #2196f3; margin: 20px 0; }
+            .topic { background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 15px; margin: 3px; display: inline-block; border: 1px solid #c8e6c9; font-size: 0.9em; }
+            .review-list { display: flex; gap: 20px; margin-top: 20px; }
+            .review-column { flex: 1; min-width: 40%; }
+            .review-item { border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }
+            .good { border-left: 5px solid #28a745; }
+            .bad { border-left: 5px solid #dc3545; }
+            .review-text { font-style: italic; font-size: 0.9em; margin-top: 5px; }
+            .metadata { font-size: 0.75em; color: #6c757d; margin-top: 5px; }
         </style>
     </head>
     <body>
         <div class="container">
-            <h1>📊 App Feedback Report</h1>
-            <p style="color: #888;">Stand: 19.11.2025 06:24</p>
+            <h1>📊 App Feedback Dashboard</h1>
+            <p class="metadata">Datenbasis: **40** Reviews | Stand: 19.11.2025 07:17</p>
             
-            <div class="summary">
-                <strong>🤖 KI Analyse:</strong><br>
-                Die Apps Nordkurier und Schwäbische Zeitung haben erhebliche Probleme. Nutzer berichten von häufigen Abstürzen, insbesondere im Bereich "Aktuelles".  Bei der Schwäbischen Zeitung gibt es zusätzliche Probleme mit der Anzeigequalität, Vorlesefunktion und Navigation. Viele Nutzer sind frustriert über die mangelnde Stabilität und die fehlende Fehlerbehebung, trotz bestehender Abonnements.
+            <div class="summary"><strong>KI Fazit & aktuelle Trends:</strong><br>Die Nutzererfahrungen mit den Apps Nordkurier und Schwäbische sind überwiegend negativ. Hauptprobleme sind häufige Abstürze, Performance-Probleme wie Ruckeln und Einfrieren, sowie Schwierigkeiten beim Login und Zugriff auf Inhalte trotz Abonnements. Viele Nutzer beschweren sich über fehlende Fehlerbehebung und mangelnde Reaktion auf Feedback. Die Schwäbische App leidet zusätzlich unter Problemen mit flackernden Elementen und der Vorlesefunktion. Diese Probleme führen zu Frustration und Kündigungsdrohungen.</div>
+            
+            <div class="flex">
+                <div class="card"><h3>Ø Gesamt (History)</h3><div class="val">1.93 ⭐</div></div>
+                <div class="card"><h3>Neue Reviews (Heute)</h3><div class="val">40</div></div>
             </div>
 
-            <div class="grid">
-                <div class="card"><h3>Gesamt Reviews</h3><div class="val">20</div></div>
-                <div class="card"><h3>Ø Sterne</h3><div class="val">1.6 ⭐</div></div>
-                <div class="card"><h3>iOS</h3><div class="val">0</div></div>
-                <div class="card"><h3>Android</h3><div class="val">20</div></div>
-            </div>
-
-            <h3>🔥 Aktuelle Themen</h3>
-            <div class="topics">
-                <span class="topic">App-Abstürze</span><span class="topic">Stabilitätsprobleme</span>
-            </div>
+            <h3>🔥 Themen Cluster (Semantische Analyse)</h3>
+            <div><span class="topic">Login</span><span class="topic">Absturz</span><span class="topic">Performance</span><span class="topic">Neue Artikel</span></div>
             
-            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px;">
-                <div>
-                    <h3>👍 Top Feedback</h3>
-                    <div class="review-box good"><small>Nordkurier (android) 5★</small><br>"werden sehen was wird .👍👍👍..."</div><div class="review-box good"><small>Schwäbische (android) 5★</small><br>"bei Nutzung der App flackern die obere und untere Leiste, bis zum Absturz der App nach kurzer Zeit...."</div><div class="review-box good"><small>Nordkurier (android) 4★</small><br>"die App ist gut!..."</div>
+            <h2>⭐ Top- & Low-Reviews (KI-Auswahl)</h2>
+            <div class="review-list">
+                <div class="review-column">
+                    <h4>Top 3 Reviews (Positiv)</h4>
+                    <div class="review-item good"><div class="metadata">KI Highlight</div><div class="review-text">"werden sehen was wird .👍👍👍"</div></div><div class="review-item good"><div class="metadata">KI Highlight</div><div class="review-text">"die App ist gut!"</div></div><div class="review-item good"><div class="metadata">KI Highlight</div><div class="review-text">"Hab den Abo Service schon vor langem in Anspruch genommen. Ich habe nur vergessen meine Rezensionen vom 13.12.24 zu ändern. Mit der App komme ich inzwischen klar. Videos starten nicht oder brauchen ewig bis sie starten, kann aber auch an meiner Technik liegen. Dass die Zeitung allerdings am 17.10.25 reagiert, also über 10 Monate später 🤔. Wenn es so lange gedauert hätte, hätte ich das Abo gekündigt."</div></div>
                 </div>
-                <div>
-                    <h3>⚠️ Kritisches Feedback</h3>
-                    <div class="review-box bad"><small>Schwäbische (android) 1★</small><br>"Diese App ist die schlechteste. App die ich auf meinem Handy habe. Heute ist sie mindestens 5 mal abgestürzt während des..."</div><div class="review-box bad"><small>Schwäbische (android) 1★</small><br>"Die "neue" App ist gegenüber der "alten" Version V4.4.5 eine Katastrophe. Umblättern von Seiten geht sehr schwerfällig o..."</div><div class="review-box bad"><small>Schwäbische (android) 2★</small><br>"Leider ist die Vorlese - Sprachqualität unterirdisch. Das Handling der Seiten immer noch eine kleine Katastrophe. Ständi..."</div>
+                <div class="review-column">
+                    <h4>Low 3 Reviews (Kritisch)</h4>
+                    <div class="review-item bad"><div class="metadata">KI Fokus</div><div class="review-text">"App stürzt dauernd ab"</div></div><div class="review-item bad"><div class="metadata">KI Fokus</div><div class="review-text">"Die App stürzt im Bereich AKTUELLES regelmäßig ab und wird geschlossen. Offensichtlich ein bekanntes Problem, dass leider nicht behoben wird."</div></div><div class="review-item bad"><div class="metadata">KI Fokus</div><div class="review-text">"Wie lange wollt ihr die Leser noch verarschen? App stürzt laufend ab."</div></div>
                 </div>
             </div>
             
-            <footer>Automated by GitHub Actions</footer>
+            <h2>📝 Neueste Rohdaten</h2>
+            <div>
+                <div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-11-05</div><div class="review-text">"App stürzt dauernd ab..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-11-05</div><div class="review-text">"Die App stürzt im Bereich AKTUELLES regelmäßig ab und wird geschlossen. Offensichtlich ein bekanntes Problem, dass leider nicht behoben wird...."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-11-03</div><div class="review-text">"Wie lange wollt ihr die Leser noch verarschen? App stürzt laufend ab...."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 5★</b> | 2025-10-23</div><div class="review-text">"werden sehen was wird .👍👍👍..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-10-23</div><div class="review-text">"dauernd app - Probleme..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-10-22</div><div class="review-text">"App lässt sich seit einiger Zeit nicht mehr öffnen..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-10-22</div><div class="review-text">"Ich kann seit 4 Wochen die Onlinezeitung nicht mehr lesen obwohl ich Sie abonniert habe. Rückinformartion per Mail durch den Nordkurier passiert ebenfalls nicht. Bin mega enttäuscht. Auf Benachrichtigungen peer "Feedback " wird auch nicht reagiert...."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-10-16</div><div class="review-text">"Die App lässt sich auf dem Tablet nicht mehr öffnen! Nach mehreren Versuchen kommt das Infofenster " Die App wird wiederholt geschlossen". Was wäre die Lösung?..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 4★</b> | 2025-10-10</div><div class="review-text">"die App ist gut!..."</div></div><div class="review-item"><div class="metadata"><b>Nordkurier (android) - 1★</b> | 2025-10-04</div><div class="review-text">"APP läuft nur noch ruckelig, das schon seit einigen Wochen. Schade das der Nordkurier trotz der happigen Kosten für das Abonnement die Mängel nicht in den Griff bekommt...."</div></div>
+            </div>
         </div>
     </body>
     </html>
