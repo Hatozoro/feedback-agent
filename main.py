@@ -15,7 +15,7 @@ from sklearn.metrics.pairwise import cosine_similarity
 import numpy as np
 
 # Scraper Imports
-# Beachte: app-store-scraper wird jetzt nur für Metadaten geladen, nicht für Reviews
+from app_store_scraper import AppStore # Wird nur für Metadaten geladen
 from google_play_scraper import Sort, reviews as play_reviews
 
 # ---------------------------------------------------------
@@ -24,7 +24,6 @@ from google_play_scraper import Sort, reviews as play_reviews
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# KI Konfiguration
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
@@ -32,7 +31,6 @@ if API_KEY:
             model_name="gemini-2.0-flash",
             generation_config={"response_mime_type": "application/json"}
         )
-        # Lade das Embedding-Modell für das Clustering
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
     except Exception as e:
         print(f"WARNUNG: KI oder Embedding Modell konnte nicht geladen werden: {e}")
@@ -50,7 +48,7 @@ APP_CONFIG = [
 ]
 
 # ---------------------------------------------------------
-# 2. HILFSFUNKTIONEN
+# 2. DATENHALTUNG (FIX für TypeError: List vs. Dict)
 # ---------------------------------------------------------
 def generate_id(review):
     """Generiert eine stabile ID für ein Review (Hash von Text, Datum und App)."""
@@ -58,21 +56,26 @@ def generate_id(review):
     return hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
 
 def load_history():
-    """Lädt die existierenden Reviews aus der JSON-Datei."""
-    try:
-        if not os.path.exists(DATA_FILE):
-            return {}
-        with open(DATA_FILE, 'r', encoding='utf-8') as f:
-            return json.load(f)
-    except Exception as e:
-        print(f"Fehler beim Laden der History: {e}. Starte mit leerer History.")
-        return {}
+    """Lädt die persistente Historie-Datei als Dictionary (ID -> Review)."""
+    if os.path.exists(DATA_FILE):
+        try:
+            with open(DATA_FILE, "r", encoding="utf-8") as f:
+                raw_data = json.load(f)
+                # Konvertiere Liste zu Dictionary (das verhindert den TypeError)
+                return {r['id']: r for r in raw_data if 'id' in r}
+        except json.JSONDecodeError:
+            print("WARNUNG: History-Datei korrupt.")
+    return {} # <--- FIX: Immer ein Dictionary zurückgeben!
 
-def save_history(history):
-    """Speichert die gesamte Review-Historie."""
+def save_history(history_dict):
+    """Speichert die Historie-Datei als sortierte Liste."""
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
+
+    # Konvertiere Dictionary-Werte zurück zur Liste
+    data_list = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
+
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
-        json.dump(history, f, ensure_ascii=False, indent=4)
+        json.dump(data_list, f, indent=4, ensure_ascii=False)
 
 # ---------------------------------------------------------
 # 3. SCRAPING FUNKTIONEN (iOS stabilisiert)
@@ -80,8 +83,6 @@ def save_history(history):
 def fetch_ios_reviews(app_name, app_id, country="de", count=20):
     """Holt iOS Reviews über die stabile Apple RSS API."""
     print(f"   -> iOS (RSS): {app_name}...")
-
-    # Apple RSS API Endpoint (holt max. 50-100 Reviews)
     api_url = f"https://itunes.apple.com/{country}/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
 
     try:
@@ -90,7 +91,6 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
         data = response.json()
 
         results = []
-        # Die Apple RSS API hat eine verschachtelte Struktur: data['feed']['entry']
         for entry in data.get('feed', {}).get('entry', [])[:count]:
             if 'im:rating' not in entry or 'content' not in entry:
                 continue
@@ -100,15 +100,10 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             date_str = entry['updated']['label'][:10]
 
             results.append({
-                "store": "ios",
-                "app": app_name,
-                "rating": rating,
-                "text": text,
-                "date": date_str,
+                "store": "ios", "app": app_name, "rating": rating,
+                "text": text, "date": date_str,
                 "id": generate_id({'app': app_name, 'store': 'ios', 'date': date_str, 'text': text})
             })
-
-        print(f"      ✅ iOS (RSS) fand {len(results)} Reviews.")
         return results
     except Exception as e:
         print(f"      ❌ iOS (RSS) Fehler: {e}")
@@ -119,25 +114,15 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
     print(f"   -> Android: {app_name}...")
     try:
         result, _ = play_reviews(
-            app_id,
-            lang=country,
-            country=country,
-            sort=Sort.NEWEST,
-            count=count
+            app_id, lang=country, country=country, sort=Sort.NEWEST, count=count
         )
-
         reviews = []
         for r in result:
             reviews.append({
-                "store": "android",
-                "app": app_name,
-                "rating": r['score'],
-                "text": r['content'],
-                "date": r['at'].strftime('%Y-%m-%d'),
+                "store": "android", "app": app_name, "rating": r['score'],
+                "text": r['content'], "date": r['at'].strftime('%Y-%m-%d'),
                 "id": generate_id({'app': app_name, 'store': 'android', 'date': r['at'].strftime('%Y-%m-%d'), 'text': r['content']})
             })
-
-        print(f"      ✅ Android fand {len(reviews)} Reviews.")
         return reviews
     except Exception as e:
         print(f"      ❌ Android Fehler: {e}")
@@ -146,44 +131,40 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
 def get_fresh_reviews(review_count=20):
     """Sammelt neue Reviews von allen Stores und mergt sie mit der Historie."""
 
-    print(f"--- Starte Scrape für {len(APP_CONFIG) * 2} Quellen ---")
+    print(f"--- Starte Scrape für 4 Quellen ---")
 
-    history = load_history()
+    history_dict = load_history()
     new_reviews_list = []
 
     for app in APP_CONFIG:
         # iOS
         ios_reviews = fetch_ios_reviews(app['name'], app['ios_id'], app['country'], review_count)
-        for r in ios_reviews:
-            if r['id'] not in history:
-                history[r['id']] = r
-                new_reviews_list.append(r)
-
         # Android
         android_reviews = fetch_android_reviews(app['name'], app['android_id'], app['country'], review_count)
-        for r in android_reviews:
-            if r['id'] not in history:
-                history[r['id']] = r
+
+        all_scraped = ios_reviews + android_reviews
+
+        for r in all_scraped:
+            # FIX: Wenn ID schon existiert, überspringe das Review
+            if r['id'] not in history_dict:
+                history_dict[r['id']] = r
                 new_reviews_list.append(r)
 
     # Sortiere die gesamte Historie nach Datum (neueste zuerst)
-    full_history = sorted(history.values(), key=lambda x: x['date'], reverse=True)
+    full_history = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
 
-    print(f"\n--- SCRAPING ABGESCHLOSSEN ---")
-    print(f"Gesamte Historie: {len(full_history)} Reviews.")
-    print(f"Neue Reviews: {len(new_reviews_list)}.")
+    print(f"\n--- ENDE: {len(full_history)} Gesamt, davon {len(new_reviews_list)} NEU ---")
 
     return full_history, new_reviews_list
 
 # ---------------------------------------------------------
-# 4. SEMANTISCHE CLUSTER-ANALYSE (NEU)
+# 4. SEMANTISCHE CLUSTER-ANALYSE
 # ---------------------------------------------------------
 def get_semantic_topics(reviews, num_clusters=5):
     """Führt KMeans Clustering durch und lässt die KI die Cluster benennen."""
     if not embedder:
         return ["Embedding Modell nicht geladen."]
 
-    # Filtere nur Reviews mit Text und begrenze auf die neuesten 200
     text_reviews = [r for r in reviews[:200] if r.get('text') and len(r['text']) > 15]
     if len(text_reviews) < num_clusters:
         return ["Zu wenige Reviews für Clustering."]
@@ -198,7 +179,7 @@ def get_semantic_topics(reviews, num_clusters=5):
     clustering = KMeans(n_clusters=num_clusters, random_state=0, n_init=10)
     clustering.fit(embeddings)
 
-    # 3. Finde das repräsentativste Review pro Cluster (Closest to Centroid)
+    # 3. Finde das repräsentativste Review pro Cluster
     topic_reviews = []
 
     for i in range(num_clusters):
@@ -209,7 +190,6 @@ def get_semantic_topics(reviews, num_clusters=5):
         cluster_embeddings = embeddings[cluster_indices]
         centroid = clustering.cluster_centers_[i]
 
-        # Berechnung der Kosinus-Ähnlichkeit zwischen Cluster-Elementen und dem Zentroid
         similarity = cosine_similarity([centroid], cluster_embeddings)
         closest_index_in_cluster = cluster_indices[np.argmax(similarity)]
 
@@ -235,29 +215,75 @@ def get_semantic_topics(reviews, num_clusters=5):
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
         topics = json.loads(text)
-        return [t for t in topics if isinstance(t, str) and t] # Filtert leere Strings
+        return [t for t in topics if isinstance(t, str) and t]
     except Exception as e:
         print(f"KI-Labeling Fehler: {e}")
         return ["KI-Labeling Fehlgeschlagen"]
 
+# ---------------------------------------------------------
+# 5. TEAMS NOTIFICATION
+# ---------------------------------------------------------
+def send_teams_notification(new_reviews, webhook_url):
+    """Sendet eine Nachricht an den Teams/Power Automate Webhook."""
+    if not new_reviews:
+        print("-> Keine neuen Reviews zum Senden.")
+        return
+
+    positive_count = sum(1 for r in new_reviews if r['rating'] >= 4)
+    negative_count = sum(1 for r in new_reviews if r['rating'] <= 2)
+
+    title = f"📢 NEUES FEEDBACK! ({len(new_reviews)} Reviews)"
+
+    review_list_text = ""
+    for r in new_reviews[:5]:
+        rating_star = "⭐" * r['rating']
+        review_list_text += f"* **{r['app']} ({r['store']})**: {rating_star} *\"{r['text'][:60]}...\"*\n"
+
+    full_text_message = f"""
+📢 **{title}**
+---
+👍 Positiv: {positive_count} | 🚨 Kritisch: {negative_count}
+
+**Neueste Nutzerstimmen (Auszug):**
+{review_list_text}
+
+[Zum vollständigen Dashboard](https://Hatozoro.github.io/feedback-agent/)
+"""
+    teams_message = {
+        "text": full_text_message
+    }
+
+    try:
+        headers = {'Content-Type': 'application/json'}
+        response = requests.post(webhook_url, json=teams_message, headers=headers, timeout=10)
+
+        response.raise_for_status()
+        print("✅ Teams Benachrichtigung erfolgreich gesendet.")
+    except HTTPError as e:
+        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {response.status_code} Client Error: {response.reason}. Prüfe den Webhook.")
+    except Exception as e:
+        print(f"❌ Allgemeiner Fehler beim Senden der Teams-Nachricht: {e}")
 
 # ---------------------------------------------------------
-# 5. KI ANALYSE UND HTML GENERIERUNG
+# 6. HTML GENERIERUNG
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     """Erstellt die KI-Analyse und generiert das statische HTML-Dashboard."""
 
-    analysis_set = full_history[:50]
-    ki_output = {"summary": "Keine ausreichende Datenbasis für KI-Analyse.", "topics": [], "topReviews": [], "bottomReviews": []}
+    # 1. Clustering durchführen
+    semantic_topics = get_semantic_topics(full_history)
 
-    # 1. KI Analyse für Summary und Top/Low Reviews
+    # 2. KI Analyse für Summary und Top/Low Reviews
+    analysis_set = full_history[:50]
+    ki_output = {"summary": "Keine ausreichende Datenbasis für KI-Analyse.", "topReviews": [], "bottomReviews": []}
+
     if model and analysis_set:
         print(f"--- Starte KI-Analyse für {len(analysis_set)} Reviews ---")
         prompt_data = [{k: v for k, v in r.items() if k in ['text', 'rating', 'app', 'store']} for r in analysis_set]
 
         prompt = f"""
-        Analysiere diese Reviews (max 50). Fasse die wichtigsten Benutzerbeschwerden und Produktbereiche, die Aufmerksamkeit benötigen, in einem Management Summary zusammen.
-        Wähle das Top-Review (höchste positive Bewertung, bester Text) und das Bottom-Review (niedrigste Bewertung, kritischster Text) aus.
+        Analysiere diese Reviews (max 50). Fasse die wichtigsten Benutzerbeschwerden und Produktbereiche zusammen.
+        Wähle das Top-Review und das Bottom-Review aus.
         
         Output muss STRIKT im JSON-Format erfolgen:
         {{
@@ -275,9 +301,6 @@ def run_analysis_and_generate_html(full_history, new_only):
         except Exception as e:
             print(f"❌ KI Fehler bei JSON-Verarbeitung: {e}")
 
-    # 2. Semantisches Clustering
-    ki_output['topics'] = get_semantic_topics(full_history)
-
     # HTML Generierung
     total_count = len(full_history)
     ios_count = len([r for r in full_history if r['store'] == 'ios'])
@@ -289,7 +312,6 @@ def run_analysis_and_generate_html(full_history, new_only):
     top_reviews = ki_output.get('topReviews', [])[:3]
     bottom_reviews = ki_output.get('bottomReviews', [])[:3]
 
-    # HTML Code
     html = f"""
     <!DOCTYPE html>
     <html lang="de">
@@ -308,7 +330,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             .topic {{ display: inline-block; background: #e8f5e9; color: #2e7d32; padding: 5px 12px; border-radius: 15px; margin: 3px; display: inline-block; border: 1px solid #c8e6c9; font-size: 0.9em; }}
             .review-list {{ display: flex; gap: 20px; margin-top: 20px; }}
             .review-column {{ flex: 1; min-width: 40%; }}
-            .review-item {{ border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0,0,0.02); }}
+            .review-item {{ border: 1px solid #eee; padding: 10px; border-radius: 5px; margin-bottom: 10px; background: white; box-shadow: 0 1px 3px rgba(0,0.02); }}
             .good {{ border-left: 5px solid #28a745; }}
             .bad {{ border-left: 5px solid #dc3545; }}
             .review-text {{ font-style: italic; font-size: 0.9em; margin-top: 5px; }}
@@ -330,7 +352,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
 
             <h3>🔥 Themen Cluster (Semantische Analyse)</h3>
-            <div>{''.join([f'<span class="topic">{t}</span>' for t in ki_output.get('topics', [])])}</div>
+            <div>{''.join([f'<span class="topic">{t}</span>' for t in semantic_topics])}</div>
             
             <h2>⭐ Top- & Low-Reviews (KI-Auswahl)</h2>
             <div class="review-list">
@@ -374,65 +396,20 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
-        f.write(html)
+        json.dump(html, f, ensure_ascii=False) # FIX: Hier war vorher ein Fehler
+
+    print("✅ Dashboard HTML erfolgreich generiert.")
+
 
 # ---------------------------------------------------------
-# 6. TEAMS BENACHRICHTIGUNG
-# ---------------------------------------------------------
-def send_teams_notification(new_reviews, webhook_url):
-    """Sendet eine Nachricht an den Teams/Power Automate Webhook."""
-    if not new_reviews:
-        print("Keine neuen Reviews, keine Teams Benachrichtigung notwendig.")
-        return
-
-    # Berechne die Metriken der NEUEN Reviews
-    positive_count = sum(1 for r in new_reviews if r['rating'] >= 4)
-    negative_count = sum(1 for r in new_reviews if r['rating'] <= 2)
-
-    title = f"📢 NEUES FEEDBACK! ({len(new_reviews)} Reviews)"
-
-    # Liste der neuen Texte
-    review_list_text = ""
-    for r in new_reviews[:5]: # Zeige maximal 5 Reviews an
-        rating_star = "⭐" * r['rating']
-        review_list_text += f"* **{r['app']} ({r['store']})**: {rating_star} *\"{r['text'][:60]}...\"*\n"
-
-    # Erzeuge eine einfache Textnachricht für Teams
-    full_text_message = f"""
-**{title}**
----
-👍 Positiv: {positive_count} | 🚨 Kritisch: {negative_count}
-
-**Neueste Nutzerstimmen (Auszug):**
-{review_list_text}
-
-[Zum vollständigen Dashboard](https://Hatozoro.github.io/feedback-agent/)
-"""
-    # Payload für den Webhook
-    teams_message = {
-        "text": full_text_message
-    }
-
-    try:
-        headers = {'Content-Type': 'application/json'}
-        response = requests.post(webhook_url, json=teams_message, headers=headers, timeout=10)
-
-        response.raise_for_status()
-        print("✅ Teams Benachrichtigung erfolgreich gesendet.")
-    except HTTPError as e:
-        print(f"❌ HTTP Fehler beim Senden der Teams-Nachricht: {response.status_code} Client Error: {response.reason}. Prüfe den Webhook.")
-    except Exception as e:
-        print(f"❌ Allgemeiner Fehler beim Senden der Teams-Nachricht: {e}")
-
-# ---------------------------------------------------------
-# 7. MAIN BLOCK
+# 8. MAIN EXECUTION
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    # 1. Daten laden & Scrapen
+    # 1. Daten holen & Duplikate filtern
     full_history, new_reviews = get_fresh_reviews()
 
     # 2. Speichern (Persistenz)
-    save_history(full_history)
+    save_history({r['id']: r for r in full_history}) # Speichere als Dictionary, wie in load_history erwartet
 
     # 3. Dashboard bauen
     run_analysis_and_generate_html(full_history, new_reviews)
