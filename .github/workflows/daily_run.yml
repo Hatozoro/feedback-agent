@@ -5,7 +5,6 @@ on:
   schedule:
     - cron: '0 6 * * *'
 
-# HIER IST DER SCHLÜSSEL ZUM ERFOLG:
 permissions:
   contents: write
 
@@ -22,20 +21,25 @@ jobs:
         with:
           python-version: '3.9'
 
-      - name: Install Dependencies (Brute Force)
+      - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          # 1. Moderne Sachen installieren
           pip install google-generativeai python-dotenv pandas google-play-scraper faiss-cpu sentence-transformers numpy
-          # 2. App-Store-Scraper OHNE alten Ballast
           pip install app-store-scraper --no-deps
-          # 3. Verbindungsstücke manuell fixen
           pip install requests urllib3 certifi
 
       - name: Run Agent Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: python main.py
+
+      # NEU: Speichert die JSON-Datenbank zurück ins Repo
+      - name: Commit History Data
+        uses: stefanzweifel/git-auto-commit-action@v4
+        with:
+          commit_message: "Data: Update review history"
+          file_pattern: data/*.json
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
