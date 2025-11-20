@@ -30,7 +30,6 @@
             .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
             
             .chart-container { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }
-            
             .summary-box { background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }
             .tag { display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
             
@@ -39,17 +38,15 @@
             .review-card.pos { border-top: 4px solid #22c55e; }
             .review-card.neg { border-top: 4px solid #ef4444; }
             
-            .icon-android { color: var(--android-color); }
-            .icon-ios { color: var(--ios-color); }
+            .icon-android { color: var(--android-color); } .icon-ios { color: var(--ios-color); }
+            .copy-btn { cursor: pointer; float: right; opacity: 0.5; } .copy-btn:hover { opacity: 1; color: var(--primary); }
             
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
             .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
             .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
-            .copy-btn { cursor: pointer; float: right; opacity: 0.5; }
-            .copy-btn:hover { opacity: 1; color: var(--primary); }
-            
+
             .review-text { margin-top: 8px; line-height: 1.5; position: relative; }
             .review-text.clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
             .read-more { color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }
@@ -60,7 +57,7 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 20.11.2025 14:24</span>
+                    <span style="opacity:0.7;">Update: 20.11.2025 14:38</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -87,10 +84,10 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die App-Reviews zeigen ein gemischtes Bild. Viele Nutzer klagen über Abstürze, Flackern, Performance-Probleme und Probleme mit der Cookie-Verwaltung, was zu Frustration führt. Positive Rückmeldungen loben die grundsätzliche Funktionalität, betonen aber die Notwendigkeit von Verbesserungen, besonders hinsichtlich Stabilität und Benutzerfreundlichkeit. Es gibt auch Kritik an veralteten Inhalten und der Suchfunktion.</p>
+                <p>Die App-Reviews zeigen erhebliche Probleme mit der Stabilität und Benutzerfreundlichkeit der Apps Schwäbische und Nordkurier. Viele Nutzer berichten von Abstürzen, Flackern und Problemen mit der Cookie-Verwaltung. Besonders die Suchfunktion und das Handling der Seiten werden kritisiert. Diese Mängel führen zu Frustration und Kündigungen von Abonnements.</p>
                 <div style="margin-top:15px;">
                     <strong>Themen:</strong><br>
-                    <span class="tag"># Datumsprobleme</span><span class="tag"># Cookie Bestätigung</span><span class="tag"># Download Fehler</span><span class="tag"># App Abstürze</span><span class="tag"># Region Auswahl</span>
+                    <span class="tag"># Datumsproblematik</span> <span class="tag"># Cookie Bestätigung</span> <span class="tag"># Download Fehler</span> <span class="tag"># App Abstürze</span> <span class="tag"># Regionsauswahl</span> 
                 </div>
             </div>
 
@@ -101,20 +98,20 @@
                     <div class="review-card pos">
                         <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
                             <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
-                            <span>5★</span>
+                            <span>4★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">bei Nutzung der App flackern die obere und untere Leiste, bis zum Absturz der App nach kurzer Zeit.</div>
+                            <div class="review-text clamped">Hab den Abo Service schon vor langem in Anspruch genommen. Ich habe nur vergessen meine Rezensionen vom 13.12.24 zu ändern. Mit der App komme ich inzwischen klar. Videos starten nicht oder brauchen ewig bis sie starten, kann aber auch an meiner Technik liegen. Dass die Zeitung allerdings am 17.10.25 reagiert, also über 10 Monate später 🤔. Wenn es so lange gedauert hätte, hätte ich das Abo gekündigt.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
                     <div class="review-card pos">
                         <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
-                            <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
                             <span>5★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Ganz gute App. Nur die Topfmeldungen rasen zu schnell vorbei. Zusätzliche Toopfs empfohlen.</div>
+                            <div class="review-text clamped">Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -134,31 +131,50 @@
                     
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
-                            <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Desinformation, Rechtsruck wird immer schlimmer</div>
+                            <div class="review-text clamped">Die App ist seit dem Relaunch so furchtbar schlecht geworden, dass das morgendliche Zeitungslesen mehr Frust als Lust ist. 
+Schaut euch doch bitte all die Rezensionen der letzten Wochen und Monaten an, kaum eine gibt mehr als einen Stern. 
+Ganz schlimm finde ich das unkontrollierte Springen auf die vorige oder nächste Seite bei gezoomter Ansicht. Ich habe noch gut 10 weitere Kritikpunkte, die ich dem Support schon mitgeteilt habe. Ich hatte schon mal telefonischen Kontakt mit dem Support, meine Kritikpunkte  wurden aber alle zurückgewiesen mit dem Argument, ich würde die App falsch bedienen. Geht’s noch?
+Ich überlege tatsächlich, ob ich dieses Blatt noch weiter abonnieren soll.
+
+Meine Antwort auf die Entwicklerantwort: Ich verwende die aktuellste Version, kann aber keine Verbesserung erkennen. Gravierende Probleme bestehen nach wie vor. Auf konstruktive Kritik wird nicht eingegangen. Wo bitte finde ich ein Changelog um Verbesserungen und Änderungen einsehen zu können?
+
+Ein Rezensions-Update von mir: Auch nach mehreren Monaten, immer noch keine Lösung der gravierenden Schwächen, es ist einfach unerträglich. Es ist erschreckend, wie konstruktive Kritik der Benutzer ignoriert wird.
+
+Ein weiteres Update: nach mehr als einem halben Jahr tut sich immer noch nichts, Probleme werden ignoriert. Ich habe nun das Abo, das ich schon 40 Jahre lang habe, gekündigt. Inhaltlich und technisch ist die Schwäbische einfach nicht mehr tragbar, vom unterirdischen Kunden-Service ganz zu schweigen.
+
+bye-bye Schwäbische
+
+Noch ein Nachtrag nach weiteren zwei Monaten: Ich habe die App bei einer Nachbarin getestet, da ich mich schon längere Zeit von der Schwäbischen verabschiedet habe. Es ist nicht zu glauben, die App ist nochmal schlechter geworden. U.a. taucht jetzt alle Nase lang eine Cookie-Nachricht auf, die man bestätigen muss. Was für eine unfassbare Schlamperei. Der Kunde ist nicht König sondern der Schwäbischen schlichtweg egal! Was für ein Käseblatt.
+
+Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder ein Probeabo geklickt um zu schauen, was sich vielleicht inzwischen verbessert hat. Ergebnis: nichts. Zumindest sind die mir bekannten und gemeldeten Probleme immer noch nicht gelöst bzw behoben.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
-                            <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">App stürzt ein paar Sekunden nach dem öffnen ab und schließt sich. Pixel 6a</div>
+                            <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
-                            <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
-                            <span>1★</span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
+                            <span>2★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Ich habe erst seit ein paar Tagen das Digitalabo und bin mit der App nicht zufrieden. Die Anzeige ist manchmal zittrig. "Aktuelles" kann ich nicht lesen, da stürzt die App beim Aufruf von Videos und Artikeln zuverlässig ab. Der Fehler tritt am Androidtablet und am ipad auf. Eine Neuinstallation ändert nichts. 13.11.: Nach wie vor das Problem, dass ich "Aktuelles" wegen Absturz nicht lesen kann. Weder auf dem ipad noch auf dem Galaxy. Die Frage nach der Android-Version erübrigt sich.</div>
+                            <div class="review-text clamped">Cookies müssen immer wieder abgelehnt werden, trotz „ablehnen + speichern“. Warum erfolgt diese Speicherung nicht persistent? Sehr lästig.
+Beim Vergrößern des ePapers (Fingergeste auf dem iPad), damit man Artikel lesen kann, springt die Darstellung (viel zu) oft auf die vorhergehende oder folgende Doppelseite.
+In der Ergebnisliste der Artikelsuche fehlt jeweils das Erscheinungsdatum der gefundenen Artikel (genauso auf der Website). Ich vermute dahinter eine unlautere Absicht (Clickbait). 
+Außerdem taugen die Suchergebnisse nichts (Artikel aus der Printausgabe werden nicht gefunden).
+Daher aktuell nur 2 Sterne möglich.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -195,9 +211,8 @@
             let currentFilter = 'all';
             let currentSort = 'newest';
 
-            // Theme Init
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
             
             function toggleTheme() {
                 const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -206,7 +221,6 @@
                 updateChartColors();
             }
 
-            // Chart Setup
             const ctx = document.getElementById('trendChart').getContext('2d');
             let chart = new Chart(ctx, {
                 type: 'bar',
@@ -236,10 +250,8 @@
             }
             updateChartColors();
 
-            // Init Defaults
             document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
-            // Read More Logic
             function initReadMore() {
                 document.querySelectorAll('.review-content').forEach(div => {
                     const text = div.querySelector('.review-text');
@@ -257,7 +269,6 @@
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }
 
-            // Filter & Sort
             function setFilter(app, btn) {
                 currentFilter = app;
                 const group = btn.parentElement;
@@ -265,7 +276,7 @@
                 btn.classList.add('active');
                 filterData();
             }
-
+            
             function setSort(mode, btn) {
                 currentSort = mode;
                 const group = btn.parentElement;
