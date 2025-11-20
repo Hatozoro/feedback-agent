@@ -79,7 +79,6 @@ def calculate_trends(reviews):
         return round(sum(f)/len(f), 2) if f else 0.0
     return {'overall': round(sum(r for d, r in dated_reviews)/len(dated_reviews), 2), 'last_7d': get_avg(7), 'last_30d': get_avg(30)}
 
-# Chart Data: Nur noch Anzahl (Balken), nach Sentiment gefärbt
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     stats = {}
@@ -171,7 +170,7 @@ def get_semantic_topics(reviews):
     try:
         p = f'Erstelle Labels (1-2 Wörter) für diese Themen: {json.dumps(samples, ensure_ascii=False)}. Output JSON Liste.'
         return json.loads(model.generate_content(p).text.replace("```json","").replace("```","").strip())
-    except: return ["Allgemein"]
+    except: return ["Themen Analyse Fehler"]
 
 def get_ai_buzzwords(reviews):
     if not model: return []
@@ -217,32 +216,27 @@ def run_analysis_and_generate_html(full_history, new_only):
     # Fallback
     top_list = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)[:3]
     bot_list = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)[:3]
+    if not top_list: top_list = ki_data.get('topReviews', [])
+    if not bot_list: bot_list = ki_data.get('bottomReviews', [])
 
-    # Wenn KI leer, überschreibe mit Fallback
-    if not ki_data.get('topReviews'): ki_data['topReviews'] = top_list
-    if not ki_data.get('bottomReviews'): ki_data['bottomReviews'] = bot_list
-
-    # Metadaten sicherstellen
-    for l in [ki_data['topReviews'], ki_data['bottomReviews']]:
-        for r in l:
-            if not r.get('app'):
-                m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
-                if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
+    for r in top_list + bot_list:
+        if not r.get('app'):
+            m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
+            if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
-
-    # Datum
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # HTML BUZZWORDS
+    # HTML GENERIEREN
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
+        # NEU: onclick event für die Suche
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
@@ -279,20 +273,23 @@ def run_analysis_and_generate_html(full_history, new_only):
             .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
             .card {{ background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }}
             .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }}
+            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }}
             
             .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
             .summary-box {{ background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             
             .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
+            /* BUZZWORD DESIGN (INTERAKTIV) */
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 20px; 
+                display: inline-flex; align-items: center; cursor: pointer;
+                padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
                 color: var(--text); font-weight: 500; transition: transform 0.2s;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); }}
+            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -305,8 +302,10 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
+            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
+            
             .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
             .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
@@ -325,14 +324,29 @@ def run_analysis_and_generate_html(full_history, new_only):
             </header>
 
             <div class="kpi-grid">
-                <div class="card"><div class="kpi-label">Gesamt Ø</div><div class="kpi-val">{trends['overall']} ⭐</div></div>
-                <div class="card"><div class="kpi-label">Trend (7 Tage)</div><div class="kpi-val">{trends['last_7d']} ⭐</div></div>
-                <div class="card"><div class="kpi-label">Erfasste Reviews</div><div class="kpi-val">{len(full_history)}</div></div>
+                <div class="card">
+                    <div class="kpi-label">Gesamt Ø</div>
+                    <div class="kpi-val">{trends['overall']} ⭐</div>
+                </div>
+                <div class="card">
+                    <div class="kpi-label">Trend (7 Tage)</div>
+                    <div class="kpi-val">{trends['last_7d']} ⭐</div>
+                </div>
+                <div class="card">
+                    <div class="kpi-label">Erfasste Reviews</div>
+                    <div class="kpi-val">{len(full_history)}</div>
+                </div>
             </div>
 
-            <div class="chart-container"><h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4><canvas id="trendChart"></canvas></div>
+            <div class="chart-container">
+                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
+                <canvas id="trendChart"></canvas>
+            </div>
             
-            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>{summary}</div>
+            <div class="summary-box">
+                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
+                <p>{summary}</p>
+            </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
@@ -348,40 +362,74 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
 
             <div class="review-grid">
-                <div><h3>👍 Top Stimmen</h3>{''.join([f'''
+                <div>
+                    <h3>👍 Top Stimmen</h3>
+                    {''.join([f'''
                     <div class="review-card pos">
-                        <div class="meta"><span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span> <span>{r.get('rating')}★</span></div>
-                        <div class="review-content"><div class="review-text clamped">{r.get('text')}</div><span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span></div>
-                    </div>''' for r in ki_data.get('topReviews', [])])}
+                        <div class="meta">
+                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
+                            <span>{r.get('rating')}★</span>
+                        </div>
+                        <div class="review-content">
+                            <div class="review-text clamped">{r.get('text')}</div>
+                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                        </div>
+                    </div>''' for r in top_list[:3]])}
                 </div>
-                <div><h3>⚠️ Kritische Stimmen</h3>{''.join([f'''
+                <div>
+                    <h3>⚠️ Kritische Stimmen</h3>
+                    {''.join([f'''
                     <div class="review-card neg">
-                        <div class="meta"><span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span> <span>{r.get('rating')}★</span></div>
-                        <div class="review-content"><div class="review-text clamped">{r.get('text')}</div><span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span></div>
-                    </div>''' for r in ki_data.get('bottomReviews', [])])}
+                        <div class="meta">
+                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
+                            <span>{r.get('rating')}★</span>
+                        </div>
+                        <div class="review-content">
+                            <div class="review-text clamped">{r.get('text')}</div>
+                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                        </div>
+                    </div>''' for r in bot_list[:3]])}
                 </div>
             </div>
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
-                <input type="text" class="search-input" id="search" placeholder="Suche..." onkeyup="filterData()" style="flex:1;">
-                <div class="filter-group"><button class="filter-btn active" onclick="setFilter('all', this)">Alle</button><button class="filter-btn" onclick="setFilter('Nordkurier', this)">NK</button><button class="filter-btn" onclick="setFilter('Schwäbische', this)">SZ</button></div>
-                <div class="filter-group"><button class="filter-btn" onclick="setSort('newest', this)">Neu</button><button class="filter-btn" onclick="setSort('best', this)">Beste</button><button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button></div>
+            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
+                <div style="flex:1; min-width: 300px;">
+                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">App:</span>
+                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Sortierung:</span>
+                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
+                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                </div>
             </div>
+
             <div id="list-container" style="display:grid; gap:15px;"></div>
         </div>
 
         <script>
             const REVIEWS = {js_reviews};
-            let currentFilter='all', currentSort='newest';
+            let currentFilter = 'all';
+            let currentSort = 'newest';
+
             const theme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', theme);
+            
             function toggleTheme() {{
-                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
-                updateChart();
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+                updateChartColors();
             }}
 
             const ctx = document.getElementById('trendChart').getContext('2d');
@@ -390,63 +438,120 @@ def run_analysis_and_generate_html(full_history, new_only):
                 data: {{
                     labels: {js_labels},
                     datasets: [
-                        {{ label: 'Positiv', data: {js_pos}, backgroundColor: '#22c55e' }},
-                        {{ label: 'Neutral', data: {js_neu}, backgroundColor: '#94a3b8' }},
-                        {{ label: 'Negativ', data: {js_neg}, backgroundColor: '#ef4444' }}
+                        {{ label: 'Positiv (4-5★)', data: {js_pos}, backgroundColor: '#22c55e' }},
+                        {{ label: 'Neutral (3★)', data: {js_neu}, backgroundColor: '#94a3b8' }},
+                        {{ label: 'Negativ (1-2★)', data: {js_neg}, backgroundColor: '#ef4444' }}
                     ]
                 }},
-                options: {{ responsive: true, maintainAspectRatio: false, scales: {{ x: {{ stacked: true, grid: {{ display: false }} }}, y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} }} }}
+                options: {{
+                    responsive: true, maintainAspectRatio: false,
+                    scales: {{ 
+                        x: {{ stacked: true, grid: {{ display: false }} }}, 
+                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} 
+                    }},
+                    plugins: {{ legend: {{ position: 'bottom' }} }}
+                }}
             }});
-            function updateChart() {{ chart.options.scales.y.grid.color = document.documentElement.getAttribute('data-theme') === 'dark' ? '#334155' : '#e2e8f0'; chart.update(); }}
-            updateChart();
+            
+            function updateChartColors() {{
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
+                chart.update();
+            }}
+            updateChartColors();
 
             document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
-            
+
             function initReadMore() {{
                 document.querySelectorAll('.review-content').forEach(div => {{
-                    const txt = div.querySelector('.review-text');
-                    if(txt.scrollHeight > txt.clientHeight) div.querySelector('.read-more').style.display = 'inline-block';
+                    const text = div.querySelector('.review-text');
+                    const btn = div.querySelector('.read-more');
+                    if (text.scrollHeight > text.clientHeight) {{
+                        btn.style.display = 'inline-block';
+                    }}
                 }});
             }}
             initReadMore();
 
             function toggleText(btn) {{
-                btn.previousElementSibling.classList.toggle('clamped');
-                btn.innerText = btn.innerText === 'Mehr anzeigen' ? 'Weniger anzeigen' : 'Mehr anzeigen';
+                const text = btn.previousElementSibling;
+                text.classList.toggle('clamped');
+                btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }}
 
-            function setFilter(app, btn) {{ currentFilter=app; updateActive(btn); filterData(); }}
-            function setSort(mode, btn) {{ currentSort=mode; updateActive(btn); filterData(); }}
-            function updateActive(btn) {{ btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active')); btn.classList.add('active'); }}
-            function copyText(txt) {{ navigator.clipboard.writeText(txt); alert('Kopiert!'); }}
+            function setFilter(app, btn) {{
+                currentFilter = app;
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterData();
+            }}
+            
+            function setSort(mode, btn) {{
+                currentSort = mode;
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                filterData();
+            }}
+
+            function setSearch(term) {{
+                const input = document.getElementById('search');
+                input.value = term;
+                filterData();
+                // Scrollen zum Suchfeld
+                input.scrollIntoView({{behavior: 'smooth'}});
+            }}
+
+            function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
                 const q = document.getElementById('search').value.toLowerCase().trim();
-                const list = document.getElementById('list-container');
-                list.innerHTML = '';
-                
-                let res = REVIEWS.filter(r => (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q));
-                
-                if(currentSort === 'newest') res.sort((a,b) => a.date < b.date ? 1 : -1);
-                if(currentSort === 'best') res.sort((a,b) => b.rating - a.rating);
-                if(currentSort === 'worst') res.sort((a,b) => a.rating - b.rating);
+                const container = document.getElementById('list-container');
+                container.innerHTML = '';
 
-                if(res.length === 0) {{ list.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px">Keine Ergebnisse</div>'; return; }}
+                let filtered = REVIEWS.filter(r => {{
+                    return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
+                }});
 
-                res.slice(0, 50).forEach(r => {{
+                if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
+                if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
+                if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
+
+                if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px;">Keine Ergebnisse</div>'; return; }}
+
+                filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    let txt = r.text;
-                    if(q.length >= 2) txt = txt.replace(new RegExp('('+q+')', 'gi'), '<mark>$1</mark>');
+                    
+                    // HIGHLIGHTING LOGIC
+                    let displayText = r.text;
+                    if (q.length >= 2) {{
+                        const regex = new RegExp('(' + q + ')', 'gi');
+                        displayText = displayText.replace(regex, '<mark>$1</mark>');
+                    }}
                     
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
-                        <div class="meta"><span>${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐</span> <span>${{r.fmt_date || r.date}}</span></div>
-                        <div style="line-height:1.5; margin-top:5px;">${{txt}} <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i></div>
+                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
+                            <span style="display:flex; align-items:center; gap:6px;">
+                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
+                            </span>
+                            <span>${{r.fmt_date || r.date}}</span>
+                        </div>
+                        <div style="line-height:1.5;">
+                            <span class="review-text clamped">${{displayText}}</span>
+                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                            <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
+                        </div>
                     `;
-                    list.appendChild(div);
+                    container.appendChild(div);
                 }});
+                
+                // Read More Init für neue Elemente
+                initReadMore();
             }}
+            
             filterData();
         </script>
     </body>
@@ -454,25 +559,41 @@ def run_analysis_and_generate_html(full_history, new_only):
     """
 
     os.makedirs("public", exist_ok=True)
-    with open("public/index.html", "w", encoding="utf-8") as f: f.write(html)
-    print("✅ Dashboard v11.0 generiert.")
+    with open("public/index.html", "w", encoding="utf-8") as f:
+        f.write(html)
+    print("✅ Dashboard HTML erfolgreich generiert.")
 
 # ---------------------------------------------------------
 # 7. MAIN EXECUTION
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
-    if not new_reviews: return
-    pos = sum(1 for r in new_reviews if r['rating']>=4)
-    neg = sum(1 for r in new_reviews if r['rating']<=2)
-    txt = f"🚀 **UPDATE** ({len(new_reviews)})\n\n👍 {pos} | 🚨 {neg}\n[Dashboard](https://Hatozoro.github.io/feedback-agent/)"
-    try: requests.post(webhook_url, json={"text": txt})
-    except: pass
+    if not new_reviews:
+        return
+
+    pos = sum(1 for r in new_reviews if r['rating'] >= 4)
+    neg = sum(1 for r in new_reviews if r['rating'] <= 2)
+
+    text_body = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n\n"
+    text_body += f"👍 Positiv: {pos} | 🚨 Kritisch: {neg}\n\n"
+    text_body += "**Auszug:**\n"
+
+    for r in new_reviews[:3]:
+        text_body += f"- {r['rating']}★: {r['text'][:60]}...\n"
+
+    text_body += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+
+    try:
+        requests.post(webhook_url, json={"text": text_body}, timeout=10)
+        print("✅ Teams Nachricht gesendet.")
+    except Exception as e:
+        print(f"❌ Teams Fehler: {e}")
 
 if __name__ == "__main__":
     full, new = get_fresh_reviews()
     save_history({r['id']: r for r in full})
     run_analysis_and_generate_html(full, new)
+
     teams = os.getenv("TEAMS_WEBHOOK_URL")
     if teams: send_teams_notification(new, teams)
 
-    print("✅ Fertig.")
+    print("✅ Durchlauf beendet.")
