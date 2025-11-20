@@ -168,7 +168,6 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
 
         # Feed parsen
         entries = data.get('feed', {}).get('entry', [])
-        # Begrenzen auf 'count', aber sicherstellen, dass wir gültige Einträge haben
         valid_entries = 0
         for entry in entries:
             if valid_entries >= count: break
@@ -179,7 +178,6 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             rating = int(entry['im:rating']['label'])
             text = entry['content']['label']
 
-            # Datum aus RSS ist manchmal komplex, wir versuchen es zu lesen oder nehmen heute als Fallback
             raw_date = entry.get('updated', {}).get('label', datetime.now().strftime('%Y-%m-%d'))
             date_str = raw_date[:10] # YYYY-MM-DD Teil
 
@@ -312,22 +310,15 @@ def get_semantic_topics(reviews, num_clusters=5):
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     # Berechnungen
-    trend_metrics = calculate_trends(full_history)
+    trends = calculate_trends(full_history)  # FIX: Variable heißt jetzt 'trends'
     chart_data = prepare_chart_data(full_history)
     topics = get_semantic_topics(full_history)
-
-    # VARIABLEN VORBEREITEN FÜR CHART (Sicheres JSON)
-    j_labels = json.dumps(chart_data['labels'])
-    j_pos = json.dumps(chart_data['pos'])
-    j_neg = json.dumps(chart_data['neg'])
-    j_neu = json.dumps(chart_data['neu'])
 
     # KI Zusammenfassung & Highlights
     ki_output = {"summary": "Keine Analyse verfügbar.", "topReviews": [], "bottomReviews": []}
 
     # Wir nehmen nur relevante Reviews für die KI (länger als 40 Zeichen)
     rich_reviews = [r for r in full_history if len(r.get('text', '')) > 40]
-    # Fallback, falls keine langen da sind
     if len(rich_reviews) < 10: rich_reviews = full_history
 
     if model and rich_reviews:
@@ -406,6 +397,10 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     # Daten für JS vorbereiten
     js_reviews = json.dumps(full_history, ensure_ascii=False)
+    js_labels = json.dumps(chart_data['labels'])
+    js_pos = json.dumps(chart_data['pos'])
+    js_neg = json.dumps(chart_data['neg'])
+    js_neu = json.dumps(chart_data['neu'])
 
     html = f"""
     <!DOCTYPE html>
@@ -496,12 +491,11 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                {summary_text}
-            </div>
-
-            <div style="margin-bottom: 40px;">
-                <h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3>
-                {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
+                <p>{summary_text}</p>
+                <div style="margin-top:15px;">
+                    <strong>Themen:</strong><br>
+                    {''.join([f'<span class="tag"># {t}</span>' for t in topics])}
+                </div>
             </div>
 
             <div class="review-grid">
@@ -570,9 +564,9 @@ def run_analysis_and_generate_html(full_history, new_only):
             document.documentElement.setAttribute('data-theme', savedTheme);
             
             function toggleTheme() {{
-                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', next);
-                localStorage.setItem('theme', next);
+                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
                 updateChartColors();
             }}
 
@@ -581,11 +575,11 @@ def run_analysis_and_generate_html(full_history, new_only):
             let chart = new Chart(ctx, {{
                 type: 'bar',
                 data: {{
-                    labels: {j_labels},
+                    labels: {js_labels},
                     datasets: [
-                        {{ label: 'Positiv (4-5★)', data: {j_pos}, backgroundColor: '#22c55e' }},
-                        {{ label: 'Neutral (3★)', data: {j_neu}, backgroundColor: '#94a3b8' }},
-                        {{ label: 'Negativ (1-2★)', data: {j_neg}, backgroundColor: '#ef4444' }}
+                        {{ label: 'Positiv (4-5★)', data: {js_pos}, backgroundColor: '#22c55e' }},
+                        {{ label: 'Neutral (3★)', data: {js_neu}, backgroundColor: '#94a3b8' }},
+                        {{ label: 'Negativ (1-2★)', data: {js_neg}, backgroundColor: '#ef4444' }}
                     ]
                 }},
                 options: {{
@@ -694,7 +688,7 @@ def run_analysis_and_generate_html(full_history, new_only):
     print("✅ Dashboard HTML erfolgreich generiert.")
 
 # ---------------------------------------------------------
-# 6. TEAMS BENACHRICHTIGUNG (Einfacher Text)
+# 7. MAIN EXECUTION
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
     if not new_reviews:
@@ -718,22 +712,12 @@ def send_teams_notification(new_reviews, webhook_url):
     except Exception as e:
         print(f"❌ Teams Fehler: {e}")
 
-# ---------------------------------------------------------
-# 7. MAIN BLOCK
-# ---------------------------------------------------------
 if __name__ == "__main__":
-    # 1. Daten laden & Scrapen
-    full_history, new_reviews = get_fresh_reviews()
+    full, new = get_fresh_reviews()
+    save_history({r['id']: r for r in full})
+    run_analysis_and_generate_html(full, new)
 
-    # 2. Speichern (Persistenz)
-    save_history({r['id']: r for r in full_history})
+    teams = os.getenv("TEAMS_WEBHOOK_URL")
+    if teams: send_teams_notification(new, teams)
 
-    # 3. Dashboard bauen
-    run_analysis_and_generate_html(full_history, new_reviews)
-
-    # 4. Chat-Benachrichtigung senden
-    teams_webhook = os.getenv("TEAMS_WEBHOOK_URL")
-    if teams_webhook:
-        send_teams_notification(new_reviews, teams_webhook)
-
-    print("✅ Durchlauf beendet. Ready for Commit.")
+    print("✅ Durchlauf beendet.")
