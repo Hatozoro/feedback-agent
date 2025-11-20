@@ -79,6 +79,7 @@ def calculate_trends(reviews):
         return round(sum(f)/len(f), 2) if f else 0.0
     return {'overall': round(sum(r for d, r in dated_reviews)/len(dated_reviews), 2), 'last_7d': get_avg(7), 'last_30d': get_avg(30)}
 
+# Chart Data: Nur noch Anzahl (Balken), nach Sentiment gefärbt
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     stats = {}
@@ -152,36 +153,32 @@ def get_fresh_reviews(count=20):
 # 4. INTELLIGENZ
 # ---------------------------------------------------------
 def get_semantic_topics(reviews):
-    """Erstellt die Themen für die linke Seite (Clustering)."""
     if not embedder or not model: return ["KI nicht bereit"]
     txts = [r['text'] for r in reviews[:300] if len(r.get('text','')) > 15]
     if len(txts) < 5: return ["Zu wenige Daten"]
 
-    embeddings = embedder.encode(txts)
-    kmeans = KMeans(n_clusters=min(5, len(txts)), n_init=10).fit(embeddings)
+    vecs = embedder.encode(txts)
+    kmeans = KMeans(n_clusters=min(5, len(txts)), n_init=10).fit(vecs)
 
-    topic_samples = []
+    samples = []
     for i in range(kmeans.n_clusters):
         idx = np.where(kmeans.labels_ == i)[0]
         if idx.size == 0: continue
         center = kmeans.cluster_centers_[i]
-        best = idx[np.argmax(cosine_similarity([center], embeddings[idx]))]
-        topic_samples.append(txts[best])
+        best = idx[np.argmax(cosine_similarity([center], vecs[idx]))]
+        samples.append(txts[best])
 
     try:
-        p = f'Erstelle allgemeine Kategorien (1-2 Wörter) für diese Themen: {json.dumps(topic_samples, ensure_ascii=False)}. Output JSON Liste.'
-        resp = model.generate_content(p)
-        return json.loads(resp.text.replace("```json","").replace("```","").strip())
-    except: return ["Allgemeine Themen"]
+        p = f'Erstelle Labels (1-2 Wörter) für diese Themen: {json.dumps(samples, ensure_ascii=False)}. Output JSON Liste.'
+        return json.loads(model.generate_content(p).text.replace("```json","").replace("```","").strip())
+    except: return ["Allgemein"]
 
 def get_ai_buzzwords(reviews):
-    """Erstellt die detaillierte Problemliste für die rechte Seite."""
     if not model: return []
     text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
     prompt = f"""
-    Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme (z.B. "Login Absturz", "Werbung").
-    Zähle, wie oft jedes vorkommt.
-    Output JSON Liste: [ {{"term": "Problem", "count": 12}}, ... ]
+    Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
+    Output JSON Liste: [ {{"term": "Thema", "count": 12}}, ... ]
     Reviews: {json.dumps(text_sample, ensure_ascii=False)}
     """
     try:
@@ -191,13 +188,13 @@ def get_ai_buzzwords(reviews):
     except: return []
 
 # ---------------------------------------------------------
-# 5. HTML GENERATOR
+# 5. DASHBOARD GENERATOR
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
     chart = prepare_chart_data(full_history)
-    topics = get_semantic_topics(full_history)     # Linke Seite (Allgemein)
-    buzzwords = get_ai_buzzwords(full_history)     # Rechte Seite (Spezifisch)
+    topics = get_semantic_topics(full_history)
+    buzzwords = get_ai_buzzwords(full_history)
 
     ki_data = {"summary": "Keine Analyse.", "topReviews": [], "bottomReviews": []}
     rich = [r for r in full_history if len(r.get('text', '')) > 40]
@@ -220,29 +217,31 @@ def run_analysis_and_generate_html(full_history, new_only):
     # Fallback
     top_list = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)[:3]
     bot_list = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)[:3]
-    if not top_list: top_list = ki_data.get('topReviews', [])
-    if not bot_list: bot_list = ki_data.get('bottomReviews', [])
 
-    for r in top_list + bot_list:
-        if not r.get('app'):
-            m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
-            if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
+    # Wenn KI leer, überschreibe mit Fallback
+    if not ki_data.get('topReviews'): ki_data['topReviews'] = top_list
+    if not ki_data.get('bottomReviews'): ki_data['bottomReviews'] = bot_list
+
+    # Metadaten sicherstellen
+    for l in [ki_data['topReviews'], ki_data['bottomReviews']]:
+        for r in l:
+            if not r.get('app'):
+                m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
+                if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
+
+    # Datum
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # HTML BUZZWORDS (Design Update)
+    # HTML BUZZWORDS
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        # Farbskala: Von Grau (wenig) zu Rot (viel)
-        # Wir nutzen HSL für schönere Farbübergänge
-        # 0 Grad = Rot, 120 = Grün, aber wir wollen Intensität.
-        # Wir machen es simpler: Transparenz auf roter Basis.
         buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
@@ -265,12 +264,12 @@ def run_analysis_and_generate_html(full_history, new_only):
             :root {{ 
                 --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
                 --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-color: 220, 38, 38; 
+                --buzz-base: 220, 38, 38; 
             }}
             [data-theme="dark"] {{ 
                 --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
                 --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-color: 248, 113, 113;
+                --buzz-base: 248, 113, 113;
             }}
             body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
@@ -284,24 +283,23 @@ def run_analysis_and_generate_html(full_history, new_only):
             .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
             .summary-box {{ background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             
-            /* CLUSTER TAGS (LINKS) */
-            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 8px; margin: 0 8px 8px 0; font-size: 0.95rem; color: var(--text); font-weight: 500; }}
+            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
-            /* BUZZWORD TAGS (RECHTS) - Heatmap Style */
-            .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+            .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
                 display: inline-flex; align-items: center; padding: 6px 12px; border-radius: 20px; 
-                /* Farbe wird intensiver, je höher die Anzahl */
-                background-color: rgba(var(--buzz-color), calc(0.1 + var(--intensity) * 0.4));
-                border: 1px solid rgba(var(--buzz-color), 0.2);
-                color: var(--text); font-size: 0.9rem;
+                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
+                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
+                color: var(--text); font-weight: 500; transition: transform 0.2s;
             }}
-            .buzz-tag .count {{ background: rgba(255,255,255,0.5); color: #000; padding: 1px 6px; border-radius: 10px; font-size: 0.8em; margin-left: 8px; font-weight: bold; }}
+            .buzz-tag:hover {{ transform: scale(1.05); }}
+            .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
             .review-card {{ background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
+            
             .icon-android {{ color: var(--android); }} .icon-ios {{ color: var(--ios); }}
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
@@ -309,7 +307,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
-            .review-text {{ margin-top: 8px; line-height: 1.5; }}
+            .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
             .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
             .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
@@ -319,7 +317,10 @@ def run_analysis_and_generate_html(full_history, new_only):
     <body>
         <div class="container">
             <header>
-                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span></div>
+                <div>
+                    <h1 style="margin:0;">📊 App Feedback Pro</h1>
+                    <span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span>
+                </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
@@ -351,13 +352,13 @@ def run_analysis_and_generate_html(full_history, new_only):
                     <div class="review-card pos">
                         <div class="meta"><span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span> <span>{r.get('rating')}★</span></div>
                         <div class="review-content"><div class="review-text clamped">{r.get('text')}</div><span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span></div>
-                    </div>''' for r in top_list[:3]])}
+                    </div>''' for r in ki_data.get('topReviews', [])])}
                 </div>
                 <div><h3>⚠️ Kritische Stimmen</h3>{''.join([f'''
                     <div class="review-card neg">
                         <div class="meta"><span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span> <span>{r.get('rating')}★</span></div>
                         <div class="review-content"><div class="review-text clamped">{r.get('text')}</div><span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span></div>
-                    </div>''' for r in bot_list[:3]])}
+                    </div>''' for r in ki_data.get('bottomReviews', [])])}
                 </div>
             </div>
 
@@ -454,17 +455,24 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f: f.write(html)
-    print("✅ Dashboard v9.5 generiert.")
+    print("✅ Dashboard v11.0 generiert.")
+
+# ---------------------------------------------------------
+# 7. MAIN EXECUTION
+# ---------------------------------------------------------
+def send_teams_notification(new_reviews, webhook_url):
+    if not new_reviews: return
+    pos = sum(1 for r in new_reviews if r['rating']>=4)
+    neg = sum(1 for r in new_reviews if r['rating']<=2)
+    txt = f"🚀 **UPDATE** ({len(new_reviews)})\n\n👍 {pos} | 🚨 {neg}\n[Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+    try: requests.post(webhook_url, json={"text": txt})
+    except: pass
 
 if __name__ == "__main__":
     full, new = get_fresh_reviews()
     save_history({r['id']: r for r in full})
     run_analysis_and_generate_html(full, new)
     teams = os.getenv("TEAMS_WEBHOOK_URL")
-    if teams:
-        pos = sum(1 for r in new if r['rating']>=4)
-        neg = sum(1 for r in new if r['rating']<=2)
-        txt = f"🚀 **UPDATE** ({len(new)})\n\n👍 {pos} | 🚨 {neg}\n[Dashboard](https://Hatozoro.github.io/feedback-agent/)"
-        try: requests.post(teams, json={"text": txt})
-        except: pass
+    if teams: send_teams_notification(new, teams)
+
     print("✅ Fertig.")
