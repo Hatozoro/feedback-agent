@@ -3,6 +3,14 @@
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
+        "text": "Desinformation, Rechtsruck wird immer schlimmer",
+        "date": "2025-11-18",
+        "id": "a2202e9951ef9d6ad27c3ad1081887358516d2e254c74a7780617da797ee66b8"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
         "text": "App stürzt ein paar Sekunden nach dem öffnen ab und schließt sich. Pixel 6a",
         "date": "2025-11-17",
         "id": "6c6fb57cceb23392b705605fa7898d0d34ad75f30caecdfc48bd876975f74184"
