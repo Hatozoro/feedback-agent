@@ -99,6 +99,7 @@ def calculate_trends(reviews):
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     daily_stats = {}
+    # Letzte X Tage initialisieren
     for i in range(days):
         date_key = (today - timedelta(days=i)).strftime('%Y-%m-%d')
         daily_stats[date_key] = {'sum': 0, 'count': 0}
@@ -111,6 +112,9 @@ def prepare_chart_data(reviews, days=14):
             daily_stats[d]['count'] += 1
 
     labels = sorted(daily_stats.keys())
+    # Format labels to DD.MM.YYYY for display
+    formatted_labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%d.%m.%Y') for l in labels]
+
     ratings = []
     counts = []
 
@@ -120,7 +124,7 @@ def prepare_chart_data(reviews, days=14):
         ratings.append(avg)
         counts.append(stats['count'])
 
-    return {'labels': labels, 'ratings': ratings, 'counts': counts}
+    return {'labels': formatted_labels, 'ratings': ratings, 'counts': counts}
 
 # ---------------------------------------------------------
 # 3. SCRAPING
@@ -218,7 +222,7 @@ def get_semantic_topics(reviews, num_clusters=5):
         return ["Technische Probleme", "Login", "App-Qualität", "Inhalte", "Sonstiges"]
 
 # ---------------------------------------------------------
-# 5. HTML GENERIERUNG (UX CLEANUP)
+# 5. HTML GENERIERUNG (FINAL POLISH)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trend_metrics = calculate_trends(full_history)
@@ -246,7 +250,16 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_output.update(json.loads(text))
         except: pass
 
-    # Fallback für fehlende App-Namen in KI-Antwort
+    # Fallback & Formatierung Datum
+    for r in full_history:
+        if 'date' in r:
+            try:
+                # Datum für Anzeige umformatieren (YYYY-MM-DD -> DD.MM.YYYY)
+                r['display_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
+            except:
+                r['display_date'] = r['date']
+
+    # Fallback KI Daten
     for review_list in [ki_output.get('topReviews', []), ki_output.get('bottomReviews', [])]:
         for r in review_list:
             if not r.get('app') or r.get('app') == 'None':
@@ -329,7 +342,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
 
             <div class="chart-container">
-                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
                 <canvas id="trendChart"></canvas>
             </div>
             
@@ -359,7 +371,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             <div style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
                 <div style="flex:1; min-width: 300px;">
-                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+                    <input type="text" class="search-input" id="search" placeholder="Suchen..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 </div>
                 
                 <div class="filter-group">
@@ -385,7 +397,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             let currentFilter = 'all';
             let currentSort = 'newest';
 
-            // Theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
             function toggleTheme() {{
@@ -395,43 +406,42 @@ def run_analysis_and_generate_html(full_history, new_only):
                 updateChartColors();
             }}
 
-            // Chart (NUR EINE LINIE JETZT)
             const ctx = document.getElementById('trendChart').getContext('2d');
             let chart = new Chart(ctx, {{
-                type: 'line',
+                type: 'bar',
                 data: {{
                     labels: {js_chart_labels},
                     datasets: [
                         {{
-                            label: 'Durchschnittsbewertung',
+                            type: 'line',
+                            label: 'Ø Bewertung',
                             data: {js_chart_ratings},
                             borderColor: '#2563eb',
-                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                            backgroundColor: 'transparent',
                             borderWidth: 3,
                             pointBackgroundColor: '#ffffff',
                             pointBorderColor: '#2563eb',
                             pointRadius: 5,
                             tension: 0.4,
-                            fill: true
+                            yAxisID: 'y'
+                        }},
+                        {{
+                            type: 'bar',
+                            label: 'Anzahl Reviews',
+                            data: {js_chart_counts},
+                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                            borderRadius: 4,
+                            yAxisID: 'y1'
                         }}
                     ]
                 }},
                 options: {{
                     responsive: true,
                     maintainAspectRatio: false,
-                    plugins: {{
-                        tooltip: {{
-                            callbacks: {{
-                                afterLabel: function(context) {{
-                                    const counts = {js_chart_counts};
-                                    return 'Anzahl Reviews: ' + counts[context.dataIndex];
-                                }}
-                            }}
-                        }}
-                    }},
                     scales: {{
-                        y: {{ min: 1, max: 5, grid: {{ color: '#e2e8f0' }} }},
-                        x: {{ grid: {{ display: false }} }}
+                        y: {{ min: 1, max: 5, position: 'left', grid: {{ color: '#e2e8f0' }} }},
+                        y1: {{ position: 'right', grid: {{ display: false }} }},
+                        x: {{ grid: {{ display: false }}, ticks: {{ maxRotation: 0, autoSkip: true }} }}
                     }}
                 }}
             }});
@@ -443,8 +453,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 chart.update();
             }}
             updateChartColors(); 
-            
-            // Init Sort Buttons
+
             document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
             function setFilter(app, btn) {{
@@ -491,7 +500,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                             <span style="display:flex; align-items:center; gap:6px;">
                                 ${{icon}} <strong>${{r.app}}</strong> • ${{stars}}
                             </span>
-                            <span>${{r.date}}</span>
+                            <span>${{r.display_date || r.date}}</span>
                         </div>
                         <div style="line-height:1.5;">
                             ${{r.text}}
@@ -509,7 +518,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f: f.write(html)
-    print("✅ UX-Dashboard generiert.")
+    print("✅ Pro-Dashboard v4.2 generiert.")
 
 # ---------------------------------------------------------
 # 6. MAIN
