@@ -170,13 +170,14 @@ def get_semantic_topics(reviews):
     try:
         p = f'Erstelle Labels (1-2 Wörter) für diese Themen: {json.dumps(samples, ensure_ascii=False)}. Output JSON Liste.'
         return json.loads(model.generate_content(p).text.replace("```json","").replace("```","").strip())
-    except: return ["Themen Analyse Fehler"]
+    except: return ["Allgemein"]
 
 def get_ai_buzzwords(reviews):
     if not model: return []
     text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
     prompt = f"""
     Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
+    Fasse Synonyme zusammen (z.B. "stürzt", "Absturz" -> "App-Abstürze").
     Output JSON Liste: [ {{"term": "Thema", "count": 12}}, ... ]
     Reviews: {json.dumps(text_sample, ensure_ascii=False)}
     """
@@ -187,7 +188,7 @@ def get_ai_buzzwords(reviews):
     except: return []
 
 # ---------------------------------------------------------
-# 5. DASHBOARD GENERATOR
+# 5. DASHBOARD GENERATOR (SMART SEARCH UPDATE)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
@@ -230,12 +231,11 @@ def run_analysis_and_generate_html(full_history, new_only):
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # HTML GENERIEREN
+    # HTML BUZZWORDS (Interaktiv)
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        # NEU: onclick event für die Suche
         buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
@@ -302,7 +302,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
-            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
             
@@ -499,7 +498,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 const input = document.getElementById('search');
                 input.value = term;
                 filterData();
-                // Scrollen zum Suchfeld
                 input.scrollIntoView({{behavior: 'smooth'}});
             }}
 
@@ -523,11 +521,19 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC
+                    // SMART SEARCH & HIGHLIGHT
                     let displayText = r.text;
                     if (q.length >= 2) {{
-                        const regex = new RegExp('(' + q + ')', 'gi');
-                        displayText = displayText.replace(regex, '<mark>$1</mark>');
+                        const words = q.split(' ').filter(w => w.length > 0);
+                        // Prüfe ob ALLE Wörter vorkommen
+                        const allMatch = words.every(w => r.text.toLowerCase().includes(w));
+                        if (!allMatch) return; // Skip rendering if not all words match (Strict Search)
+                        
+                        // Highlight alle Wörter einzeln
+                        words.forEach(w => {{
+                             const regex = new RegExp('(' + w + ')', 'gi');
+                             displayText = displayText.replace(regex, '<mark>$1</mark>');
+                        }});
                     }}
                     
                     const div = document.createElement('div');
@@ -540,16 +546,12 @@ def run_analysis_and_generate_html(full_history, new_only):
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            <span class="review-text clamped">${{displayText}}</span>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                            <span class="review-text">${{displayText}}</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 }});
-                
-                // Read More Init für neue Elemente
-                initReadMore();
             }}
             
             filterData();
