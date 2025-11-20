@@ -75,7 +75,7 @@ def calculate_trends(reviews):
     for r in reviews:
         try:
             review_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
-            if r.get('text'):
+            if r.get('text') and r.get('rating') is not None:
                 dated_reviews.append((review_date, float(r['rating'])))
         except ValueError:
             continue
@@ -88,26 +88,26 @@ def calculate_trends(reviews):
         filtered = [rating for date, rating in dated_reviews if date >= cutoff_date]
         return round(sum(filtered) / len(filtered), 2) if filtered else 0.0
 
-    overall_avg = round(sum(r['rating'] for r in reviews) / len(reviews), 2)
+    overall_avg = round(sum(r['rating'] for r in reviews if r.get('rating') is not None) / (len(reviews) or 1), 2)
+
     return {
         'overall': overall_avg,
         'last_7d': get_avg_for_days(7),
         'last_30d': get_avg_for_days(30)
     }
 
-# NEU: Bereitet Daten für 2 Achsen vor (Rating UND Anzahl)
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     daily_stats = {}
-    # Letzte X Tage initialisieren
     for i in range(days):
         date_key = (today - timedelta(days=i)).strftime('%Y-%m-%d')
         daily_stats[date_key] = {'sum': 0, 'count': 0}
 
     for r in reviews:
         d = r['date']
-        if d in daily_stats:
-            daily_stats[d]['sum'] += float(r['rating'])
+        rating = r.get('rating')
+        if d in daily_stats and rating is not None:
+            daily_stats[d]['sum'] += float(rating)
             daily_stats[d]['count'] += 1
 
     labels = sorted(daily_stats.keys())
@@ -218,7 +218,7 @@ def get_semantic_topics(reviews, num_clusters=5):
         return ["Technische Probleme", "Login", "App-Qualität", "Inhalte", "Sonstiges"]
 
 # ---------------------------------------------------------
-# 5. HTML GENERIERUNG (VERSION 4.0)
+# 5. HTML GENERIERUNG (UX CLEANUP)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trend_metrics = calculate_trends(full_history)
@@ -229,9 +229,7 @@ def run_analysis_and_generate_html(full_history, new_only):
     analysis_set = full_history[:50]
     if model and analysis_set:
         print("--- Starte KI Deep Dive ---")
-        # FIX: Wir übergeben den App-Namen explizit im Prompt-Daten-Objekt
         prompt_data = [{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in analysis_set]
-
         prompt = f"""
         Analysiere diese App-Reviews.
         1. Schreibe ein Management Summary (Deutsch).
@@ -248,19 +246,16 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_output.update(json.loads(text))
         except: pass
 
-    # Fallback, falls KI Felder leer lässt oder 'app' vergisst: Wir füllen Daten aus der Historie auf
-    # Dies behebt das "None" Problem
+    # Fallback für fehlende App-Namen in KI-Antwort
     for review_list in [ki_output.get('topReviews', []), ki_output.get('bottomReviews', [])]:
         for r in review_list:
             if not r.get('app') or r.get('app') == 'None':
-                # Versuch das Review im Original-Set zu finden
                 match = next((x for x in analysis_set if x['text'][:20] == r.get('text', '')[:20]), None)
                 if match:
                     r['app'] = match['app']
                     r['store'] = match['store']
                     r['rating'] = match['rating']
 
-    # Datenaufbereitung für JS
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_chart_labels = json.dumps(chart_data['labels'])
     js_chart_ratings = json.dumps(chart_data['ratings'])
@@ -308,12 +303,13 @@ def run_analysis_and_generate_html(full_history, new_only):
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
             
-            /* Icons Color Fix */
             .icon-android {{ color: var(--android-color); }}
             .icon-ios {{ color: var(--ios-color); }}
 
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }}
-            .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-right: 5px; }}
+            .filter-group {{ display: flex; gap: 5px; align-items: center; }}
+            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
+            .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }}
             .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
@@ -332,7 +328,11 @@ def run_analysis_and_generate_html(full_history, new_only):
                 <div class="card"><div>Total Reviews</div><div class="kpi-val">{len(full_history)}</div></div>
             </div>
 
-            <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            <div class="chart-container">
+                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
+                <canvas id="trendChart"></canvas>
+            </div>
+            
             <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>{summary_text}</div>
             <div style="margin-bottom: 40px;"><h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3>{''.join([f'<span class="tag"># {t}</span>' for t in topics])}</div>
 
@@ -357,17 +357,24 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-                <input type="text" class="search-input" id="search" placeholder="Suchen..." onkeyup="filterData()">
-            </div>
-            <div style="margin-bottom:20px;">
-                <button class="filter-btn active" onclick="setFilter('all', this)">Alle Apps</button>
-                <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
-                <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
-                <span style="margin: 0 10px; color:var(--border);">|</span>
-                <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
-                <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
-                <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+            <div style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
+                <div style="flex:1; min-width: 300px;">
+                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">App:</span>
+                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Sortierung:</span>
+                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
+                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                </div>
             </div>
 
             <div id="list-container" style="display:grid; gap:15px;"></div>
@@ -381,7 +388,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             // Theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            
             function toggleTheme() {{
                 const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
@@ -389,38 +395,42 @@ def run_analysis_and_generate_html(full_history, new_only):
                 updateChartColors();
             }}
 
-            // Chart
+            // Chart (NUR EINE LINIE JETZT)
             const ctx = document.getElementById('trendChart').getContext('2d');
             let chart = new Chart(ctx, {{
-                type: 'bar',
+                type: 'line',
                 data: {{
                     labels: {js_chart_labels},
                     datasets: [
                         {{
-                            type: 'line',
-                            label: 'Ø Bewertung',
+                            label: 'Durchschnittsbewertung',
                             data: {js_chart_ratings},
                             borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
                             borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#2563eb',
+                            pointRadius: 5,
                             tension: 0.4,
-                            yAxisID: 'y'
-                        }},
-                        {{
-                            type: 'bar',
-                            label: 'Anzahl Reviews',
-                            data: {js_chart_counts},
-                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
-                            borderRadius: 4,
-                            yAxisID: 'y1'
+                            fill: true
                         }}
                     ]
                 }},
                 options: {{
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {{
+                        tooltip: {{
+                            callbacks: {{
+                                afterLabel: function(context) {{
+                                    const counts = {js_chart_counts};
+                                    return 'Anzahl Reviews: ' + counts[context.dataIndex];
+                                }}
+                            }}
+                        }}
+                    }},
                     scales: {{
-                        y: {{ min: 1, max: 5, position: 'left', grid: {{ color: '#e2e8f0' }} }},
-                        y1: {{ position: 'right', grid: {{ drawOnChartArea: false }} }},
+                        y: {{ min: 1, max: 5, grid: {{ color: '#e2e8f0' }} }},
                         x: {{ grid: {{ display: false }} }}
                     }}
                 }}
@@ -432,27 +442,28 @@ def run_analysis_and_generate_html(full_history, new_only):
                 chart.options.scales.y.grid.color = gridColor;
                 chart.update();
             }}
-            updateChartColors(); // Init
+            updateChartColors(); 
+            
+            // Init Sort Buttons
+            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
             function setFilter(app, btn) {{
                 currentFilter = app;
-                // Nur Filter-Buttons resetten (die ersten 3)
-                const btns = document.querySelectorAll('.filter-btn');
-                btns[0].classList.remove('active'); btns[1].classList.remove('active'); btns[2].classList.remove('active');
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 filterData();
             }}
 
             function setSort(mode, btn) {{
                 currentSort = mode;
-                // Sortier Buttons resetten (ab Index 3)
-                const btns = document.querySelectorAll('.filter-btn');
-                btns[3].classList.remove('active'); btns[4].classList.remove('active'); btns[5].classList.remove('active');
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 filterData();
             }}
 
-            function copyText(text) {{ navigator.clipboard.writeText(text); }}
+            function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
                 const q = document.getElementById('search').value.toLowerCase();
@@ -463,7 +474,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                     return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
                 }});
 
-                // Sortierung
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
                 if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
                 if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
@@ -472,21 +482,25 @@ def run_analysis_and_generate_html(full_history, new_only):
 
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
+                    const stars = '⭐'.repeat(r.rating);
+                    
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem;">
-                            <span>${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐ • ${{r.date}}</span>
-                            <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
+                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
+                            <span style="display:flex; align-items:center; gap:6px;">
+                                ${{icon}} <strong>${{r.app}}</strong> • ${{stars}}
+                            </span>
+                            <span>${{r.date}}</span>
                         </div>
-                        <div style="margin-top:10px;">${{r.text}}</div>
+                        <div style="line-height:1.5;">
+                            ${{r.text}}
+                            <i class="fas fa-copy copy-btn" style="margin-left:10px;" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
+                        </div>
                     `;
                     container.appendChild(div);
                 }});
             }}
-            
-            // Init default sort btn
-            document.querySelectorAll('.filter-btn')[3].classList.add('active');
             filterData();
         </script>
     </body>
@@ -495,7 +509,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f: f.write(html)
-    print("✅ Pro-Dashboard v4.0 generiert.")
+    print("✅ UX-Dashboard generiert.")
 
 # ---------------------------------------------------------
 # 6. MAIN
