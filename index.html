@@ -36,12 +36,13 @@
             .review-card.pos { border-top: 4px solid #22c55e; }
             .review-card.neg { border-top: 4px solid #ef4444; }
             
-            /* Icons Color Fix */
             .icon-android { color: var(--android-color); }
             .icon-ios { color: var(--ios-color); }
 
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }
-            .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-right: 5px; }
+            .filter-group { display: flex; gap: 5px; align-items: center; }
+            .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
+            .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             .copy-btn { cursor: pointer; float: right; opacity: 0.5; }
             .copy-btn:hover { opacity: 1; color: var(--primary); }
@@ -50,7 +51,7 @@
     <body>
         <div class="container">
             <header>
-                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: 20.11.2025 13:31</span></div>
+                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: 20.11.2025 13:40</span></div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
@@ -60,9 +61,13 @@
                 <div class="card"><div>Total Reviews</div><div class="kpi-val">81</div></div>
             </div>
 
-            <div class="chart-container"><canvas id="trendChart"></canvas></div>
-            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>Die App-Reviews zeigen ein gemischtes Bild. Viele Nutzer klagen über Abstürze, Flackern, Probleme mit der Cookie-Verwaltung und generelle Instabilität der Apps 'Schwäbische' und 'Nordkurier'. Besonders häufig wird das Abstürzen im Bereich "Aktuelles" und das Springen auf andere Seiten beim Zoomen bemängelt. Einige Nutzer berichten, dass Fehler trotz mehrfacher Hinweise nicht behoben werden. Auf der positiven Seite gibt es Nutzer, die mit der App zufrieden sind und die Möglichkeit schätzen, jederzeit und überall Nachrichten lesen zu können. Es gibt auch Hinweise auf Probleme mit der Vorlesefunktion und der Suchfunktion. Insgesamt scheint die technische Umsetzung der Apps verbesserungsbedürftig zu sein.</div>
-            <div style="margin-bottom: 40px;"><h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3><span class="tag"># Falsches Datum</span><span class="tag"># Cookie Bestätigung</span><span class="tag"># Download Fehler</span><span class="tag"># Überfrachtet</span><span class="tag"># Regionen Fehler</span></div>
+            <div class="chart-container">
+                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
+                <canvas id="trendChart"></canvas>
+            </div>
+            
+            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>Die App-Reviews zeigen ein überwiegend negatives Bild, insbesondere bezüglich der Apps "Schwäbische" und "Nordkurier". Viele Nutzer berichten von häufigen Abstürzen, Flackern des Bildschirms, Problemen beim Laden von Inhalten, einer schlechten Vorlese-Funktion und einer insgesamt instabilen Performance. Einige Nutzer bemängeln, dass Probleme trotz Meldung an den Support nicht behoben werden. Die Cookie-Verwaltung wird ebenfalls als lästig empfunden. Einige wenige Nutzer äußern sich positiv und loben die App grundsätzlich, erwähnen aber auch kleinere Mängel. Insgesamt überwiegt der Eindruck einer fehlerhaften und frustrierenden Nutzererfahrung.</div>
+            <div style="margin-bottom: 40px;"><h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3><span class="tag"># Datum Fehler</span><span class="tag"># Cookie Problem</span><span class="tag"># Download Fehler</span><span class="tag"># Überfrachtet</span><span class="tag"># Regionen Fehler</span></div>
 
             <div class="review-grid">
                 <div><h3>👍 Top Stimmen</h3>
@@ -90,51 +95,43 @@
                         <div style="opacity:0.7; font-size:0.9rem;">
                             <span><i class="fab fa-android icon-android"></i> 1★ Schwäbische</span>
                         </div>
-                        <div style="font-style:italic">"Diese App ist die schlechteste. App die ich auf meinem Handy habe. Heute ist sie mindestens 5 mal abgestürzt während des Lesens. Oder sie geht einfach auf eine andere beim vergrößern. und ich bezahle im Monat noch über 20 Euro für diese Schrott App und redet euch nicht raus meine Frau hat die gleichen Probleme auf dem LP. Warum bekommt ihr es nicht das die App sauber läuft das geht jetzt schon über Jahre. Wenn es sich nichts bessert werde ich mein Abo kündigen."</div>
+                        <div style="font-style:italic">"Desinformation, Rechtsruck wird immer schlimmer"</div>
                     </div>
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem;">
-                            <span><i class="fab fa-apple icon-ios"></i> 1★ Schwäbische</span>
+                            <span><i class="fab fa-android icon-android"></i> 1★ Schwäbische</span>
                         </div>
-                        <div style="font-style:italic">"Die App ist seit dem Relaunch so furchtbar schlecht geworden, dass das morgendliche Zeitungslesen mehr Frust als Lust ist. 
-Schaut euch doch bitte all die Rezensionen der letzten Wochen und Monaten an, kaum eine gibt mehr als einen Stern. 
-Ganz schlimm finde ich das unkontrollierte Springen auf die vorige oder nächste Seite bei gezoomter Ansicht. Ich habe noch gut 10 weitere Kritikpunkte, die ich dem Support schon mitgeteilt habe. Ich hatte schon mal telefonischen Kontakt mit dem Support, meine Kritikpunkte  wurden aber alle zurückgewiesen mit dem Argument, ich würde die App falsch bedienen. Geht’s noch?
-Ich überlege tatsächlich, ob ich dieses Blatt noch weiter abonnieren soll.
-
-Meine Antwort auf die Entwicklerantwort: Ich verwende die aktuellste Version, kann aber keine Verbesserung erkennen. Gravierende Probleme bestehen nach wie vor. Auf konstruktive Kritik wird nicht eingegangen. Wo bitte finde ich ein Changelog um Verbesserungen und Änderungen einsehen zu können?
-
-Ein Rezensions-Update von mir: Auch nach mehreren Monaten, immer noch keine Lösung der gravierenden Schwächen, es ist einfach unerträglich. Es ist erschreckend, wie konstruktive Kritik der Benutzer ignoriert wird.
-
-Ein weiteres Update: nach mehr als einem halben Jahr tut sich immer noch nichts, Probleme werden ignoriert. Ich habe nun das Abo, das ich schon 40 Jahre lang habe, gekündigt. Inhaltlich und technisch ist die Schwäbische einfach nicht mehr tragbar, vom unterirdischen Kunden-Service ganz zu schweigen.
-
-bye-bye Schwäbische
-
-Noch ein Nachtrag nach weiteren zwei Monaten: Ich habe die App bei einer Nachbarin getestet, da ich mich schon längere Zeit von der Schwäbischen verabschiedet habe. Es ist nicht zu glauben, die App ist nochmal schlechter geworden. U.a. taucht jetzt alle Nase lang eine Cookie-Nachricht auf, die man bestätigen muss. Was für eine unfassbare Schlamperei. Der Kunde ist nicht König sondern der Schwäbischen schlichtweg egal! Was für ein Käseblatt.
-
-Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder ein Probeabo geklickt um zu schauen, was sich vielleicht inzwischen verbessert hat. Ergebnis: nichts. Zumindest sind die mir bekannten und gemeldeten Probleme immer noch nicht gelöst bzw behoben."</div>
+                        <div style="font-style:italic">"App stürzt ein paar Sekunden nach dem öffnen ab und schließt sich. Pixel 6a"</div>
                     </div>
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem;">
-                            <span><i class="fab fa-android icon-android"></i> 1★ Nordkurier</span>
+                            <span><i class="fab fa-android icon-android"></i> 1★ Schwäbische</span>
                         </div>
-                        <div style="font-style:italic">"APP läuft nur noch ruckelig, das schon seit einigen Wochen. Schade das der Nordkurier trotz der happigen Kosten für das Abonnement die Mängel nicht in den Griff bekommt."</div>
+                        <div style="font-style:italic">"Ich habe erst seit ein paar Tagen das Digitalabo und bin mit der App nicht zufrieden. Die Anzeige ist manchmal zittrig. "Aktuelles" kann ich nicht lesen, da stürzt die App beim Aufruf von Videos und Artikeln zuverlässig ab. Der Fehler tritt am Androidtablet und am ipad auf. Eine Neuinstallation ändert nichts. 13.11.: Nach wie vor das Problem, dass ich "Aktuelles" wegen Absturz nicht lesen kann. Weder auf dem ipad noch auf dem Galaxy. Die Frage nach der Android-Version erübrigt sich."</div>
                     </div>
                 </div>
             </div>
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
-                <input type="text" class="search-input" id="search" placeholder="Suchen..." onkeyup="filterData()">
-            </div>
-            <div style="margin-bottom:20px;">
-                <button class="filter-btn active" onclick="setFilter('all', this)">Alle Apps</button>
-                <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
-                <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
-                <span style="margin: 0 10px; color:var(--border);">|</span>
-                <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
-                <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
-                <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+            <div style="display:flex; gap:20px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
+                <div style="flex:1; min-width: 300px;">
+                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">App:</span>
+                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Sortierung:</span>
+                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
+                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                </div>
             </div>
 
             <div id="list-container" style="display:grid; gap:15px;"></div>
@@ -148,7 +145,6 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
             // Theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
-            
             function toggleTheme() {
                 const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
@@ -156,38 +152,42 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                 updateChartColors();
             }
 
-            // Chart
+            // Chart (NUR EINE LINIE JETZT)
             const ctx = document.getElementById('trendChart').getContext('2d');
             let chart = new Chart(ctx, {
-                type: 'bar',
+                type: 'line',
                 data: {
                     labels: ["2025-11-07", "2025-11-08", "2025-11-09", "2025-11-10", "2025-11-11", "2025-11-12", "2025-11-13", "2025-11-14", "2025-11-15", "2025-11-16", "2025-11-17", "2025-11-18", "2025-11-19", "2025-11-20"],
                     datasets: [
                         {
-                            type: 'line',
-                            label: 'Ø Bewertung',
+                            label: 'Durchschnittsbewertung',
                             data: [null, 1.0, null, null, null, null, 2.0, 4.0, null, null, 1.0, 1.0, null, null],
                             borderColor: '#2563eb',
+                            backgroundColor: 'rgba(37, 99, 235, 0.1)',
                             borderWidth: 3,
+                            pointBackgroundColor: '#ffffff',
+                            pointBorderColor: '#2563eb',
+                            pointRadius: 5,
                             tension: 0.4,
-                            yAxisID: 'y'
-                        },
-                        {
-                            type: 'bar',
-                            label: 'Anzahl Reviews',
-                            data: [0, 1, 0, 0, 0, 0, 2, 1, 0, 0, 1, 1, 0, 0],
-                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
-                            borderRadius: 4,
-                            yAxisID: 'y1'
+                            fill: true
                         }
                     ]
                 },
                 options: {
                     responsive: true,
                     maintainAspectRatio: false,
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                afterLabel: function(context) {
+                                    const counts = [0, 1, 0, 0, 0, 0, 2, 1, 0, 0, 1, 1, 0, 0];
+                                    return 'Anzahl Reviews: ' + counts[context.dataIndex];
+                                }
+                            }
+                        }
+                    },
                     scales: {
-                        y: { min: 1, max: 5, position: 'left', grid: { color: '#e2e8f0' } },
-                        y1: { position: 'right', grid: { drawOnChartArea: false } },
+                        y: { min: 1, max: 5, grid: { color: '#e2e8f0' } },
                         x: { grid: { display: false } }
                     }
                 }
@@ -199,27 +199,28 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                 chart.options.scales.y.grid.color = gridColor;
                 chart.update();
             }
-            updateChartColors(); // Init
+            updateChartColors(); 
+            
+            // Init Sort Buttons
+            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
             function setFilter(app, btn) {
                 currentFilter = app;
-                // Nur Filter-Buttons resetten (die ersten 3)
-                const btns = document.querySelectorAll('.filter-btn');
-                btns[0].classList.remove('active'); btns[1].classList.remove('active'); btns[2].classList.remove('active');
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 filterData();
             }
 
             function setSort(mode, btn) {
                 currentSort = mode;
-                // Sortier Buttons resetten (ab Index 3)
-                const btns = document.querySelectorAll('.filter-btn');
-                btns[3].classList.remove('active'); btns[4].classList.remove('active'); btns[5].classList.remove('active');
+                const group = btn.parentElement;
+                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
                 filterData();
             }
 
-            function copyText(text) { navigator.clipboard.writeText(text); }
+            function copyText(text) { navigator.clipboard.writeText(text); alert('Text kopiert!'); }
 
             function filterData() {
                 const q = document.getElementById('search').value.toLowerCase();
@@ -230,7 +231,6 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                     return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
                 });
 
-                // Sortierung
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
                 if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
                 if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
@@ -239,21 +239,25 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
 
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
+                    const stars = '⭐'.repeat(r.rating);
+                    
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem;">
-                            <span>${icon} <strong>${r.app}</strong> • ${r.rating}⭐ • ${r.date}</span>
-                            <i class="fas fa-copy copy-btn" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
+                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
+                            <span style="display:flex; align-items:center; gap:6px;">
+                                ${icon} <strong>${r.app}</strong> • ${stars}
+                            </span>
+                            <span>${r.date}</span>
                         </div>
-                        <div style="margin-top:10px;">${r.text}</div>
+                        <div style="line-height:1.5;">
+                            ${r.text}
+                            <i class="fas fa-copy copy-btn" style="margin-left:10px;" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
+                        </div>
                     `;
                     container.appendChild(div);
                 });
             }
-            
-            // Init default sort btn
-            document.querySelectorAll('.filter-btn')[3].classList.add('active');
             filterData();
         </script>
     </body>
