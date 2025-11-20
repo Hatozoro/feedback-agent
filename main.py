@@ -177,7 +177,6 @@ def get_ai_buzzwords(reviews):
     text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
     prompt = f"""
     Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
-    Fasse Synonyme zusammen (z.B. "stürzt", "Absturz" -> "App-Abstürze").
     Output JSON Liste: [ {{"term": "Thema", "count": 12}}, ... ]
     Reviews: {json.dumps(text_sample, ensure_ascii=False)}
     """
@@ -188,7 +187,7 @@ def get_ai_buzzwords(reviews):
     except: return []
 
 # ---------------------------------------------------------
-# 5. DASHBOARD GENERATOR (SMART SEARCH UPDATE)
+# 5. DASHBOARD GENERATOR (SMART SEARCH FIX)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
@@ -231,7 +230,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # HTML BUZZWORDS (Interaktiv)
+    # HTML BUZZWORDS
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
@@ -302,6 +301,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
+            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
             
@@ -393,26 +393,11 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
-                <div style="flex:1; min-width: 300px;">
-                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
-                </div>
-                
-                <div class="filter-group">
-                    <span class="filter-label">App:</span>
-                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
-                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
-                </div>
-
-                <div class="filter-group">
-                    <span class="filter-label">Sortierung:</span>
-                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
-                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
-                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
-                </div>
+            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" class="search-input" id="search" placeholder="Suche..." onkeyup="filterData()" style="flex:1;">
+                <div class="filter-group"><button class="filter-btn active" onclick="setFilter('all', this)">Alle</button><button class="filter-btn" onclick="setFilter('Nordkurier', this)">NK</button><button class="filter-btn" onclick="setFilter('Schwäbische', this)">SZ</button></div>
+                <div class="filter-group"><button class="filter-btn" onclick="setSort('newest', this)">Neu</button><button class="filter-btn" onclick="setSort('best', this)">Beste</button><button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button></div>
             </div>
-
             <div id="list-container" style="display:grid; gap:15px;"></div>
         </div>
 
@@ -521,19 +506,21 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // SMART SEARCH & HIGHLIGHT
+                    // HIGHLIGHTING LOGIC (SPLIT SEARCH FIX)
                     let displayText = r.text;
                     if (q.length >= 2) {{
-                        const words = q.split(' ').filter(w => w.length > 0);
-                        // Prüfe ob ALLE Wörter vorkommen
-                        const allMatch = words.every(w => r.text.toLowerCase().includes(w));
-                        if (!allMatch) return; // Skip rendering if not all words match (Strict Search)
+                        const terms = q.split(' ').filter(t => t.length > 1);
+                        // Prüfen ob ALLE Begriffe vorkommen (AND-Suche)
+                        const allFound = terms.every(term => r.text.toLowerCase().includes(term));
                         
-                        // Highlight alle Wörter einzeln
-                        words.forEach(w => {{
-                             const regex = new RegExp('(' + w + ')', 'gi');
-                             displayText = displayText.replace(regex, '<mark>$1</mark>');
-                        }});
+                        if (allFound) {{
+                            terms.forEach(term => {{
+                                const regex = new RegExp('(' + term + ')', 'gi');
+                                displayText = displayText.replace(regex, '<mark>$1</mark>');
+                            }});
+                        }} else {{
+                            return; // Überspringe dieses Review, wenn nicht alle Begriffe passen
+                        }}
                     }}
                     
                     const div = document.createElement('div');
