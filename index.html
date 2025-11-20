@@ -55,7 +55,6 @@
             
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
-            .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
             .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             
@@ -71,7 +70,7 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 20.11.2025 18:16</span>
+                    <span style="opacity:0.7;">Update: 20.11.2025 18:32</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -98,18 +97,18 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die Nutzerbewertungen für die Apps Schwäbische und Nordkurier sind überwiegend negativ. Viele Nutzer berichten von Abstürzen, Flackern, Problemen mit der Cookie-Verwaltung und einer schlechten Benutzererfahrung, insbesondere nach Updates. Einige Nutzer bemängeln auch fehlende Funktionen wie die Suchfunktion in älteren Ausgaben oder Probleme mit der Vorlesefunktion. Es gibt jedoch auch positive Rückmeldungen von Nutzern, die mit der grundlegenden Funktionalität zufrieden sind und die App als Erleichterung empfinden, um jederzeit und überall Nachrichten zu lesen.</p>
+                <p>Die Nutzerbewertungen der Apps Schwäbische und Nordkurier sind überwiegend negativ. Häufige Probleme sind Abstürze, Flackern des Bildschirms, Schwierigkeiten beim Umblättern und Zoomen, sowie das wiederholte Abfragen von Cookie-Einstellungen. Viele Nutzer bemängeln, dass die Apps nach Updates schlechter geworden sind und grundlegende Funktionen wie die Suchfunktion fehlen. Zudem wird der Kundenservice als mangelhaft kritisiert, da auf konstruktive Kritik nicht eingegangen wird und Fehler über lange Zeiträume nicht behoben werden. Einige Nutzer berichten auch von Problemen mit der Vorlesefunktion und der Aktualität der Nachrichten. Es gibt aber auch positive Rückmeldungen, die die App als Erleichterung zum Lesen der Zeitung loben, aber diese sind deutlich in der Minderheit.</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <span class="tag"># Datumsprobleme</span> <span class="tag"># Cookie-Bestätigung</span> <span class="tag"># App-Abstürze</span> <span class="tag"># Einstellungen</span> <span class="tag"># Download-Probleme</span> 
+                    <span class="tag"># Cookie-Bestätigungen</span> <span class="tag"># Schlechter Kundenservice</span> <span class="tag"># App instabil</span> <span class="tag"># Veraltete Nachrichten</span> <span class="tag"># App-Probleme</span> 
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
                     <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('App stürzt ab')">App stürzt ab <span class="count">15</span></span><span class="buzz-tag" style="--intensity:0.8;" onclick="setSearch('Cookies')">Cookies <span class="count">12</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('Anmeldung')">Anmeldung <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('Seite springt')">Seite springt <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('Startprobleme')">Startprobleme <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;" onclick="setSearch('lässt sich nicht öffnen')">lässt sich nicht öffnen <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;" onclick="setSearch('ruckelt')">ruckelt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2;" onclick="setSearch('nicht verfügbar')">nicht verfügbar <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;" onclick="setSearch('Suchfunktion fehlt')">Suchfunktion fehlt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;" onclick="setSearch('Download Probleme')">Download Probleme <span class="count">3</span></span></div>
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('App-Abstürze')">App-Abstürze <span class="count">22</span></span><span class="buzz-tag" style="--intensity:0.5454545454545454;" onclick="setSearch('Cookie-Probleme (ständige Abfrage, Speicherung funktioniert nicht)')">Cookie-Probleme (ständige Abfrage, Speicherung funktioniert nicht) <span class="count">12</span></span><span class="buzz-tag" style="--intensity:0.5;" onclick="setSearch('Probleme beim Seitenwechsel/Zoomen (Springen, Ruckeln)')">Probleme beim Seitenwechsel/Zoomen (Springen, Ruckeln) <span class="count">11</span></span><span class="buzz-tag" style="--intensity:0.2727272727272727;" onclick="setSearch('App lässt sich nicht öffnen')">App lässt sich nicht öffnen <span class="count">6</span></span><span class="buzz-tag" style="--intensity:0.22727272727272727;" onclick="setSearch('App hängt/friert ein')">App hängt/friert ein <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.18181818181818182;" onclick="setSearch('Probleme mit der Suchfunktion')">Probleme mit der Suchfunktion <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.18181818181818182;" onclick="setSearch('Aktualisierungsprobleme/veraltete Inhalte')">Aktualisierungsprobleme/veraltete Inhalte <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.18181818181818182;" onclick="setSearch('Probleme beim Laden von Inhalten/Downloads')">Probleme beim Laden von Inhalten/Downloads <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.18181818181818182;" onclick="setSearch('Flackern der Leisten/des Bildschirms')">Flackern der Leisten/des Bildschirms <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.13636363636363635;" onclick="setSearch('Anmeldeprobleme')">Anmeldeprobleme <span class="count">3</span></span></div>
                     </div>
                 </div>
             </div>
@@ -322,7 +321,6 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                 const input = document.getElementById('search');
                 input.value = term;
                 filterData();
-                // Scrollen zum Suchfeld
                 input.scrollIntoView({behavior: 'smooth'});
             }
 
@@ -346,11 +344,19 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC
+                    // SMART SEARCH & HIGHLIGHT
                     let displayText = r.text;
                     if (q.length >= 2) {
-                        const regex = new RegExp('(' + q + ')', 'gi');
-                        displayText = displayText.replace(regex, '<mark>$1</mark>');
+                        const words = q.split(' ').filter(w => w.length > 0);
+                        // Prüfe ob ALLE Wörter vorkommen
+                        const allMatch = words.every(w => r.text.toLowerCase().includes(w));
+                        if (!allMatch) return; // Skip rendering if not all words match (Strict Search)
+                        
+                        // Highlight alle Wörter einzeln
+                        words.forEach(w => {
+                             const regex = new RegExp('(' + w + ')', 'gi');
+                             displayText = displayText.replace(regex, '<mark>$1</mark>');
+                        });
                     }
                     
                     const div = document.createElement('div');
@@ -363,16 +369,12 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                             <span>${r.fmt_date || r.date}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            <span class="review-text clamped">${displayText}</span>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                            <span class="review-text">${displayText}</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 });
-                
-                // Read More Init für neue Elemente
-                initReadMore();
             }
             
             filterData();
