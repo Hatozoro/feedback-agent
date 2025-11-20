@@ -28,7 +28,7 @@ from google_play_scraper import Sort, reviews as play_reviews
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# KI-Modelle laden (mit Fehlerbehandlung)
+# KI-Modelle laden
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
@@ -36,7 +36,6 @@ if API_KEY:
             model_name="gemini-2.0-flash",
             generation_config={"response_mime_type": "application/json"}
         )
-        # Embedding Modell für Clustering
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
     except Exception as e:
         print(f"WARNUNG: KI Module konnten nicht geladen werden: {e}")
@@ -47,13 +46,19 @@ else:
     model = None
     embedder = None
 
-# Dateipfade
+# Dateipfade und Konfiguration
 DATA_FILE = "data/reviews_history.json"
 
-# App-Definitionen
 APP_CONFIG = [
     {"name": "Nordkurier", "ios_id": "1250964862", "android_id": "de.nordkurier.live", "country": "de"},
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
+]
+
+# SMART FILTER: Wörter, die in einer 5-Sterne Bewertung nichts zu suchen haben
+NEGATIVE_KEYWORDS = [
+    "absturz", "stürzt", "fehler", "schlecht", "katastrophe", "mies",
+    "flackern", "unbrauchbar", "nicht möglich", "enttäuscht", "nervt",
+    "problem", "instabil", "langsam", "geht nicht"
 ]
 
 # ---------------------------------------------------------
@@ -61,7 +66,7 @@ APP_CONFIG = [
 # ---------------------------------------------------------
 
 def generate_id(review):
-    """Erstellt eine eindeutige ID basierend auf dem Inhalt, um Duplikate zu vermeiden."""
+    """Erstellt eine eindeutige ID basierend auf dem Inhalt."""
     unique_string = f"{review.get('text', '')[:50]}{review.get('date', '')}{review.get('app', '')}{review.get('store', '')}"
     return hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
 
@@ -71,7 +76,6 @@ def load_history():
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
-                # Wir nutzen ein Dictionary für schnellen Zugriff per ID
                 return {r['id']: r for r in raw_data if 'id' in r}
         except json.JSONDecodeError:
             print("Info: Datenbank war leer oder korrupt, starte neu.")
@@ -80,7 +84,6 @@ def load_history():
 def save_history(history_dict):
     """Speichert die Datenbank zurück auf die Festplatte."""
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
-    # Sortieren nach Datum (Neueste zuerst) für die JSON Datei
     data_list = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
@@ -116,13 +119,11 @@ def calculate_trends(reviews):
     }
 
 def prepare_chart_data(reviews, days=14):
-    """Bereitet die Daten für den Graphen vor (Gestapelte Balken: Positiv/Neutral/Negativ)."""
+    """Bereitet die Daten für den Graphen vor (Gestapelte Balken)."""
     today = datetime.now().date()
     stats = {}
 
-    # Letzte X Tage initialisieren
     for i in range(days):
-        # Wir speichern das Datum im Schlüssel für Sortierung
         date_obj = today - timedelta(days=i)
         date_key = date_obj.strftime('%Y-%m-%d')
         stats[date_key] = {'pos': 0, 'neg': 0, 'neu': 0}
@@ -138,9 +139,7 @@ def prepare_chart_data(reviews, days=14):
             else:
                 stats[d]['neu'] += 1
 
-    # Sortieren und für Chart.js formatieren
     labels_sorted = sorted(stats.keys())
-
     # Formatierung zu deutschem Datum (TT.MM.)
     formatted_labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%d.%m.') for l in labels_sorted]
 
@@ -151,13 +150,23 @@ def prepare_chart_data(reviews, days=14):
         'neu': [stats[d]['neu'] for d in labels_sorted]
     }
 
+def is_genuine_positive(review):
+    """SMART FILTER: Prüft, ob ein positives Review versteckte negative Wörter enthält."""
+    if review.get('rating', 0) < 4:
+        return True # Bei schlechten Ratings ist Negatives okay
+
+    text = review.get('text', '').lower()
+    # Wenn negative Schlüsselwörter im Text vorkommen, ist es verdächtig
+    if any(word in text for word in NEGATIVE_KEYWORDS):
+        return False
+    return True
+
 # ---------------------------------------------------------
 # 3. SCRAPING FUNKTIONEN
 # ---------------------------------------------------------
 def fetch_ios_reviews(app_name, app_id, country="de", count=20):
     """Holt iOS Reviews über die stabile RSS Schnittstelle."""
     print(f"   -> iOS (RSS): {app_name}...")
-    # RSS Feed URL
     api_url = f"https://itunes.apple.com/{country}/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
 
     try:
@@ -166,27 +175,19 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
         data = response.json()
         results = []
 
-        # Feed parsen
         entries = data.get('feed', {}).get('entry', [])
         valid_entries = 0
         for entry in entries:
             if valid_entries >= count: break
-
-            if 'im:rating' not in entry or 'content' not in entry:
-                continue
+            if 'im:rating' not in entry or 'content' not in entry: continue
 
             rating = int(entry['im:rating']['label'])
             text = entry['content']['label']
-
             raw_date = entry.get('updated', {}).get('label', datetime.now().strftime('%Y-%m-%d'))
-            date_str = raw_date[:10] # YYYY-MM-DD Teil
+            date_str = raw_date[:10]
 
             results.append({
-                "store": "ios",
-                "app": app_name,
-                "rating": rating,
-                "text": text,
-                "date": date_str,
+                "store": "ios", "app": app_name, "rating": rating, "text": text, "date": date_str,
                 "id": generate_id({'app': app_name, 'store': 'ios', 'date': date_str, 'text': text})
             })
             valid_entries += 1
@@ -201,21 +202,13 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
     print(f"   -> Android: {app_name}...")
     try:
         result, _ = play_reviews(
-            app_id,
-            lang=country,
-            country=country,
-            sort=Sort.NEWEST,
-            count=count
+            app_id, lang=country, country=country, sort=Sort.NEWEST, count=count
         )
-
         reviews = []
         for r in result:
             date_str = r['at'].strftime('%Y-%m-%d')
             reviews.append({
-                "store": "android",
-                "app": app_name,
-                "rating": r['score'],
-                "text": r['content'],
+                "store": "android", "app": app_name, "rating": r['score'], "text": r['content'],
                 "date": date_str,
                 "id": generate_id({'app': app_name, 'store': 'android', 'date': date_str, 'text': r['content']})
             })
@@ -232,21 +225,18 @@ def get_fresh_reviews(review_count=20):
     print(f"--- Starte Scrape für {len(APP_CONFIG)*2} Quellen ---")
 
     for app in APP_CONFIG:
-        # 1. iOS
         ios_data = fetch_ios_reviews(app['name'], app['ios_id'], app['country'], review_count)
         for r in ios_data:
             if r['id'] not in history_dict:
                 history_dict[r['id']] = r
                 new_reviews_list.append(r)
 
-        # 2. Android
         and_data = fetch_android_reviews(app['name'], app['android_id'], app['country'], review_count)
         for r in and_data:
             if r['id'] not in history_dict:
                 history_dict[r['id']] = r
                 new_reviews_list.append(r)
 
-    # Gesamthistorie sortieren
     full_history = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
     print(f"\n--- STATUS: {len(full_history)} Gesamt gespeichert, {len(new_reviews_list)} NEU gefunden ---")
 
@@ -260,38 +250,27 @@ def get_semantic_topics(reviews, num_clusters=5):
     if not embedder or not model:
         return ["KI Module nicht geladen"]
 
-    # Nur Reviews mit Text > 15 Zeichen nutzen
     text_reviews = [r for r in reviews[:300] if len(r.get('text','')) > 15]
-
     if len(text_reviews) < 5:
         return ["Zu wenige Daten für Cluster"]
 
-    # Embeddings erstellen
     texts = [r['text'] for r in text_reviews]
     embeddings = embedder.encode(texts)
 
-    # KMeans Clustering
     kmeans = KMeans(n_clusters=min(num_clusters, len(texts)), random_state=0, n_init=10).fit(embeddings)
 
-    # Repräsentative Reviews finden
     topic_samples = []
     for i in range(kmeans.n_clusters):
         idx = np.where(kmeans.labels_ == i)[0]
         if idx.size == 0: continue
-
         center = kmeans.cluster_centers_[i]
-        # Finde das Review, das am nächsten zum Cluster-Zentrum liegt
         closest_idx = idx[np.argmax(cosine_similarity([center], embeddings[idx]))]
         topic_samples.append(text_reviews[closest_idx])
 
-    # KI nach Labels fragen
     prompt_data = [{"text": r['text']} for r in topic_samples]
-
     prompt = f"""
     Du bist ein Produkt-Analyst. Erstelle für jedes dieser {len(topic_samples)} Reviews ein kurzes, prägnantes Schlagwort (max 2 Wörter, z.B. "Login Fehler", "Abstürze").
-    
     Reviews: {json.dumps(prompt_data, ensure_ascii=False)}
-    
     Antworte NUR mit einer JSON Liste von Strings. Beispiel: ["Login", "Performance"]
     """
 
@@ -299,7 +278,6 @@ def get_semantic_topics(reviews, num_clusters=5):
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
         labels = json.loads(text)
-        # Validierung: Muss Liste von Strings sein
         return [str(l) for l in labels if isinstance(l, (str, int))]
     except Exception as e:
         print(f"Labeling Fehler: {e}")
@@ -309,39 +287,26 @@ def get_semantic_topics(reviews, num_clusters=5):
 # 5. DASHBOARD GENERATOR
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
-    # Berechnungen
-    trends = calculate_trends(full_history)  # FIX: Variable heißt jetzt 'trends'
+    trends = calculate_trends(full_history)
     chart_data = prepare_chart_data(full_history)
     topics = get_semantic_topics(full_history)
 
-    # KI Zusammenfassung & Highlights
     ki_output = {"summary": "Keine Analyse verfügbar.", "topReviews": [], "bottomReviews": []}
 
-    # Wir nehmen nur relevante Reviews für die KI (länger als 40 Zeichen)
+    # KI Analyse
     rich_reviews = [r for r in full_history if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = full_history
 
     if model and rich_reviews:
         print("--- Starte KI Deep Dive Analyse ---")
-        # Wir senden max 50 Reviews an die KI um Token zu sparen
         analysis_subset = rich_reviews[:50]
-
         prompt_data = [{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in analysis_subset]
 
         prompt = f"""
         Analysiere diese App-Reviews.
         1. Schreibe ein Management Summary (Deutsch, ca 3-4 Sätze).
         2. Wähle 3 Top-Reviews (Positiv, 4-5 Sterne) und 3 Bottom-Reviews (Negativ, 1-2 Sterne).
-        
-        WICHTIG: Gib im JSON für jedes Review auch 'app', 'store' und 'rating' exakt so zurück, wie sie in den Daten stehen.
-        
-        Output JSON Format: 
-        {{ 
-            "summary": "Text...", 
-            "topReviews": [{{...}}], 
-            "bottomReviews": [{{...}}] 
-        }}
-        
+        Output JSON Format: {{ "summary": "Text...", "topReviews": [{{...}}], "bottomReviews": [{{...}}] }}
         Data: {json.dumps(prompt_data, ensure_ascii=False)}
         """
         try:
@@ -351,51 +316,51 @@ def run_analysis_and_generate_html(full_history, new_only):
         except Exception as e:
             print(f"KI Fehler: {e}")
 
-    # --- FALLBACK & FORMATIERUNG ---
+    # --- INTELLIGENTE AUSWAHL LOGIK (Smart Filter) ---
 
-    # 1. Fallback für fehlende Top/Low Reviews (falls KI versagt)
-    top_list = ki_output.get('topReviews', [])
-    bot_list = ki_output.get('bottomReviews', [])
+    top_list = []
+    bot_list = []
 
-    if len(top_list) < 3:
-        best_raw = sorted([r for r in full_history if r['rating'] >= 4], key=lambda x: len(x['text']), reverse=True)
-        for r in best_raw[:3]:
-            if r['text'] not in [x.get('text') for x in top_list]:
-                top_list.append(r)
+    # 1. Kandidaten sammeln: Nur "echte" Positive (Anti-Widerspruch-Filter)
+    genuine_positive_candidates = [
+        r for r in full_history
+        if r['rating'] >= 4 and is_genuine_positive(r)
+    ]
+    # Sortieren nach Textlänge (Aussagekraft)
+    best_sorted = sorted(genuine_positive_candidates, key=lambda x: len(x['text']), reverse=True)
 
-    if len(bot_list) < 3:
-        worst_raw = sorted([r for r in full_history if r['rating'] <= 2], key=lambda x: len(x['text']), reverse=True)
-        for r in worst_raw[:3]:
-            if r['text'] not in [x.get('text') for x in bot_list]:
-                bot_list.append(r)
+    for r in best_sorted:
+        if len(top_list) >= 3: break
+        if r['text'] not in [x.get('text') for x in top_list]:
+            top_list.append(r)
 
-    # 2. Metadaten auffüllen (falls KI sie vergessen hat)
+    # 2. Kandidaten Negativ
+    worst_sorted = sorted([r for r in full_history if r['rating'] <= 2], key=lambda x: len(x['text']), reverse=True)
+    for r in worst_sorted:
+        if len(bot_list) >= 3: break
+        if r['text'] not in [x.get('text') for x in bot_list]:
+            bot_list.append(r)
+
+    # KI-Ergebnisse nur nutzen, wenn wir selbst keine gefunden haben (als Backup)
+    if len(top_list) < 1: top_list = ki_output.get('topReviews', [])
+    if len(bot_list) < 1: bot_list = ki_output.get('bottomReviews', [])
+
+    # Metadaten-Check
     for r in top_list + bot_list:
         if not r.get('app'):
-            # Suche Original in History
             orig = next((x for x in full_history if x['text'][:20] == r.get('text', '')[:20]), None)
-            if orig:
-                r.update({'app': orig['app'], 'store': orig['store'], 'rating': orig['rating']})
+            if orig: r.update({'app': orig['app'], 'store': orig['store'], 'rating': orig['rating']})
 
-    # 3. Summary bereinigen (Falls KI ein Objekt zurückgibt)
-    summary_text = ki_output.get('summary', '')
-    if isinstance(summary_text, (dict, list)):
-        summary_text = str(summary_text)
-    summary_text = summary_text.strip().replace('{', '').replace('}', '').replace('"', '')
+    # Summary Cleaning
+    summary_text = str(ki_output.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
 
-    # 4. Datum formatieren für Anzeige (DD.MM.YYYY)
+    # Datum formatieren
     for r in full_history:
         if 'date' in r:
-            try:
-                # Wenn es YYYY-MM-DD ist
-                r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
-            except:
-                r['fmt_date'] = r['date']
+            try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
+            except: r['fmt_date'] = r['date']
 
-
-    # --- HTML ERSTELLUNG ---
-
-    # Daten für JS vorbereiten
+    # JS Daten
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_labels = json.dumps(chart_data['labels'])
     js_pos = json.dumps(chart_data['pos'])
@@ -434,7 +399,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }}
             
             .chart-container {{ background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
-            
             .summary-box {{ background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             .tag {{ display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
@@ -443,17 +407,15 @@ def run_analysis_and_generate_html(full_history, new_only):
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
             
-            .icon-android {{ color: var(--android-color); }}
-            .icon-ios {{ color: var(--ios-color); }}
+            .icon-android {{ color: var(--android-color); }} .icon-ios {{ color: var(--ios-color); }}
+            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
             .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
-            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }}
-            .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
-            
+
             .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
             .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
@@ -494,7 +456,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 <p>{summary_text}</p>
                 <div style="margin-top:15px;">
                     <strong>Themen:</strong><br>
-                    {''.join([f'<span class="tag"># {t}</span>' for t in topics])}
+                    {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
                 </div>
             </div>
 
@@ -559,9 +521,8 @@ def run_analysis_and_generate_html(full_history, new_only):
             let currentFilter = 'all';
             let currentSort = 'newest';
 
-            // Theme Init
-            const savedTheme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', savedTheme);
+            const theme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', theme);
             
             function toggleTheme() {{
                 const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
@@ -570,7 +531,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 updateChartColors();
             }}
 
-            // Chart Setup
             const ctx = document.getElementById('trendChart').getContext('2d');
             let chart = new Chart(ctx, {{
                 type: 'bar',
@@ -600,10 +560,8 @@ def run_analysis_and_generate_html(full_history, new_only):
             }}
             updateChartColors();
 
-            // Init Defaults
             document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
-            // Read More Logic
             function initReadMore() {{
                 document.querySelectorAll('.review-content').forEach(div => {{
                     const text = div.querySelector('.review-text');
@@ -621,7 +579,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }}
 
-            // Filter & Sort
             function setFilter(app, btn) {{
                 currentFilter = app;
                 const group = btn.parentElement;
@@ -629,7 +586,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 btn.classList.add('active');
                 filterData();
             }}
-
+            
             function setSort(mode, btn) {{
                 currentSort = mode;
                 const group = btn.parentElement;
@@ -697,17 +654,14 @@ def send_teams_notification(new_reviews, webhook_url):
     pos = sum(1 for r in new_reviews if r['rating'] >= 4)
     neg = sum(1 for r in new_reviews if r['rating'] <= 2)
 
-    text_body = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n\n"
-    text_body += f"👍 Positiv: {pos} | 🚨 Kritisch: {neg}\n\n"
-    text_body += "**Auszug:**\n"
-
+    txt = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n---\n👍 {pos} | 🚨 {neg}\n\n"
     for r in new_reviews[:3]:
-        text_body += f"- {r['rating']}★: {r['text'][:60]}...\n"
+        txt += f"- {r['rating']}★: {r['text'][:60]}...\n"
 
-    text_body += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+    txt += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
 
     try:
-        requests.post(webhook_url, json={"text": text_body}, timeout=10)
+        requests.post(webhook_url, json={"text": txt}, timeout=10)
         print("✅ Teams Nachricht gesendet.")
     except Exception as e:
         print(f"❌ Teams Fehler: {e}")
