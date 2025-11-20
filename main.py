@@ -3,6 +3,8 @@ import json
 import time
 import hashlib
 import requests
+import re
+from collections import Counter
 from requests.exceptions import HTTPError
 from datetime import datetime, timedelta
 
@@ -28,7 +30,6 @@ from google_play_scraper import Sort, reviews as play_reviews
 load_dotenv()
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# KI-Modelle laden
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
@@ -46,7 +47,6 @@ else:
     model = None
     embedder = None
 
-# Dateipfade und Konfiguration
 DATA_FILE = "data/reviews_history.json"
 
 APP_CONFIG = [
@@ -54,24 +54,23 @@ APP_CONFIG = [
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
 ]
 
-# SMART FILTER: Wörter, die in einer 5-Sterne Bewertung nichts zu suchen haben
-NEGATIVE_KEYWORDS = [
-    "absturz", "stürzt", "fehler", "schlecht", "katastrophe", "mies",
-    "flackern", "unbrauchbar", "nicht möglich", "enttäuscht", "nervt",
-    "problem", "instabil", "langsam", "geht nicht"
-]
+STOP_WORDS = {
+    "die", "der", "und", "in", "zu", "den", "das", "nicht", "von", "sie", "ist", "des", "sich", "mit", "dem", "dass",
+    "er", "es", "wir", "ich", "auf", "so", "eine", "auch", "als", "nach", "wie", "für", "man", "aber", "aus", "bei",
+    "ein", "bis", "ist", "hat", "nur", "oder", "habe", "kann", "werden", "wenn", "doch", "mal", "app", "seit", "mehr",
+    "immer", "wieder", "mich", "meine", "keine", "bin", "noch", "war", "jetzt", "alles", "gut", "sehr", "zum", "mir",
+    "vor", "da", "am", "um", "denn", "einen", "einem", "einer", "muss", "wird", "sind", "wäre", "über", "wegen", "diese"
+}
 
 # ---------------------------------------------------------
-# 2. HILFSFUNKTIONEN (Datenbank & Trends)
+# 2. HILFSFUNKTIONEN
 # ---------------------------------------------------------
 
 def generate_id(review):
-    """Erstellt eine eindeutige ID basierend auf dem Inhalt."""
     unique_string = f"{review.get('text', '')[:50]}{review.get('date', '')}{review.get('app', '')}{review.get('store', '')}"
     return hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
 
 def load_history():
-    """Lädt die bestehende Datenbank."""
     if os.path.exists(DATA_FILE):
         try:
             with open(DATA_FILE, "r", encoding="utf-8") as f:
@@ -82,17 +81,14 @@ def load_history():
     return {}
 
 def save_history(history_dict):
-    """Speichert die Datenbank zurück auf die Festplatte."""
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
     data_list = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
 
 def calculate_trends(reviews):
-    """Berechnet die Durchschnittsbewertungen für KPIs."""
     today = datetime.now().date()
     dated_reviews = []
-
     for r in reviews:
         try:
             review_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
@@ -119,10 +115,8 @@ def calculate_trends(reviews):
     }
 
 def prepare_chart_data(reviews, days=14):
-    """Bereitet die Daten für den Graphen vor (Gestapelte Balken)."""
     today = datetime.now().date()
     stats = {}
-
     for i in range(days):
         date_obj = today - timedelta(days=i)
         date_key = date_obj.strftime('%Y-%m-%d')
@@ -132,15 +126,11 @@ def prepare_chart_data(reviews, days=14):
         d = r['date']
         rating = r.get('rating')
         if d in stats and rating is not None:
-            if rating >= 4:
-                stats[d]['pos'] += 1
-            elif rating <= 2:
-                stats[d]['neg'] += 1
-            else:
-                stats[d]['neu'] += 1
+            if rating >= 4: stats[d]['pos'] += 1
+            elif rating <= 2: stats[d]['neg'] += 1
+            else: stats[d]['neu'] += 1
 
     labels_sorted = sorted(stats.keys())
-    # Formatierung zu deutschem Datum (TT.MM.)
     formatted_labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%d.%m.') for l in labels_sorted]
 
     return {
@@ -150,31 +140,32 @@ def prepare_chart_data(reviews, days=14):
         'neu': [stats[d]['neu'] for d in labels_sorted]
     }
 
-def is_genuine_positive(review):
-    """SMART FILTER: Prüft, ob ein positives Review versteckte negative Wörter enthält."""
-    if review.get('rating', 0) < 4:
-        return True # Bei schlechten Ratings ist Negatives okay
+def get_buzzwords(reviews):
+    text_blob = " ".join([r.get('text', '') for r in reviews]).lower()
+    text_blob = re.sub(r'[^\w\s]', '', text_blob)
+    words = text_blob.split()
+    filtered_words = [w for w in words if w not in STOP_WORDS and len(w) > 3]
+    counter = Counter(filtered_words)
+    return counter.most_common(20)
 
+def is_genuine_positive(review):
+    bad_words = ["absturz", "stürzt", "fehler", "schlecht", "katastrophe", "mies", "flackern", "unbrauchbar", "nicht möglich", "enttäuscht"]
+    if review.get('rating', 0) < 4: return True
     text = review.get('text', '').lower()
-    # Wenn negative Schlüsselwörter im Text vorkommen, ist es verdächtig
-    if any(word in text for word in NEGATIVE_KEYWORDS):
-        return False
+    if any(word in text for word in bad_words): return False
     return True
 
 # ---------------------------------------------------------
 # 3. SCRAPING FUNKTIONEN
 # ---------------------------------------------------------
 def fetch_ios_reviews(app_name, app_id, country="de", count=20):
-    """Holt iOS Reviews über die stabile RSS Schnittstelle."""
     print(f"   -> iOS (RSS): {app_name}...")
     api_url = f"https://itunes.apple.com/{country}/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
-
     try:
         response = requests.get(api_url, timeout=10)
         response.raise_for_status()
         data = response.json()
         results = []
-
         entries = data.get('feed', {}).get('entry', [])
         valid_entries = 0
         for entry in entries:
@@ -191,19 +182,15 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
                 "id": generate_id({'app': app_name, 'store': 'ios', 'date': date_str, 'text': text})
             })
             valid_entries += 1
-
         return results
     except Exception as e:
         print(f"      ❌ iOS Fehler: {e}")
         return []
 
 def fetch_android_reviews(app_name, app_id, country="de", count=20):
-    """Holt Android Reviews über den Scraper."""
     print(f"   -> Android: {app_name}...")
     try:
-        result, _ = play_reviews(
-            app_id, lang=country, country=country, sort=Sort.NEWEST, count=count
-        )
+        result, _ = play_reviews(app_id, lang=country, country=country, sort=Sort.NEWEST, count=count)
         reviews = []
         for r in result:
             date_str = r['at'].strftime('%Y-%m-%d')
@@ -218,19 +205,15 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         return []
 
 def get_fresh_reviews(review_count=20):
-    """Sammelt Daten von allen Quellen."""
     history_dict = load_history()
     new_reviews_list = []
-
-    print(f"--- Starte Scrape für {len(APP_CONFIG)*2} Quellen ---")
-
+    print(f"--- Starte Scrape ---")
     for app in APP_CONFIG:
         ios_data = fetch_ios_reviews(app['name'], app['ios_id'], app['country'], review_count)
         for r in ios_data:
             if r['id'] not in history_dict:
                 history_dict[r['id']] = r
                 new_reviews_list.append(r)
-
         and_data = fetch_android_reviews(app['name'], app['android_id'], app['country'], review_count)
         for r in and_data:
             if r['id'] not in history_dict:
@@ -239,24 +222,18 @@ def get_fresh_reviews(review_count=20):
 
     full_history = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
     print(f"\n--- STATUS: {len(full_history)} Gesamt gespeichert, {len(new_reviews_list)} NEU gefunden ---")
-
     return full_history, new_reviews_list
 
 # ---------------------------------------------------------
-# 4. INTELLIGENZ: CLUSTERING & LABELING
+# 4. INTELLIGENZ
 # ---------------------------------------------------------
 def get_semantic_topics(reviews, num_clusters=5):
-    """Erstellt Themencluster aus den Review-Texten."""
-    if not embedder or not model:
-        return ["KI Module nicht geladen"]
-
+    if not embedder or not model: return ["KI nicht bereit"]
     text_reviews = [r for r in reviews[:300] if len(r.get('text','')) > 15]
-    if len(text_reviews) < 5:
-        return ["Zu wenige Daten für Cluster"]
+    if len(text_reviews) < 5: return ["Zu wenige Daten"]
 
     texts = [r['text'] for r in text_reviews]
     embeddings = embedder.encode(texts)
-
     kmeans = KMeans(n_clusters=min(num_clusters, len(texts)), random_state=0, n_init=10).fit(embeddings)
 
     topic_samples = []
@@ -269,19 +246,16 @@ def get_semantic_topics(reviews, num_clusters=5):
 
     prompt_data = [{"text": r['text']} for r in topic_samples]
     prompt = f"""
-    Du bist ein Produkt-Analyst. Erstelle für jedes dieser {len(topic_samples)} Reviews ein kurzes, prägnantes Schlagwort (max 2 Wörter, z.B. "Login Fehler", "Abstürze").
+    Du bist ein Produkt-Analyst. Erstelle für jedes dieser {len(topic_samples)} Reviews ein kurzes, prägnantes Schlagwort (max 2 Wörter).
     Reviews: {json.dumps(prompt_data, ensure_ascii=False)}
-    Antworte NUR mit einer JSON Liste von Strings. Beispiel: ["Login", "Performance"]
+    Antworte NUR mit einer JSON Liste von Strings.
     """
-
     try:
         response = model.generate_content(prompt)
         text = response.text.replace("```json", "").replace("```", "").strip()
         labels = json.loads(text)
         return [str(l) for l in labels if isinstance(l, (str, int))]
-    except Exception as e:
-        print(f"Labeling Fehler: {e}")
-        return ["Analyse-Fehler"]
+    except: return ["Analyse-Fehler"]
 
 # ---------------------------------------------------------
 # 5. DASHBOARD GENERATOR
@@ -290,77 +264,58 @@ def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
     chart_data = prepare_chart_data(full_history)
     topics = get_semantic_topics(full_history)
+    buzzwords = get_buzzwords(full_history)
 
     ki_output = {"summary": "Keine Analyse verfügbar.", "topReviews": [], "bottomReviews": []}
-
-    # KI Analyse
     rich_reviews = [r for r in full_history if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = full_history
 
     if model and rich_reviews:
-        print("--- Starte KI Deep Dive Analyse ---")
-        analysis_subset = rich_reviews[:50]
-        prompt_data = [{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in analysis_subset]
-
+        print("--- KI Analyse ---")
         prompt = f"""
-        Analysiere diese App-Reviews.
-        1. Schreibe ein Management Summary (Deutsch, ca 3-4 Sätze).
-        2. Wähle 3 Top-Reviews (Positiv, 4-5 Sterne) und 3 Bottom-Reviews (Negativ, 1-2 Sterne).
-        Output JSON Format: {{ "summary": "Text...", "topReviews": [{{...}}], "bottomReviews": [{{...}}] }}
-        Data: {json.dumps(prompt_data, ensure_ascii=False)}
+        Analysiere diese App-Reviews (max 50).
+        1. Schreibe ein Management Summary (Deutsch).
+        2. Wähle 3 Top-Reviews und 3 Bottom-Reviews.
+        Output JSON: {{ "summary": "...", "topReviews": [{{...}}], "bottomReviews": [{{...}}] }}
+        Data: {json.dumps([{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in rich_reviews[:50]], ensure_ascii=False)}
         """
         try:
             resp = model.generate_content(prompt)
             text = resp.text.replace("```json", "").replace("```", "").strip()
             ki_output.update(json.loads(text))
-        except Exception as e:
-            print(f"KI Fehler: {e}")
+        except: pass
 
-    # --- INTELLIGENTE AUSWAHL LOGIK (Smart Filter) ---
-
+    # Fallback & Filter
     top_list = []
     bot_list = []
 
-    # 1. Kandidaten sammeln: Nur "echte" Positive (Anti-Widerspruch-Filter)
-    genuine_positive_candidates = [
-        r for r in full_history
-        if r['rating'] >= 4 and is_genuine_positive(r)
-    ]
-    # Sortieren nach Textlänge (Aussagekraft)
-    best_sorted = sorted(genuine_positive_candidates, key=lambda x: len(x['text']), reverse=True)
+    # Python Smart Filter
+    candidates_pos = [r for r in full_history if r['rating'] >= 4 and is_genuine_positive(r)]
+    sorted_best = sorted(candidates_pos, key=lambda x: len(x['text']), reverse=True)
+    for r in sorted_best[:3]: top_list.append(r)
 
-    for r in best_sorted:
-        if len(top_list) >= 3: break
-        if r['text'] not in [x.get('text') for x in top_list]:
-            top_list.append(r)
+    sorted_worst = sorted([r for r in full_history if r['rating'] <= 2], key=lambda x: len(x['text']), reverse=True)
+    for r in sorted_worst[:3]: bot_list.append(r)
 
-    # 2. Kandidaten Negativ
-    worst_sorted = sorted([r for r in full_history if r['rating'] <= 2], key=lambda x: len(x['text']), reverse=True)
-    for r in worst_sorted:
-        if len(bot_list) >= 3: break
-        if r['text'] not in [x.get('text') for x in bot_list]:
-            bot_list.append(r)
-
-    # KI-Ergebnisse nur nutzen, wenn wir selbst keine gefunden haben (als Backup)
+    # Wenn Python-Filter leer, nimm KI-Vorschlag
     if len(top_list) < 1: top_list = ki_output.get('topReviews', [])
     if len(bot_list) < 1: bot_list = ki_output.get('bottomReviews', [])
 
-    # Metadaten-Check
+    # Metadaten auffüllen
     for r in top_list + bot_list:
         if not r.get('app'):
-            orig = next((x for x in full_history if x['text'][:20] == r.get('text', '')[:20]), None)
-            if orig: r.update({'app': orig['app'], 'store': orig['store'], 'rating': orig['rating']})
+            m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
+            if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
-    # Summary Cleaning
-    summary_text = str(ki_output.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
+    summary = str(ki_output.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
 
-    # Datum formatieren
+    # Datum
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # JS Daten
+    # JSON Data
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_labels = json.dumps(chart_data['labels'])
     js_pos = json.dumps(chart_data['pos'])
@@ -377,17 +332,8 @@ def run_analysis_and_generate_html(full_history, new_only):
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            :root {{
-                --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0;
-                --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05);
-                --ios-color: #000000; --android-color: #3DDC84;
-                --grid-color: #e2e8f0;
-            }}
-            [data-theme="dark"] {{
-                --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155;
-                --primary: #3b82f6; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3);
-                --ios-color: #ffffff; --grid-color: #334155;
-            }}
+            :root {{ --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0; --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05); --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e; }}
+            [data-theme="dark"] {{ --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155; --primary: #3b82f6; --ios: #fff; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3); --mark-bg: #854d0e; --mark-text: #fef08a; }}
             body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
             header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }}
@@ -396,76 +342,68 @@ def run_analysis_and_generate_html(full_history, new_only):
             .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
             .card {{ background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px var(--shadow); border: 1px solid var(--border); }}
             .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }}
-            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }}
+            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }}
             
             .chart-container {{ background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
             .summary-box {{ background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
+            
             .tag {{ display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
+            .buzzword {{ display: inline-block; margin: 0 10px 5px 0; color: var(--text); opacity: 0.8; }}
             
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
             .review-card {{ background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px var(--shadow); }}
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
             
-            .icon-android {{ color: var(--android-color); }} .icon-ios {{ color: var(--ios-color); }}
+            .icon-android {{ color: var(--android); }} .icon-ios {{ color: var(--ios); }}
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
-            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
 
             .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
+            .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
             .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
+            .meta {{ font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }}
         </style>
     </head>
     <body>
         <div class="container">
             <header>
-                <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span>
-                </div>
+                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span></div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
             <div class="kpi-grid">
-                <div class="card">
-                    <div class="kpi-label">Gesamt Ø</div>
-                    <div class="kpi-val">{trends['overall']} <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Trend (7 Tage)</div>
-                    <div class="kpi-val">{trends['last_7d']} <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Erfasste Reviews</div>
-                    <div class="kpi-val">{len(full_history)}</div>
-                </div>
+                <div class="card"><div class="kpi-label">Gesamt Ø</div><div class="kpi-val">{trends['overall']} ⭐</div></div>
+                <div class="card"><div class="kpi-label">Trend (7 Tage)</div><div class="kpi-val">{trends['last_7d']} ⭐</div></div>
+                <div class="card"><div class="kpi-label">Erfasste Reviews</div><div class="kpi-val">{len(full_history)}</div></div>
             </div>
 
-            <div class="chart-container">
-                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
             
-            <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>{summary_text}</p>
-                <div style="margin-top:15px;">
-                    <strong>Themen:</strong><br>
+            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>{summary}</div>
+
+            <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
+                <div class="col" style="flex:1;">
+                    <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
                     {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
+                </div>
+                <div class="col" style="flex:1;">
+                    <h3 style="margin-bottom: 15px;">☁️ Häufige Begriffe</h3>
+                    <div style="background:var(--card-bg); padding:15px; border-radius:12px; border:1px solid var(--border);">
+                        {''.join([f'<span class="buzzword" style="font-size:{10 + (c/buzzwords[0][1])*10}px">{w} ({c})</span> ' for w, c in buzzwords])}
+                    </div>
                 </div>
             </div>
 
             <div class="review-grid">
-                <div>
-                    <h3>👍 Top Stimmen</h3>
-                    {''.join([f'''
+                <div><h3>👍 Top Stimmen</h3>{''.join([f'''
                     <div class="review-card pos">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
                             <span>{r.get('rating')}★</span>
                         </div>
@@ -475,11 +413,9 @@ def run_analysis_and_generate_html(full_history, new_only):
                         </div>
                     </div>''' for r in top_list[:3]])}
                 </div>
-                <div>
-                    <h3>⚠️ Kritische Stimmen</h3>
-                    {''.join([f'''
+                <div><h3>⚠️ Kritische Stimmen</h3>{''.join([f'''
                     <div class="review-card neg">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
                             <span>{r.get('rating')}★</span>
                         </div>
@@ -497,16 +433,12 @@ def run_analysis_and_generate_html(full_history, new_only):
                 <div style="flex:1; min-width: 300px;">
                     <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 </div>
-                
                 <div class="filter-group">
-                    <span class="filter-label">App:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
                     <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
                     <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
                 </div>
-
                 <div class="filter-group">
-                    <span class="filter-label">Sortierung:</span>
                     <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
                     <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
                     <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
@@ -523,7 +455,6 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             const theme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', theme);
-            
             function toggleTheme() {{
                 const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', newTheme);
@@ -544,18 +475,13 @@ def run_analysis_and_generate_html(full_history, new_only):
                 }},
                 options: {{
                     responsive: true, maintainAspectRatio: false,
-                    scales: {{ 
-                        x: {{ stacked: true, grid: {{ display: false }} }}, 
-                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} 
-                    }},
-                    plugins: {{ legend: {{ position: 'bottom' }} }}
+                    scales: {{ x: {{ stacked: true, grid: {{ display: false }} }}, y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} }}
                 }}
             }});
-            
+
             function updateChartColors() {{
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                const gridColor = isDark ? '#334155' : '#e2e8f0';
-                chart.options.scales.y.grid.color = gridColor;
+                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
                 chart.update();
             }}
             updateChartColors();
@@ -598,7 +524,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
-                const q = document.getElementById('search').value.toLowerCase();
+                const q = document.getElementById('search').value.toLowerCase().trim();
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
 
@@ -614,25 +540,32 @@ def run_analysis_and_generate_html(full_history, new_only):
 
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    const stars = '⭐'.repeat(r.rating);
+                    
+                    // HIGHLIGHTING LOGIC (JS Concatenation Fix)
+                    let displayText = r.text;
+                    if (q.length >= 2) {{
+                        const regex = new RegExp('(' + q + ')', 'gi'); // <--- HIER IST DER FIX
+                        displayText = displayText.replace(regex, '<mark>$1</mark>');
+                    }}
                     
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{stars}}
+                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            ${{r.text}}
-                            <i class="fas fa-copy copy-btn" style="margin-left:10px;" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
+                            <span class="review-text">${{displayText}}</span>
+                            <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 }});
             }}
+            
             filterData();
         </script>
     </body>
@@ -648,9 +581,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 # 7. MAIN EXECUTION
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
-    if not new_reviews:
-        return
-
+    if not new_reviews: return
     pos = sum(1 for r in new_reviews if r['rating'] >= 4)
     neg = sum(1 for r in new_reviews if r['rating'] <= 2)
 
