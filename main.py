@@ -69,12 +69,38 @@ def save_history(history_dict):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
 
-# NEU: Berechnung für den Chart (Tägliche Durchschnitte)
+# Berechnung der KPIs (7 Tage, 30 Tage, Gesamt)
+def calculate_trends(reviews):
+    today = datetime.now().date()
+    dated_reviews = []
+    for r in reviews:
+        try:
+            review_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
+            if r.get('text'):
+                dated_reviews.append((review_date, float(r['rating'])))
+        except ValueError:
+            continue
+
+    if not dated_reviews:
+        return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0}
+
+    def get_avg_for_days(days):
+        cutoff_date = today - timedelta(days=days)
+        filtered = [rating for date, rating in dated_reviews if date >= cutoff_date]
+        return round(sum(filtered) / len(filtered), 2) if filtered else 0.0
+
+    overall_avg = round(sum(r['rating'] for r in reviews) / len(reviews), 2)
+
+    return {
+        'overall': overall_avg,
+        'last_7d': get_avg_for_days(7),
+        'last_30d': get_avg_for_days(30)
+    }
+
+# Daten für den Chart.js Graphen vorbereiten
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     daily_stats = {}
-
-    # Initialisiere letzte X Tage mit 0
     for i in range(days):
         date_key = (today - timedelta(days=i)).strftime('%Y-%m-%d')
         daily_stats[date_key] = {'sum': 0, 'count': 0}
@@ -85,7 +111,6 @@ def prepare_chart_data(reviews, days=14):
             daily_stats[d]['sum'] += float(r['rating'])
             daily_stats[d]['count'] += 1
 
-    # Daten für Chart.js formatieren
     labels = sorted(daily_stats.keys())
     data_points = []
     for date in labels:
@@ -94,27 +119,6 @@ def prepare_chart_data(reviews, days=14):
         data_points.append(avg)
 
     return {'labels': labels, 'data': data_points}
-
-def calculate_kpis(reviews):
-    """Berechnet statische KPIs."""
-    if not reviews: return {'overall': 0, 'week': 0}
-
-    today = datetime.now().date()
-    week_ago = today - timedelta(days=7)
-
-    ratings = [float(r['rating']) for r in reviews]
-    overall = round(sum(ratings) / len(ratings), 2)
-
-    week_ratings = []
-    for r in reviews:
-        try:
-            if datetime.strptime(r['date'], '%Y-%m-%d').date() >= week_ago:
-                week_ratings.append(float(r['rating']))
-        except: continue
-
-    week_avg = round(sum(week_ratings) / len(week_ratings), 2) if week_ratings else overall
-
-    return {'overall': overall, 'week': week_avg}
 
 # ---------------------------------------------------------
 # 3. SCRAPING
@@ -129,16 +133,16 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
         results = []
         for entry in data.get('feed', {}).get('entry', [])[:count]:
             if 'im:rating' not in entry or 'content' not in entry: continue
+            rating = int(entry['im:rating']['label'])
+            text = entry['content']['label']
+            date_str = entry.get('updated', {}).get('label', datetime.now().strftime('%Y-%m-%d'))[:10]
             results.append({
-                "store": "ios", "app": app_name,
-                "rating": int(entry['im:rating']['label']),
-                "text": entry['content']['label'],
-                "date": entry.get('updated', {}).get('label', datetime.now().strftime('%Y-%m-%d'))[:10],
-                "id": generate_id({'app': app_name, 'store': 'ios', 'text': entry['content']['label']}) # Simplified ID gen call
+                "store": "ios", "app": app_name, "rating": rating, "text": text, "date": date_str,
+                "id": generate_id({'app': app_name, 'store': 'ios', 'date': date_str, 'text': text})
             })
         return results
     except Exception as e:
-        print(f"      ❌ iOS Fehler: {e}")
+        print(f"      ❌ iOS (RSS) Fehler: {e}")
         return []
 
 def fetch_android_reviews(app_name, app_id, country="de", count=20):
@@ -149,8 +153,9 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         for r in result:
             d = r['at'].strftime('%Y-%m-%d')
             reviews.append({
-                "store": "android", "app": app_name, "rating": r['score'], "text": r['content'], "date": d,
-                "id": generate_id({'app': app_name, 'store': 'android', 'text': r['content']})
+                "store": "android", "app": app_name, "rating": r['score'], "text": r['content'],
+                "date": d,
+                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']})
             })
         return reviews
     except Exception as e:
@@ -158,26 +163,27 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         return []
 
 def get_fresh_reviews(review_count=20):
-    history = load_history()
-    new_list = []
+    history_dict = load_history()
+    new_reviews_list = []
+    print(f"--- Starte Scrape für {len(APP_CONFIG)*2} Quellen ---")
     for app in APP_CONFIG:
         for r in fetch_ios_reviews(app['name'], app['ios_id'], app['country'], review_count) + \
                  fetch_android_reviews(app['name'], app['android_id'], app['country'], review_count):
-            if r['id'] not in history:
-                history[r['id']] = r
-                new_list.append(r)
-
-    full_list = sorted(history.values(), key=lambda x: x['date'], reverse=True)
-    print(f"\n--- STATUS: {len(full_list)} Gesamt, {len(new_list)} NEU ---")
-    return full_list, new_list
+            if r['id'] not in history_dict:
+                history_dict[r['id']] = r
+                new_reviews_list.append(r)
+    full_history = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
+    print(f"\n--- STATUS: {len(full_history)} Gesamt, {len(new_reviews_list)} NEU ---")
+    return full_history, new_reviews_list
 
 # ---------------------------------------------------------
-# 4. KI & CLUSTERING
+# 4. CLUSTERING
 # ---------------------------------------------------------
 def get_semantic_topics(reviews, num_clusters=5):
     if not embedder: return ["KI nicht bereit"]
-    text_reviews = [r for r in reviews[:200] if len(r.get('text', '')) > 15]
-    if len(text_reviews) < num_clusters: return ["Zu wenige Daten"]
+
+    text_reviews = [r for r in reviews[:300] if len(r.get('text', '')) > 10]
+    if len(text_reviews) < num_clusters: return ["Zu wenige Daten für Cluster"]
 
     texts = [r['text'] for r in text_reviews]
     embeddings = embedder.encode(texts)
@@ -195,21 +201,29 @@ def get_semantic_topics(reviews, num_clusters=5):
     if not model: return ["KI-Service fehlt"]
 
     prompt = f"""
-    Erstelle kurze, prägnante Labels (max 2 Wörter) für diese Themen-Cluster.
-    Output nur als JSON Liste von Strings.
-    Reviews: {json.dumps([{'text': r['text']} for r in topic_reviews], ensure_ascii=False)}
+    Erstelle für jedes dieser {len(topic_reviews)} repräsentativen Reviews ein kurzes Schlagwort (max 2 Wörter, z.B. "Login Probleme", "Abstürze").
+    Antworte NUR mit einer JSON Liste von Strings.
+    Reviews: {json.dumps([r['text'][:100] for r in topic_reviews], ensure_ascii=False)}
     """
     try:
         resp = model.generate_content(prompt)
-        return [t for t in json.loads(resp.text.replace("```json", "").replace("```", "").strip()) if isinstance(t, str)]
-    except: return ["Analyse Fehler"]
+        text = resp.text.replace("```json", "").replace("```", "").strip()
+        data = json.loads(text)
+        if isinstance(data, dict): data = list(data.values())
+        return [str(t) for t in data if t]
+    except Exception as e:
+        print(f"Labeling Fehler: {e}")
+        return ["Technische Probleme", "Login", "App-Qualität", "Inhalte", "Sonstiges"]
 
 # ---------------------------------------------------------
-# 5. HTML GENERIERUNG (PRO VERSION)
+# 5. HTML GENERIERUNG (FIXED KPIS)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
-    kpis = calculate_kpis(full_history)
+    # KPIs berechnen
+    trend_metrics = calculate_trends(full_history)
+    # Chart Daten vorbereiten
     chart_data = prepare_chart_data(full_history)
+    # Themen
     topics = get_semantic_topics(full_history)
 
     # KI Analyse
@@ -226,7 +240,8 @@ def run_analysis_and_generate_html(full_history, new_only):
         """
         try:
             resp = model.generate_content(prompt)
-            ki_output.update(json.loads(resp.text.replace("```json", "").replace("```", "").strip()))
+            text = resp.text.replace("```json", "").replace("```", "").strip()
+            ki_output.update(json.loads(text))
         except: pass
 
     # Datenaufbereitung für JS
@@ -234,14 +249,14 @@ def run_analysis_and_generate_html(full_history, new_only):
     js_chart_labels = json.dumps(chart_data['labels'])
     js_chart_values = json.dumps(chart_data['data'])
 
-    # Robustes Summary
     summary_text = ki_output.get('summary', '')
     if isinstance(summary_text, (dict, list)): summary_text = str(summary_text)
     summary_text = summary_text.strip().replace('{', '').replace('}', '')
 
+    # HTML
     html = f"""
     <!DOCTYPE html>
-    <html lang="de">
+    <html lang="de" data-theme="light">
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -249,100 +264,69 @@ def run_analysis_and_generate_html(full_history, new_only):
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            :root {{ --primary: #2563eb; --bg: #f8fafc; --card: #ffffff; --text: #1e293b; }}
-            body {{ font-family: 'Inter', system-ui, sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
+            :root {{
+                --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0;
+                --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05);
+            }}
+            [data-theme="dark"] {{
+                --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155;
+                --primary: #3b82f6; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3);
+            }}
+            body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
-            
-            /* Header & KPIs */
             header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }}
+            .theme-btn {{ background: none; border: 1px solid var(--border); color: var(--text); padding: 8px; border-radius: 8px; cursor: pointer; }}
+            
             .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
-            .card {{ background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid #e2e8f0; }}
+            .card {{ background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px var(--shadow); border: 1px solid var(--border); }}
             .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); }}
-            .kpi-label {{ color: #64748b; font-size: 0.9rem; text-transform: uppercase; letter-spacing: 0.05em; }}
+            .chart-container {{ background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 300px; }}
+            .summary-box {{ background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
+            .tag {{ display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
-            /* Chart Section */
-            .chart-container {{ background: white; padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); margin-bottom: 30px; height: 300px; }}
-            
-            /* Summary & Topics */
-            .summary-box {{ background: #eff6ff; padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; }}
-            .tag {{ display: inline-block; background: white; border: 1px solid #cbd5e1; padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: #475569; font-weight: 500; }}
-            
-            /* Reviews Grid */
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
-            @media(max-width: 768px) {{ .review-grid {{ grid-template-columns: 1fr; }} }}
-            .review-card {{ background: white; padding: 20px; border-radius: 8px; border: 1px solid #e2e8f0; display: flex; flex-direction: column; gap: 10px; }}
+            .review-card {{ background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px var(--shadow); }}
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
-            .meta {{ display: flex; justify-content: space-between; font-size: 0.85rem; color: #64748b; }}
             
-            /* Search & Filter */
-            .controls {{ display: flex; gap: 10px; margin-bottom: 20px; flex-wrap: wrap; }}
-            .search-input {{ flex: 1; padding: 12px; border: 1px solid #cbd5e1; border-radius: 8px; font-size: 1rem; }}
-            .filter-btn {{ padding: 10px 20px; border: 1px solid #cbd5e1; background: white; border-radius: 8px; cursor: pointer; font-weight: 500; transition: all 0.2s; }}
-            .filter-btn:hover, .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
-            
-            .icon-ios {{ color: #1C1C1E; }}
-            .icon-android {{ color: #3DDC84; }}
-            .copy-btn {{ cursor: pointer; color: #94a3b8; float: right; }}
-            .copy-btn:hover {{ color: var(--primary); }}
+            .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }}
+            .filter-btn {{ padding: 10px 20px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; }}
+            .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
+            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }}
+            .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
         </style>
     </head>
     <body>
         <div class="container">
             <header>
-                <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="color: #64748b; font-size: 0.9rem;">Letztes Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span>
-                </div>
+                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span></div>
+                <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
             <div class="kpi-grid">
-                <div class="card">
-                    <div class="kpi-label">Gesamt Ø</div>
-                    <div class="kpi-val">{kpis['overall']} <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Trend (7 Tage)</div>
-                    <div class="kpi-val">{kpis['week']} <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Total Reviews</div>
-                    <div class="kpi-val">{len(full_history)}</div>
-                </div>
+                <div class="card"><div>Gesamt Ø</div><div class="kpi-val">{trend_metrics['overall']} <span style="font-size:1.5rem">⭐</span></div></div>
+                <div class="card"><div>Trend (7 Tage)</div><div class="kpi-val">{trend_metrics['last_7d']} <span style="font-size:1.5rem">⭐</span></div></div>
+                <div class="card"><div>Total Reviews</div><div class="kpi-val">{len(full_history)}</div></div>
             </div>
 
-            <div class="chart-container">
-                <canvas id="trendChart"></canvas>
-            </div>
-
-            <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                {summary_text}
-            </div>
-
-            <div style="margin-bottom: 40px;">
-                <h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3>
-                {''.join([f'<span class="tag"># {t}</span>' for t in topics])}
-            </div>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
+            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>{summary_text}</div>
+            <div style="margin-bottom: 40px;"><h3 style="margin-bottom: 15px;">🔥 Trending Topics</h3>{''.join([f'<span class="tag"># {t}</span>' for t in topics])}</div>
 
             <div class="review-grid">
-                <div>
-                    <h3>👍 Top Stimmen</h3>
-                    {''.join([f'''
+                <div><h3>👍 Top Stimmen</h3>{''.join([f'''
                     <div class="review-card pos">
-                        <div class="meta">
-                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} {r.get('rating')}★</span>
+                        <div style="opacity:0.7; font-size:0.9rem;">
+                            <span>{'<i class="fab fa-apple"></i>' if r.get('store')=='ios' else '<i class="fab fa-android"></i>'} {r.get('rating')}★</span>
                             <span>{r.get('app')}</span>
                         </div>
                         <div style="font-style:italic">"{r.get('text')}"</div>
                     </div>''' for r in ki_output.get('topReviews', [])[:3]])}
                 </div>
-                <div>
-                    <h3>⚠️ Kritische Stimmen</h3>
-                    {''.join([f'''
+                <div><h3>⚠️ Kritische Stimmen</h3>{''.join([f'''
                     <div class="review-card neg">
-                        <div class="meta">
-                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} {r.get('rating')}★</span>
+                        <div style="opacity:0.7; font-size:0.9rem;">
+                            <span>{'<i class="fab fa-apple"></i>' if r.get('store')=='ios' else '<i class="fab fa-android"></i>'} {r.get('rating')}★</span>
                             <span>{r.get('app')}</span>
                         </div>
                         <div style="font-style:italic">"{r.get('text')}"</div>
@@ -350,43 +334,41 @@ def run_analysis_and_generate_html(full_history, new_only):
                 </div>
             </div>
 
-            <h2 style="border-top: 1px solid #e2e8f0; padding-top: 30px;">🔎 Review Explorer</h2>
-            
-            <div class="controls">
-                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()">
-                <button class="filter-btn active" onclick="setFilter('all', this)">Alle Apps</button>
+            <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
+            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+                <input type="text" class="search-input" id="search" placeholder="Suchen..." onkeyup="filterData()">
+                <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
                 <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
                 <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
             </div>
-
             <div id="list-container" style="display:grid; gap:15px;"></div>
-
         </div>
 
         <script>
             const REVIEWS = {js_reviews};
             let currentFilter = 'all';
 
-            // Chart Setup
+            const savedTheme = localStorage.getItem('theme') || 'light';
+            document.documentElement.setAttribute('data-theme', savedTheme);
+            function toggleTheme() {{
+                const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+                document.documentElement.setAttribute('data-theme', next);
+                localStorage.setItem('theme', next);
+                chart.options.scales.y.grid.color = next === 'dark' ? '#334155' : '#e2e8f0';
+                chart.update();
+            }}
+
             const ctx = document.getElementById('trendChart').getContext('2d');
-            new Chart(ctx, {{
+            const chart = new Chart(ctx, {{
                 type: 'line',
                 data: {{
                     labels: {js_chart_labels},
                     datasets: [{{
-                        label: 'Durchschnittsbewertung (Täglich)',
-                        data: {js_chart_values},
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        tension: 0.3,
-                        fill: true
+                        label: 'Ø Bewertung', data: {js_chart_values},
+                        borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', tension: 0.3, fill: true
                     }}]
                 }},
-                options: {{
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    scales: {{ y: {{ min: 1, max: 5 }} }}
-                }}
+                options: {{ responsive: true, maintainAspectRatio: false, scales: {{ y: {{ min: 1, max: 5 }} }} }}
             }});
 
             function setFilter(app, btn) {{
@@ -396,47 +378,31 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filterData();
             }}
 
-            function copyText(text) {{
-                navigator.clipboard.writeText(text);
-                alert('Review kopiert!');
-            }}
+            function copyText(text) {{ navigator.clipboard.writeText(text); alert('Kopiert!'); }}
 
             function filterData() {{
                 const q = document.getElementById('search').value.toLowerCase();
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
-
                 const filtered = REVIEWS.filter(r => {{
-                    const matchesApp = currentFilter === 'all' || r.app === currentFilter;
-                    const matchesSearch = (r.text + r.store).toLowerCase().includes(q);
-                    return matchesApp && matchesSearch;
+                    return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
                 }});
-
-                if (filtered.length === 0) {{
-                    container.innerHTML = '<div style="text-align:center; color:#94a3b8; padding:20px;">Keine Ergebnisse gefunden.</div>';
-                    return;
-                }}
-
+                if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5">Keine Ergebnisse</div>'; return; }}
+                
                 filtered.slice(0, 50).forEach(r => {{
-                    const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    const stars = '⭐'.repeat(r.rating);
-                    
+                    const icon = r.store === 'ios' ? '<i class="fab fa-apple"></i>' : '<i class="fab fa-android"></i>';
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
-                        <div class="meta">
-                            <span style="display:flex; align-items:center; gap:8px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{stars}} • ${{r.date}}
-                            </span>
-                            <i class="fas fa-copy copy-btn" title="Text kopieren" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
+                        <div style="display:flex; justify-content:space-between; opacity:0.7; font-size:0.9rem;">
+                            <span>${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐ • ${{r.date}}</span>
+                            <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
-                        <div style="line-height:1.5; color:#334155;">${{r.text}}</div>
+                        <div style="margin-top:10px;">${{r.text}}</div>
                     `;
                     container.appendChild(div);
                 }});
             }}
-
-            // Init
             filterData();
         </script>
     </body>
@@ -451,18 +417,16 @@ def run_analysis_and_generate_html(full_history, new_only):
 # 6. MAIN
 # ---------------------------------------------------------
 if __name__ == "__main__":
-    full_history, new_reviews = get_fresh_reviews()
-    save_history({r['id']: r for r in full_history})
-    run_analysis_and_generate_html(full_history, new_reviews)
+    full, new = get_fresh_reviews()
+    save_history({r['id']: r for r in full})
+    run_analysis_and_generate_html(full, new)
 
-    teams_url = os.getenv("TEAMS_WEBHOOK_URL")
-    if teams_url and new_reviews:
-        pos = sum(1 for r in new_reviews if r['rating']>=4)
-        neg = sum(1 for r in new_reviews if r['rating']<=2)
-        txt = f"🚀 **FEEDBACK UPDATE** ({len(new_reviews)})\n\n👍 {pos} | 🚨 {neg}\n\n"
-        for r in new_reviews[:3]: txt += f"- {r['rating']}★ {r['app']}: {r['text'][:50]}...\n"
-        txt += "\n[Zum Pro-Dashboard](https://Hatozoro.github.io/feedback-agent/)"
-        try: requests.post(teams_url, json={"text": txt})
+    teams = os.getenv("TEAMS_WEBHOOK_URL")
+    if teams and new:
+        pos = sum(1 for r in new if r['rating']>=4)
+        neg = sum(1 for r in new if r['rating']<=2)
+        txt = f"🚀 **FEEDBACK UPDATE** ({len(new)})\n\n👍 {pos} | 🚨 {neg}\n[Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+        try: requests.post(teams, json={"text": txt})
         except: pass
 
     print("✅ Fertig.")
