@@ -69,7 +69,6 @@ def save_history(history_dict):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
 
-# Berechnung der KPIs (7 Tage, 30 Tage, Gesamt)
 def calculate_trends(reviews):
     today = datetime.now().date()
     dated_reviews = []
@@ -90,17 +89,17 @@ def calculate_trends(reviews):
         return round(sum(filtered) / len(filtered), 2) if filtered else 0.0
 
     overall_avg = round(sum(r['rating'] for r in reviews) / len(reviews), 2)
-
     return {
         'overall': overall_avg,
         'last_7d': get_avg_for_days(7),
         'last_30d': get_avg_for_days(30)
     }
 
-# Daten für den Chart.js Graphen vorbereiten
+# NEU: Bereitet Daten für 2 Achsen vor (Rating UND Anzahl)
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     daily_stats = {}
+    # Letzte X Tage initialisieren
     for i in range(days):
         date_key = (today - timedelta(days=i)).strftime('%Y-%m-%d')
         daily_stats[date_key] = {'sum': 0, 'count': 0}
@@ -112,13 +111,16 @@ def prepare_chart_data(reviews, days=14):
             daily_stats[d]['count'] += 1
 
     labels = sorted(daily_stats.keys())
-    data_points = []
+    ratings = []
+    counts = []
+
     for date in labels:
         stats = daily_stats[date]
         avg = round(stats['sum'] / stats['count'], 2) if stats['count'] > 0 else None
-        data_points.append(avg)
+        ratings.append(avg)
+        counts.append(stats['count'])
 
-    return {'labels': labels, 'data': data_points}
+    return {'labels': labels, 'ratings': ratings, 'counts': counts}
 
 # ---------------------------------------------------------
 # 3. SCRAPING
@@ -216,27 +218,29 @@ def get_semantic_topics(reviews, num_clusters=5):
         return ["Technische Probleme", "Login", "App-Qualität", "Inhalte", "Sonstiges"]
 
 # ---------------------------------------------------------
-# 5. HTML GENERIERUNG (FIXED KPIS)
+# 5. HTML GENERIERUNG (VERSION 4.0)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
-    # KPIs berechnen
     trend_metrics = calculate_trends(full_history)
-    # Chart Daten vorbereiten
     chart_data = prepare_chart_data(full_history)
-    # Themen
     topics = get_semantic_topics(full_history)
 
-    # KI Analyse
     ki_output = {"summary": "Keine Analyse.", "topReviews": [], "bottomReviews": []}
     analysis_set = full_history[:50]
     if model and analysis_set:
         print("--- Starte KI Deep Dive ---")
+        # FIX: Wir übergeben den App-Namen explizit im Prompt-Daten-Objekt
+        prompt_data = [{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in analysis_set]
+
         prompt = f"""
         Analysiere diese App-Reviews.
         1. Schreibe ein Management Summary (Deutsch).
         2. Wähle 3 Top-Reviews (Positiv) und 3 Bottom-Reviews (Negativ).
+        
+        WICHTIG: Gib im JSON für jedes Review auch 'app', 'store' und 'rating' exakt so zurück, wie sie in den Daten stehen.
+        
         Output JSON: {{ "summary": "...", "topReviews": [{{...}}], "bottomReviews": [{{...}}] }}
-        Data: {json.dumps([{'text': r['text'], 'rating': r['rating'], 'store': r['store']} for r in analysis_set], ensure_ascii=False)}
+        Data: {json.dumps(prompt_data, ensure_ascii=False)}
         """
         try:
             resp = model.generate_content(prompt)
@@ -244,16 +248,28 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_output.update(json.loads(text))
         except: pass
 
+    # Fallback, falls KI Felder leer lässt oder 'app' vergisst: Wir füllen Daten aus der Historie auf
+    # Dies behebt das "None" Problem
+    for review_list in [ki_output.get('topReviews', []), ki_output.get('bottomReviews', [])]:
+        for r in review_list:
+            if not r.get('app') or r.get('app') == 'None':
+                # Versuch das Review im Original-Set zu finden
+                match = next((x for x in analysis_set if x['text'][:20] == r.get('text', '')[:20]), None)
+                if match:
+                    r['app'] = match['app']
+                    r['store'] = match['store']
+                    r['rating'] = match['rating']
+
     # Datenaufbereitung für JS
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_chart_labels = json.dumps(chart_data['labels'])
-    js_chart_values = json.dumps(chart_data['data'])
+    js_chart_ratings = json.dumps(chart_data['ratings'])
+    js_chart_counts = json.dumps(chart_data['counts'])
 
     summary_text = ki_output.get('summary', '')
     if isinstance(summary_text, (dict, list)): summary_text = str(summary_text)
     summary_text = summary_text.strip().replace('{', '').replace('}', '')
 
-    # HTML
     html = f"""
     <!DOCTYPE html>
     <html lang="de" data-theme="light">
@@ -267,10 +283,13 @@ def run_analysis_and_generate_html(full_history, new_only):
             :root {{
                 --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0;
                 --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05);
+                --ios-color: #000000; --android-color: #3DDC84;
+                --grid-color: #e2e8f0;
             }}
             [data-theme="dark"] {{
                 --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155;
                 --primary: #3b82f6; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3);
+                --ios-color: #ffffff; --grid-color: #334155;
             }}
             body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
@@ -280,7 +299,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
             .card {{ background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px var(--shadow); border: 1px solid var(--border); }}
             .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); }}
-            .chart-container {{ background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 300px; }}
+            .chart-container {{ background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
             .summary-box {{ background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             .tag {{ display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
@@ -289,8 +308,12 @@ def run_analysis_and_generate_html(full_history, new_only):
             .review-card.pos {{ border-top: 4px solid #22c55e; }}
             .review-card.neg {{ border-top: 4px solid #ef4444; }}
             
+            /* Icons Color Fix */
+            .icon-android {{ color: var(--android-color); }}
+            .icon-ios {{ color: var(--ios-color); }}
+
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }}
-            .filter-btn {{ padding: 10px 20px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; }}
+            .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; margin-right: 5px; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }}
             .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
@@ -317,8 +340,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 <div><h3>👍 Top Stimmen</h3>{''.join([f'''
                     <div class="review-card pos">
                         <div style="opacity:0.7; font-size:0.9rem;">
-                            <span>{'<i class="fab fa-apple"></i>' if r.get('store')=='ios' else '<i class="fab fa-android"></i>'} {r.get('rating')}★</span>
-                            <span>{r.get('app')}</span>
+                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} {r.get('rating')}★ {r.get('app')}</span>
                         </div>
                         <div style="font-style:italic">"{r.get('text')}"</div>
                     </div>''' for r in ki_output.get('topReviews', [])[:3]])}
@@ -326,8 +348,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 <div><h3>⚠️ Kritische Stimmen</h3>{''.join([f'''
                     <div class="review-card neg">
                         <div style="opacity:0.7; font-size:0.9rem;">
-                            <span>{'<i class="fab fa-apple"></i>' if r.get('store')=='ios' else '<i class="fab fa-android"></i>'} {r.get('rating')}★</span>
-                            <span>{r.get('app')}</span>
+                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} {r.get('rating')}★ {r.get('app')}</span>
                         </div>
                         <div style="font-style:italic">"{r.get('text')}"</div>
                     </div>''' for r in ki_output.get('bottomReviews', [])[:3]])}
@@ -335,66 +356,126 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
-            <div style="display:flex; gap:10px; margin-bottom:20px; flex-wrap:wrap;">
+            
+            <div style="display:flex; gap:10px; margin-bottom:10px; flex-wrap:wrap;">
                 <input type="text" class="search-input" id="search" placeholder="Suchen..." onkeyup="filterData()">
-                <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+            </div>
+            <div style="margin-bottom:20px;">
+                <button class="filter-btn active" onclick="setFilter('all', this)">Alle Apps</button>
                 <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
                 <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
+                <span style="margin: 0 10px; color:var(--border);">|</span>
+                <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
+                <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
             </div>
+
             <div id="list-container" style="display:grid; gap:15px;"></div>
         </div>
 
         <script>
             const REVIEWS = {js_reviews};
             let currentFilter = 'all';
+            let currentSort = 'newest';
 
+            // Theme
             const savedTheme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', savedTheme);
+            
             function toggleTheme() {{
                 const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', next);
                 localStorage.setItem('theme', next);
-                chart.options.scales.y.grid.color = next === 'dark' ? '#334155' : '#e2e8f0';
-                chart.update();
+                updateChartColors();
             }}
 
+            // Chart
             const ctx = document.getElementById('trendChart').getContext('2d');
-            const chart = new Chart(ctx, {{
-                type: 'line',
+            let chart = new Chart(ctx, {{
+                type: 'bar',
                 data: {{
                     labels: {js_chart_labels},
-                    datasets: [{{
-                        label: 'Ø Bewertung', data: {js_chart_values},
-                        borderColor: '#2563eb', backgroundColor: 'rgba(37, 99, 235, 0.1)', tension: 0.3, fill: true
-                    }}]
+                    datasets: [
+                        {{
+                            type: 'line',
+                            label: 'Ø Bewertung',
+                            data: {js_chart_ratings},
+                            borderColor: '#2563eb',
+                            borderWidth: 3,
+                            tension: 0.4,
+                            yAxisID: 'y'
+                        }},
+                        {{
+                            type: 'bar',
+                            label: 'Anzahl Reviews',
+                            data: {js_chart_counts},
+                            backgroundColor: 'rgba(37, 99, 235, 0.2)',
+                            borderRadius: 4,
+                            yAxisID: 'y1'
+                        }}
+                    ]
                 }},
-                options: {{ responsive: true, maintainAspectRatio: false, scales: {{ y: {{ min: 1, max: 5 }} }} }}
+                options: {{
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {{
+                        y: {{ min: 1, max: 5, position: 'left', grid: {{ color: '#e2e8f0' }} }},
+                        y1: {{ position: 'right', grid: {{ drawOnChartArea: false }} }},
+                        x: {{ grid: {{ display: false }} }}
+                    }}
+                }}
             }});
+            
+            function updateChartColors() {{
+                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+                const gridColor = isDark ? '#334155' : '#e2e8f0';
+                chart.options.scales.y.grid.color = gridColor;
+                chart.update();
+            }}
+            updateChartColors(); // Init
 
             function setFilter(app, btn) {{
                 currentFilter = app;
-                document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+                // Nur Filter-Buttons resetten (die ersten 3)
+                const btns = document.querySelectorAll('.filter-btn');
+                btns[0].classList.remove('active'); btns[1].classList.remove('active'); btns[2].classList.remove('active');
                 btn.classList.add('active');
                 filterData();
             }}
 
-            function copyText(text) {{ navigator.clipboard.writeText(text); alert('Kopiert!'); }}
+            function setSort(mode, btn) {{
+                currentSort = mode;
+                // Sortier Buttons resetten (ab Index 3)
+                const btns = document.querySelectorAll('.filter-btn');
+                btns[3].classList.remove('active'); btns[4].classList.remove('active'); btns[5].classList.remove('active');
+                btn.classList.add('active');
+                filterData();
+            }}
+
+            function copyText(text) {{ navigator.clipboard.writeText(text); }}
 
             function filterData() {{
                 const q = document.getElementById('search').value.toLowerCase();
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
-                const filtered = REVIEWS.filter(r => {{
+
+                let filtered = REVIEWS.filter(r => {{
                     return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
                 }});
+
+                // Sortierung
+                if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
+                if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
+                if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
+
                 if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5">Keine Ergebnisse</div>'; return; }}
-                
+
                 filtered.slice(0, 50).forEach(r => {{
-                    const icon = r.store === 'ios' ? '<i class="fab fa-apple"></i>' : '<i class="fab fa-android"></i>';
+                    const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.7; font-size:0.9rem;">
+                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem;">
                             <span>${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐ • ${{r.date}}</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
@@ -403,6 +484,9 @@ def run_analysis_and_generate_html(full_history, new_only):
                     container.appendChild(div);
                 }});
             }}
+            
+            // Init default sort btn
+            document.querySelectorAll('.filter-btn')[3].classList.add('active');
             filterData();
         </script>
     </body>
@@ -411,7 +495,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f: f.write(html)
-    print("✅ Pro-Dashboard generiert.")
+    print("✅ Pro-Dashboard v4.0 generiert.")
 
 # ---------------------------------------------------------
 # 6. MAIN
