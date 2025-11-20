@@ -8,17 +8,8 @@
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
-            :root {
-                --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0;
-                --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05);
-                --ios-color: #000000; --android-color: #3DDC84;
-                --grid-color: #e2e8f0;
-            }
-            [data-theme="dark"] {
-                --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155;
-                --primary: #3b82f6; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3);
-                --ios-color: #ffffff; --grid-color: #334155;
-            }
+            :root { --bg: #f8fafc; --text: #1e293b; --card-bg: #ffffff; --border: #e2e8f0; --primary: #2563eb; --summary-bg: #eff6ff; --shadow: rgba(0,0,0,0.05); --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e; }
+            [data-theme="dark"] { --bg: #0f172a; --text: #e2e8f0; --card-bg: #1e293b; --border: #334155; --primary: #3b82f6; --ios: #fff; --summary-bg: #1e293b; --shadow: rgba(0,0,0,0.3); --mark-bg: #854d0e; --mark-text: #fef08a; }
             body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
             .container { max-width: 1100px; margin: 0 auto; }
             header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
@@ -27,76 +18,68 @@
             .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
             .card { background: var(--card-bg); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px var(--shadow); border: 1px solid var(--border); }
             .kpi-val { font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }
-            .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; letter-spacing: 0.5px; }
+            .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }
             
             .chart-container { background: var(--card-bg); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }
             .summary-box { background: var(--summary-bg); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }
+            
             .tag { display: inline-block; background: var(--card-bg); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
+            .buzzword { display: inline-block; margin: 0 10px 5px 0; color: var(--text); opacity: 0.8; }
             
             .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
             .review-card { background: var(--card-bg); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px var(--shadow); }
             .review-card.pos { border-top: 4px solid #22c55e; }
             .review-card.neg { border-top: 4px solid #ef4444; }
             
-            .icon-android { color: var(--android-color); } .icon-ios { color: var(--ios-color); }
+            .icon-android { color: var(--android); } .icon-ios { color: var(--ios); }
             .copy-btn { cursor: pointer; float: right; opacity: 0.5; } .copy-btn:hover { opacity: 1; color: var(--primary); }
             
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card-bg); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
-            .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
             .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card-bg); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
 
             .review-text { margin-top: 8px; line-height: 1.5; position: relative; }
+            .review-text mark { background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }
             .review-text.clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
             .read-more { color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }
+            .meta { font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }
         </style>
     </head>
     <body>
         <div class="container">
             <header>
-                <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 20.11.2025 14:38</span>
-                </div>
+                <div><h1 style="margin:0;">📊 App Feedback Pro</h1><span style="opacity:0.7;">Update: 20.11.2025 15:24</span></div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
             <div class="kpi-grid">
-                <div class="card">
-                    <div class="kpi-label">Gesamt Ø</div>
-                    <div class="kpi-val">1.86 <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Trend (7 Tage)</div>
-                    <div class="kpi-val">2.0 <span style="font-size:1.5rem">⭐</span></div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Erfasste Reviews</div>
-                    <div class="kpi-val">81</div>
-                </div>
+                <div class="card"><div class="kpi-label">Gesamt Ø</div><div class="kpi-val">1.86 ⭐</div></div>
+                <div class="card"><div class="kpi-label">Trend (7 Tage)</div><div class="kpi-val">2.0 ⭐</div></div>
+                <div class="card"><div class="kpi-label">Erfasste Reviews</div><div class="kpi-val">81</div></div>
             </div>
 
-            <div class="chart-container">
-                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="chart-container"><canvas id="trendChart"></canvas></div>
             
-            <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die App-Reviews zeigen erhebliche Probleme mit der Stabilität und Benutzerfreundlichkeit der Apps Schwäbische und Nordkurier. Viele Nutzer berichten von Abstürzen, Flackern und Problemen mit der Cookie-Verwaltung. Besonders die Suchfunktion und das Handling der Seiten werden kritisiert. Diese Mängel führen zu Frustration und Kündigungen von Abonnements.</p>
-                <div style="margin-top:15px;">
-                    <strong>Themen:</strong><br>
-                    <span class="tag"># Datumsproblematik</span> <span class="tag"># Cookie Bestätigung</span> <span class="tag"># Download Fehler</span> <span class="tag"># App Abstürze</span> <span class="tag"># Regionsauswahl</span> 
+            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>Die App Schwäbische und Nordkurier erhält überwiegend negative Bewertungen, wobei viele Nutzer über häufige Abstürze, Flackern des Bildschirms und das abrupte Schließen der App berichten. Ein weiteres Problem ist die Cookie-Verwaltung, die immer wieder neu eingestellt werden muss. Einige Nutzer bemängeln auch die Qualität der Vorlesefunktion und Schwierigkeiten beim Navigieren innerhalb der App. Vereinzelt gibt es positive Rückmeldungen, die die grundsätzliche Brauchbarkeit der App hervorheben, diese werden jedoch von den häufigen technischen Problemen überschattet. Besonders kritisiert wird, dass die Probleme trotz mehrfacher Hinweise an den Support nicht behoben werden. Einige Nutzer drohen mit der Kündigung ihres Abonnements.</div>
+
+            <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
+                <div class="col" style="flex:1;">
+                    <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
+                    <span class="tag"># Datumsproblematik</span> <span class="tag"># Cookie-Bestätigung</span> <span class="tag"># Download-Probleme</span> <span class="tag"># App-Abstürze</span> <span class="tag"># Regionen-Auswahl</span> 
+                </div>
+                <div class="col" style="flex:1;">
+                    <h3 style="margin-bottom: 15px;">☁️ Häufige Begriffe</h3>
+                    <div style="background:var(--card-bg); padding:15px; border-radius:12px; border:1px solid var(--border);">
+                        <span class="buzzword" style="font-size:20.0px">lesen (20)</span> <span class="buzzword" style="font-size:18.5px">zeitung (17)</span> <span class="buzzword" style="font-size:15.5px">öffnen (11)</span> <span class="buzzword" style="font-size:15.5px">update (11)</span> <span class="buzzword" style="font-size:15.5px">beim (11)</span> <span class="buzzword" style="font-size:15.5px">nichts (11)</span> <span class="buzzword" style="font-size:15.0px">stürzt (10)</span> <span class="buzzword" style="font-size:15.0px">leider (10)</span> <span class="buzzword" style="font-size:14.5px">schon (9)</span> <span class="buzzword" style="font-size:14.0px">seite (8)</span> <span class="buzzword" style="font-size:14.0px">einfach (8)</span> <span class="buzzword" style="font-size:13.5px">ipad (7)</span> <span class="buzzword" style="font-size:13.5px">version (7)</span> <span class="buzzword" style="font-size:13.5px">geht (7)</span> <span class="buzzword" style="font-size:13.0px">soll (6)</span> <span class="buzzword" style="font-size:13.0px">schwäbische (6)</span> <span class="buzzword" style="font-size:13.0px">zeit (6)</span> <span class="buzzword" style="font-size:13.0px">cookies (6)</span> <span class="buzzword" style="font-size:13.0px">problem (6)</span> <span class="buzzword" style="font-size:13.0px">probleme (6)</span> 
+                    </div>
                 </div>
             </div>
 
             <div class="review-grid">
-                <div>
-                    <h3>👍 Top Stimmen</h3>
-                    
+                <div><h3>👍 Top Stimmen</h3>
                     <div class="review-card pos">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
                             <span>4★</span>
                         </div>
@@ -106,7 +89,7 @@
                         </div>
                     </div>
                     <div class="review-card pos">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
                             <span>5★</span>
                         </div>
@@ -116,7 +99,7 @@
                         </div>
                     </div>
                     <div class="review-card pos">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>5★</span>
                         </div>
@@ -126,11 +109,9 @@
                         </div>
                     </div>
                 </div>
-                <div>
-                    <h3>⚠️ Kritische Stimmen</h3>
-                    
+                <div><h3>⚠️ Kritische Stimmen</h3>
                     <div class="review-card neg">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>1★</span>
                         </div>
@@ -155,7 +136,7 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                         </div>
                     </div>
                     <div class="review-card neg">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>1★</span>
                         </div>
@@ -165,7 +146,7 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                         </div>
                     </div>
                     <div class="review-card neg">
-                        <div style="opacity:0.7; font-size:0.9rem; display:flex; justify-content:space-between;">
+                        <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
                             <span>2★</span>
                         </div>
@@ -187,16 +168,12 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 <div style="flex:1; min-width: 300px;">
                     <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 </div>
-                
                 <div class="filter-group">
-                    <span class="filter-label">App:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
                     <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
                     <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
                 </div>
-
                 <div class="filter-group">
-                    <span class="filter-label">Sortierung:</span>
                     <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
                     <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
                     <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
@@ -213,7 +190,6 @@ Daher aktuell nur 2 Sterne möglich.</div>
 
             const theme = localStorage.getItem('theme') || 'light';
             document.documentElement.setAttribute('data-theme', theme);
-            
             function toggleTheme() {
                 const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
                 document.documentElement.setAttribute('data-theme', newTheme);
@@ -234,18 +210,13 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
-                    scales: { 
-                        x: { stacked: true, grid: { display: false } }, 
-                        y: { stacked: true, grid: { color: '#e2e8f0' } } 
-                    },
-                    plugins: { legend: { position: 'bottom' } }
+                    scales: { x: { stacked: true, grid: { display: false } }, y: { stacked: true, grid: { color: '#e2e8f0' } } }
                 }
             });
-            
+
             function updateChartColors() {
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                const gridColor = isDark ? '#334155' : '#e2e8f0';
-                chart.options.scales.y.grid.color = gridColor;
+                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
                 chart.update();
             }
             updateChartColors();
@@ -288,7 +259,7 @@ Daher aktuell nur 2 Sterne möglich.</div>
             function copyText(text) { navigator.clipboard.writeText(text); alert('Text kopiert!'); }
 
             function filterData() {
-                const q = document.getElementById('search').value.toLowerCase();
+                const q = document.getElementById('search').value.toLowerCase().trim();
                 const container = document.getElementById('list-container');
                 container.innerHTML = '';
 
@@ -304,25 +275,32 @@ Daher aktuell nur 2 Sterne möglich.</div>
 
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    const stars = '⭐'.repeat(r.rating);
+                    
+                    // HIGHLIGHTING LOGIC (JS Concatenation Fix)
+                    let displayText = r.text;
+                    if (q.length >= 2) {
+                        const regex = new RegExp('(' + q + ')', 'gi'); // <--- HIER IST DER FIX
+                        displayText = displayText.replace(regex, '<mark>$1</mark>');
+                    }
                     
                     const div = document.createElement('div');
                     div.className = 'review-card';
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${icon} <strong>${r.app}</strong> • ${stars}
+                                ${icon} <strong>${r.app}</strong> • ${r.rating}⭐
                             </span>
                             <span>${r.fmt_date || r.date}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            ${r.text}
-                            <i class="fas fa-copy copy-btn" style="margin-left:10px;" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
+                            <span class="review-text">${displayText}</span>
+                            <i class="fas fa-copy copy-btn" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 });
             }
+            
             filterData();
         </script>
     </body>
