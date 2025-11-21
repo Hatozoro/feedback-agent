@@ -187,7 +187,7 @@ def get_ai_buzzwords(reviews):
     except: return []
 
 # ---------------------------------------------------------
-# 5. DASHBOARD GENERATOR (SMART SEARCH FIX)
+# 5. DASHBOARD GENERATOR (DEDUPLICATION FIX & DESIGN)
 # ---------------------------------------------------------
 def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
@@ -213,29 +213,64 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_data.update(json.loads(resp.text.replace("```json","").replace("```","").strip()))
         except: pass
 
-    # Fallback
-    top_list = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)[:3]
-    bot_list = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)[:3]
-    if not top_list: top_list = ki_data.get('topReviews', [])
-    if not bot_list: bot_list = ki_data.get('bottomReviews', [])
+    # --- ANTI-DOPPELGÄNGER LOGIK ---
 
+    # Sets zum Speichern bereits genutzter Texte, um Duplikate zu vermeiden
+    seen_texts = set()
+
+    top_list = []
+    bot_list = []
+
+    # 1. Python Filter (Strenge Logik)
+    candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_pos:
+        if len(top_list) >= 3: break
+        if r['text'] not in seen_texts:
+            top_list.append(r)
+            seen_texts.add(r['text'])
+
+    candidates_neg = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_neg:
+        if len(bot_list) >= 3: break
+        if r['text'] not in seen_texts:
+            bot_list.append(r)
+            seen_texts.add(r['text'])
+
+    # 2. KI Fallback (Nur wenn Python nichts gefunden hat)
+    if len(top_list) < 1:
+        for r in ki_data.get('topReviews', []):
+            if len(top_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                top_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    if len(bot_list) < 1:
+        for r in ki_data.get('bottomReviews', []):
+            if len(bot_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                bot_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    # Metadaten auffüllen
     for r in top_list + bot_list:
         if not r.get('app'):
             m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
             if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
+
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # HTML BUZZWORDS
+    # HTML BUZZWORDS (Nur Visuell, kein Klick)
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
+        # Kein onclick mehr!
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
@@ -279,16 +314,15 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
-            /* BUZZWORD DESIGN (INTERAKTIV) */
+            /* BUZZWORD DESIGN (STATIC) */
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
+                display: inline-flex; align-items: center; 
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                color: var(--text); font-weight: 500;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -393,11 +427,26 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap;">
-                <input type="text" class="search-input" id="search" placeholder="Suche..." onkeyup="filterData()" style="flex:1;">
-                <div class="filter-group"><button class="filter-btn active" onclick="setFilter('all', this)">Alle</button><button class="filter-btn" onclick="setFilter('Nordkurier', this)">NK</button><button class="filter-btn" onclick="setFilter('Schwäbische', this)">SZ</button></div>
-                <div class="filter-group"><button class="filter-btn" onclick="setSort('newest', this)">Neu</button><button class="filter-btn" onclick="setSort('best', this)">Beste</button><button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button></div>
+            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
+                <div style="flex:1; min-width: 300px;">
+                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+                </div>
+                
+                <div class="filter-group">
+                    <span class="filter-label">App:</span>
+                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">NK</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">SZ</button>
+                </div>
+
+                <div class="filter-group">
+                    <span class="filter-label">Sortierung:</span>
+                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
+                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                </div>
             </div>
+
             <div id="list-container" style="display:grid; gap:15px;"></div>
         </div>
 
@@ -479,13 +528,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filterData();
             }}
 
-            function setSearch(term) {{
-                const input = document.getElementById('search');
-                input.value = term;
-                filterData();
-                input.scrollIntoView({{behavior: 'smooth'}});
-            }}
-
             function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
@@ -506,11 +548,10 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC (SPLIT SEARCH FIX)
+                    // HIGHLIGHTING LOGIC (JS Syntax Fix)
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
-                        // Prüfen ob ALLE Begriffe vorkommen (AND-Suche)
                         const allFound = terms.every(term => r.text.toLowerCase().includes(term));
                         
                         if (allFound) {{
@@ -519,7 +560,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                                 displayText = displayText.replace(regex, '<mark>$1</mark>');
                             }});
                         }} else {{
-                            return; // Überspringe dieses Review, wenn nicht alle Begriffe passen
+                            return;
                         }}
                     }}
                     
@@ -528,7 +569,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
+                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
