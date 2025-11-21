@@ -184,7 +184,7 @@ def get_semantic_topics(reviews):
     try:
         p = f'Erstelle Labels (1-2 Wörter) für diese Themen: {json.dumps(samples, ensure_ascii=False)}. Output JSON Liste.'
         return json.loads(model.generate_content(p).text.replace("```json","").replace("```","").strip())
-    except: return ["Technische Probleme", "Login", "Inhalte", "Performance"]
+    except: return ["Allgemein"]
 
 # ---------------------------------------------------------
 # 5. DASHBOARD GENERATOR
@@ -213,18 +213,49 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_data.update(json.loads(resp.text.replace("```json","").replace("```","").strip()))
         except: pass
 
-    # Fallback
-    top_list = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)[:3]
-    bot_list = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)[:3]
-    if not top_list: top_list = ki_data.get('topReviews', [])
-    if not bot_list: bot_list = ki_data.get('bottomReviews', [])
+    # --- ANTI-DOPPELGÄNGER LOGIK (STRIKT) ---
+    seen_texts = set()
+    top_list = []
+    bot_list = []
 
+    # 1. Python Filter
+    candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_pos:
+        if len(top_list) >= 3: break
+        if r['text'] not in seen_texts:
+            top_list.append(r)
+            seen_texts.add(r['text'])
+
+    candidates_neg = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_neg:
+        if len(bot_list) >= 3: break
+        if r['text'] not in seen_texts:
+            bot_list.append(r)
+            seen_texts.add(r['text'])
+
+    # 2. KI Fallback (Nur wenn Python nichts gefunden hat)
+    if len(top_list) < 1:
+        for r in ki_data.get('topReviews', []):
+            if len(top_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                top_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    if len(bot_list) < 1:
+        for r in ki_data.get('bottomReviews', []):
+            if len(bot_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                bot_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    # Metadaten auffüllen
     for r in top_list + bot_list:
         if not r.get('app'):
             m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
             if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
+
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
@@ -234,7 +265,7 @@ def run_analysis_and_generate_html(full_history, new_only):
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
@@ -256,12 +287,12 @@ def run_analysis_and_generate_html(full_history, new_only):
             :root {{ 
                 --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
                 --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-base: 220, 38, 38; --chart-text: #64748b; --chart-grid: #e2e8f0;
+                --buzz-base: 220, 38, 38; 
             }}
             [data-theme="dark"] {{ 
                 --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
                 --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-base: 248, 113, 113; --chart-text: #cbd5e1; --chart-grid: #334155;
+                --buzz-base: 248, 113, 113;
             }}
             body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
@@ -276,17 +307,17 @@ def run_analysis_and_generate_html(full_history, new_only):
             .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
             .summary-box {{ background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             
-            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); font-weight: 500; }}
+            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
+            /* BUZZWORD DESIGN */
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
+                display: inline-flex; align-items: center; 
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                color: var(--text); font-weight: 500;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -298,10 +329,14 @@ def run_analysis_and_generate_html(full_history, new_only):
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
-            .filter-group {{ display: flex; gap: 5px; align-items: center; }}
-            .filter-label {{ font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
-            .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
-            .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
+            
+            /* NEW FILTER GROUP DESIGN */
+            .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
+            .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
+            .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
+            .filter-btn {{ padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }}
+            .filter-btn:hover {{ background: rgba(0,0,0,0.05); }}
+            .filter-btn.active {{ background: var(--primary); color: white; }}
             
             .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
             .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
@@ -348,13 +383,11 @@ def run_analysis_and_generate_html(full_history, new_only):
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <div class="card" style="min-height:100px;">
-                        {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
-                    </div>
+                    {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
-                    <div class="card buzz-container" style="min-height:100px;">
+                    <div class="card buzz-container">
                         {buzz_html}
                     </div>
                 </div>
@@ -393,23 +426,30 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
             
-            <div style="display:flex; gap:15px; margin-bottom:20px; flex-wrap:wrap; align-items: flex-end;">
-                <div style="flex:1; min-width: 300px;">
-                    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
-                </div>
+            <div style="margin-bottom:20px;">
+                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 
-                <div class="filter-group">
-                    <span class="filter-label">Plattform:</span>
-                    <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
-                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
-                </div>
+                <div class="filter-row">
+                    <div class="filter-group">
+                        <span class="filter-label">App</span>
+                        <button class="filter-btn active" onclick="setFilter('app', 'all', this)">Alle</button>
+                        <button class="filter-btn" onclick="setFilter('app', 'Nordkurier', this)">NK</button>
+                        <button class="filter-btn" onclick="setFilter('app', 'Schwäbische', this)">SZ</button>
+                    </div>
+                    
+                    <div class="filter-group">
+                        <span class="filter-label">Store</span>
+                        <button class="filter-btn active" onclick="setFilter('store', 'all', this)">Alle</button>
+                        <button class="filter-btn" onclick="setFilter('store', 'ios', this)"><i class="fab fa-apple"></i></button>
+                        <button class="filter-btn" onclick="setFilter('store', 'android', this)"><i class="fab fa-android"></i></button>
+                    </div>
 
-                <div class="filter-group">
-                    <span class="filter-label">Sortierung:</span>
-                    <button class="filter-btn" onclick="setSort('newest', this)">Neueste</button>
-                    <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
-                    <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                    <div class="filter-group">
+                        <span class="filter-label">Sort</span>
+                        <button class="filter-btn active" onclick="setSort('newest', this)">Neu</button>
+                        <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
+                        <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
+                    </div>
                 </div>
             </div>
 
@@ -418,7 +458,8 @@ def run_analysis_and_generate_html(full_history, new_only):
 
         <script>
             const REVIEWS = {js_reviews};
-            let currentFilter = 'all';
+            let filterApp = 'all';
+            let filterStore = 'all';
             let currentSort = 'newest';
 
             const theme = localStorage.getItem('theme') || 'light';
@@ -445,28 +486,19 @@ def run_analysis_and_generate_html(full_history, new_only):
                 options: {{
                     responsive: true, maintainAspectRatio: false,
                     scales: {{ 
-                        x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ color: '#64748b' }} }}, 
-                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }}, ticks: {{ color: '#64748b', padding: 10 }} }} 
+                        x: {{ stacked: true, grid: {{ display: false }} }}, 
+                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} 
                     }},
-                    plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#64748b' }} }} }}
+                    plugins: {{ legend: {{ position: 'bottom' }} }}
                 }}
             }});
             
             function updateChartColors() {{
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                // Get colors from CSS variables equivalent
-                const textColor = isDark ? '#cbd5e1' : '#64748b';
-                const gridColor = isDark ? '#334155' : '#e2e8f0';
-                
-                chart.options.scales.x.ticks.color = textColor;
-                chart.options.scales.y.ticks.color = textColor;
-                chart.options.scales.y.grid.color = gridColor;
-                chart.options.plugins.legend.labels.color = textColor;
+                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
                 chart.update();
             }}
             updateChartColors();
-
-            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
             function initReadMore() {{
                 document.querySelectorAll('.review-content').forEach(div => {{
@@ -485,11 +517,15 @@ def run_analysis_and_generate_html(full_history, new_only):
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }}
 
-            function setFilter(app, btn) {{
-                currentFilter = app;
+            function setFilter(type, value, btn) {{
+                if (type === 'app') filterApp = value;
+                if (type === 'store') filterStore = value;
+                
+                // Reset active class in group
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
+                
                 filterData();
             }}
             
@@ -501,13 +537,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filterData();
             }}
 
-            function setSearch(term) {{
-                const input = document.getElementById('search');
-                input.value = term;
-                filterData();
-                input.scrollIntoView({{behavior: 'smooth'}});
-            }}
-
             function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
@@ -516,9 +545,10 @@ def run_analysis_and_generate_html(full_history, new_only):
                 container.innerHTML = '';
 
                 let filtered = REVIEWS.filter(r => {{
-                    const storeMatch = (currentFilter === 'all' || r.app === currentFilter);
-                    const searchMatch = (r.text + r.app).toLowerCase().includes(q);
-                    return storeMatch && searchMatch;
+                    const appMatch = (filterApp === 'all' || r.app === filterApp);
+                    const storeMatch = (filterStore === 'all' || r.store === filterStore);
+                    const searchMatch = (r.text + r.store).toLowerCase().includes(q);
+                    return appMatch && storeMatch && searchMatch;
                 }});
 
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
@@ -530,6 +560,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
+                    // HIGHLIGHTING LOGIC
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -555,15 +586,12 @@ def run_analysis_and_generate_html(full_history, new_only):
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            <span class="review-text clamped">${{displayText}}</span>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                            <span class="review-text">${{displayText}}</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 }});
-                
-                initReadMore(); // Re-Init Read More for new items
             }}
             
             filterData();
