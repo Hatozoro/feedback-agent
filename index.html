@@ -20,20 +20,26 @@
             }
             body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
             .container { max-width: 1100px; margin: 0 auto; }
+            
+            /* HEADER */
             header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
             .theme-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
             
+            /* KPI CARDS */
             .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
             .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
             .kpi-val { font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }
             .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }
             
+            /* CHART */
             .chart-container { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }
+            
+            /* SUMMARY */
             .summary-box { background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }
             
+            /* TAGS & BUZZWORDS */
             .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
             
-            /* BUZZWORD DESIGN */
             .buzz-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
             .buzz-tag { 
                 display: inline-flex; align-items: center; 
@@ -44,6 +50,7 @@
             }
             .buzz-tag .count { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }
 
+            /* REVIEWS */
             .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
             .review-card { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
             .review-card.pos { border-top: 4px solid #22c55e; }
@@ -52,9 +59,10 @@
             .icon-android { color: var(--android); } .icon-ios { color: var(--ios); }
             .copy-btn { cursor: pointer; float: right; opacity: 0.5; } .copy-btn:hover { opacity: 1; color: var(--primary); }
             
+            /* FILTER */
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
-            .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
+            .filter-label { font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
             .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             
@@ -70,7 +78,7 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 21.11.2025 13:36</span>
+                    <span style="opacity:0.7;">Update: 21.11.2025 13:53</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -97,18 +105,18 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die analysierten Reviews zeigen, dass die Apps Schwäbische und Nordkurier erhebliche Probleme aufweisen. Hauptsächlich werden Abstürze, Instabilität, Flackern und Probleme beim Scrollen und Zoomen bemängelt. Viele Nutzer berichten von einer Verschlechterung der App-Performance nach Updates. Ein häufiges Problem ist das wiederholte Abfragen von Cookie-Einstellungen. Es gibt auch Beschwerden über fehlende Funktionen wie die Suchfunktion und eine unzureichende Vorlese-Funktion. Einige Nutzer sind unzufrieden mit dem Kundenservice und der fehlenden Reaktion auf gemeldete Fehler. Vereinzelt gibt es positive Rückmeldungen, die sich aber meist auf frühere Versionen oder grundlegende Funktionalität beziehen.</p>
+                <p>Die analysierten Reviews zeigen, dass die Apps Schwäbische und Nordkurier mit erheblichen technischen Problemen zu kämpfen haben. Häufige Abstürze, Flackern, Probleme beim Scrollen und Zoomen sowie Schwierigkeiten mit der Cookie-Verwaltung werden von vielen Nutzern bemängelt. Besonders die Schwäbische App scheint nach einem Relaunch stark an Benutzerfreundlichkeit verloren zu haben. Einige Nutzer berichten von Ignoranz des Supports gegenüber konstruktiver Kritik und erwägen die Kündigung ihres Abonnements. Es gibt aber auch positive Rückmeldungen, die die generelle Nützlichkeit der Apps hervorheben.</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <span class="tag"># Cookie-Bestätigungen</span> <span class="tag"># App-Leistung</span> <span class="tag"># Positive Überraschung</span> <span class="tag"># Download-Probleme</span> <span class="tag"># App-Abstürze</span> 
+                    <span class="tag"># {'label': 'Cookie-Bestätigung'}</span> <span class="tag"># {'label': 'App-Umstellung'}</span> <span class="tag"># {'label': 'Ladefehler'}</span> <span class="tag"># {'label': 'Einstellungen-Speicherung'}</span> <span class="tag"># {'label': 'App-Abstürze'}</span> 
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
                     <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">13</span></span><span class="buzz-tag" style="--intensity:0.8461538461538461;">Cookie-Abfragen / Cookie-Einstellungen <span class="count">11</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Anmeldungsprobleme <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">App öffnet nicht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Springen der Seite beim Zoomen <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Laden der Zeitung nicht möglich <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.23076923076923078;">App flackert <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.23076923076923078;">Suchfunktion fehlt/schlecht <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.23076923076923078;">App hängt/friert ein <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.23076923076923078;">Probleme mit "Aktuelles" <span class="count">3</span></span></div>
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">14</span></span><span class="buzz-tag" style="--intensity:0.6428571428571429;">Cookie-Abfragen <span class="count">9</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Anmeldung erforderlich <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">App öffnet nicht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Suchfunktion fehlt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Probleme beim Seitenwechsel <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">App hängt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Funktioniert nicht <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Aktuelles stürzt ab <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Flackern <span class="count">3</span></span></div>
                     </div>
                 </div>
             </div>
@@ -211,10 +219,10 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 </div>
                 
                 <div class="filter-group">
-                    <span class="filter-label">App:</span>
+                    <span class="filter-label">Plattform:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
-                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
+                    <button class="filter-btn" onclick="setFilter('ios', this)"><i class="fab fa-apple"></i></button>
+                    <button class="filter-btn" onclick="setFilter('android', this)"><i class="fab fa-android"></i></button>
                 </div>
 
                 <div class="filter-group">
@@ -290,8 +298,8 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }
 
-            function setFilter(app, btn) {
-                currentFilter = app;
+            function setFilter(store, btn) {
+                currentFilter = store;
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -314,7 +322,9 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 container.innerHTML = '';
 
                 let filtered = REVIEWS.filter(r => {
-                    return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
+                    const storeMatch = (currentFilter === 'all' || r.store === currentFilter);
+                    const searchMatch = (r.text + r.app).toLowerCase().includes(q);
+                    return storeMatch && searchMatch;
                 });
 
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
@@ -326,11 +336,10 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // SMART SEARCH & HIGHLIGHT
+                    // SMART SEARCH HIGHLIGHTING
                     let displayText = r.text;
                     if (q.length >= 2) {
                         const terms = q.split(' ').filter(t => t.length > 1);
-                        // Prüfen ob ALLE Wörter vorkommen
                         const allFound = terms.every(term => r.text.toLowerCase().includes(term));
                         
                         if (allFound) {
@@ -339,7 +348,7 @@ Daher aktuell nur 2 Sterne möglich.</div>
                                 displayText = displayText.replace(regex, '<mark>$1</mark>');
                             });
                         } else {
-                            return; // Überspringe dieses Review, wenn nicht alle Begriffe passen
+                            return;
                         }
                     }
                     
