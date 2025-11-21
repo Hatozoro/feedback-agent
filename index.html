@@ -11,46 +11,39 @@
             :root { 
                 --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
                 --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-base: 220, 38, 38; 
+                --buzz-base: 220, 38, 38; --chart-text: #64748b; --chart-grid: #e2e8f0;
             }
             [data-theme="dark"] { 
                 --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
                 --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-base: 248, 113, 113;
+                --buzz-base: 248, 113, 113; --chart-text: #cbd5e1; --chart-grid: #334155;
             }
             body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
             .container { max-width: 1100px; margin: 0 auto; }
-            
-            /* HEADER */
             header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }
             .theme-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
             
-            /* KPI CARDS */
             .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
             .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
             .kpi-val { font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }
             .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }
             
-            /* CHART */
             .chart-container { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }
-            
-            /* SUMMARY */
             .summary-box { background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }
             
-            /* TAGS & BUZZWORDS */
-            .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
+            .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); font-weight: 500; }
             
             .buzz-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
             .buzz-tag { 
-                display: inline-flex; align-items: center; 
+                display: inline-flex; align-items: center; cursor: pointer;
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500;
+                color: var(--text); font-weight: 500; transition: transform 0.2s;
             }
+            .buzz-tag:hover { transform: scale(1.05); border-color: var(--primary); }
             .buzz-tag .count { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }
 
-            /* REVIEWS */
             .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
             .review-card { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
             .review-card.pos { border-top: 4px solid #22c55e; }
@@ -59,7 +52,6 @@
             .icon-android { color: var(--android); } .icon-ios { color: var(--ios); }
             .copy-btn { cursor: pointer; float: right; opacity: 0.5; } .copy-btn:hover { opacity: 1; color: var(--primary); }
             
-            /* FILTER */
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
             .filter-label { font-size: 0.85rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
@@ -78,7 +70,7 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 21.11.2025 13:53</span>
+                    <span style="opacity:0.7;">Update: 21.11.2025 14:09</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -105,18 +97,20 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die analysierten Reviews zeigen, dass die Apps Schwäbische und Nordkurier mit erheblichen technischen Problemen zu kämpfen haben. Häufige Abstürze, Flackern, Probleme beim Scrollen und Zoomen sowie Schwierigkeiten mit der Cookie-Verwaltung werden von vielen Nutzern bemängelt. Besonders die Schwäbische App scheint nach einem Relaunch stark an Benutzerfreundlichkeit verloren zu haben. Einige Nutzer berichten von Ignoranz des Supports gegenüber konstruktiver Kritik und erwägen die Kündigung ihres Abonnements. Es gibt aber auch positive Rückmeldungen, die die generelle Nützlichkeit der Apps hervorheben.</p>
+                <p>Die analysierten Reviews zeigen, dass viele Nutzer Probleme mit der Stabilität und Funktionalität der Apps Schwäbische und Nordkurier haben. Häufige Abstürze, Flackern des Bildschirms, Probleme beim Scrollen und Zoomen, sowie Schwierigkeiten mit der Cookie-Verwaltung werden kritisiert. Einige Nutzer bemängeln auch das Fehlen von Funktionen wie der Suchfunktion in älteren Ausgaben. Es gibt aber auch positive Rückmeldungen, die die generelle Verfügbarkeit und den Informationsgehalt der App loben, auch wenn diese in der Minderheit sind.</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <span class="tag"># {'label': 'Cookie-Bestätigung'}</span> <span class="tag"># {'label': 'App-Umstellung'}</span> <span class="tag"># {'label': 'Ladefehler'}</span> <span class="tag"># {'label': 'Einstellungen-Speicherung'}</span> <span class="tag"># {'label': 'App-Abstürze'}</span> 
+                    <div class="card" style="min-height:100px;">
+                        <span class="tag"># App-Abstürze</span> <span class="tag"># Performance-Probleme</span> <span class="tag"># Download-Probleme</span> <span class="tag"># Cookie-Ärgernis</span> <span class="tag"># Teilweiser Download</span> 
+                    </div>
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
-                    <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">14</span></span><span class="buzz-tag" style="--intensity:0.6428571428571429;">Cookie-Abfragen <span class="count">9</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Anmeldung erforderlich <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">App öffnet nicht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Suchfunktion fehlt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">Probleme beim Seitenwechsel <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;">App hängt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Funktioniert nicht <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Aktuelles stürzt ab <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;">Flackern <span class="count">3</span></span></div>
+                    <div class="card buzz-container" style="min-height:100px;">
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('App stürzt ab')">App stürzt ab <span class="count">12</span></span><span class="buzz-tag" style="--intensity:0.75;" onclick="setSearch('Cookie-Abfragen')">Cookie-Abfragen <span class="count">9</span></span><span class="buzz-tag" style="--intensity:0.4166666666666667;" onclick="setSearch('Anmeldung')">Anmeldung <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('Seite springt')">Seite springt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('App öffnet nicht')">App öffnet nicht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;" onclick="setSearch('Suchfunktion fehlt')">Suchfunktion fehlt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.25;" onclick="setSearch('flackern')">flackern <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.25;" onclick="setSearch('nicht laden')">nicht laden <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.25;" onclick="setSearch('ruckelt')">ruckelt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.16666666666666666;" onclick="setSearch('keine Verbesserung')">keine Verbesserung <span class="count">2</span></span></div>
                     </div>
                 </div>
             </div>
@@ -147,11 +141,11 @@
                     </div>
                     <div class="review-card pos">
                         <div class="meta">
-                            <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
                             <span>5★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Ich bin total überrascht über meine „Schwäbische“! Kann jederzeit und überall nachlesen, informieren. Ist für mich eine Erleichterung! Danke</div>
+                            <div class="review-text clamped">Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -190,21 +184,32 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                             <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
+                            <div class="review-text clamped">Die App ist seit dem Relaunch so furchtbar schlecht geworden, dass das morgendliche Zeitungslesen mehr Frust als Lust ist. 
+Schaut euch doch bitte all die Rezensionen der letzten Wochen und Monaten an, kaum eine gibt mehr als einen Stern. 
+Ganz schlimm finde ich das unkontrollierte Springen auf die vorige oder nächste Seite bei gezoomter Ansicht. Ich habe noch gut 10 weitere Kritikpunkte, die ich dem Support schon mitgeteilt habe. Ich hatte schon mal telefonischen Kontakt mit dem Support, meine Kritikpunkte  wurden aber alle zurückgewiesen mit dem Argument, ich würde die App falsch bedienen. Geht’s noch?
+Ich überlege tatsächlich, ob ich dieses Blatt noch weiter abonnieren soll.
+
+Meine Antwort auf die Entwicklerantwort: Ich verwende die aktuellste Version, kann aber keine Verbesserung erkennen. Gravierende Probleme bestehen nach wie vor. Auf konstruktive Kritik wird nicht eingegangen. Wo bitte finde ich ein Changelog um Verbesserungen und Änderungen einsehen zu können?
+
+Ein Rezensions-Update von mir: Auch nach mehreren Monaten, immer noch keine Lösung der gravierenden Schwächen, es ist einfach unerträglich. Es ist erschreckend, wie konstruktive Kritik der Benutzer ignoriert wird.
+
+Ein weiteres Update: nach mehr als einem halben Jahr tut sich immer noch nichts, Probleme werden ignoriert. Ich habe nun das Abo, das ich schon 40 Jahre lang habe, gekündigt. Inhaltlich und technisch ist die Schwäbische einfach nicht mehr tragbar, vom unterirdischen Kunden-Service ganz zu schweigen.
+
+bye-bye Schwäbische
+
+Noch ein Nachtrag nach weiteren zwei Monaten: Ich habe die App bei einer Nachbarin getestet, da ich mich schon längere Zeit von der Schwäbischen verabschiedet habe. Es ist nicht zu glauben, die App ist nochmal schlechter geworden. U.a. taucht jetzt alle Nase lang eine Cookie-Nachricht auf, die man bestätigen muss. Was für eine unfassbare Schlamperei. Der Kunde ist nicht König sondern der Schwäbischen schlichtweg egal! Was für ein Käseblatt.
+
+Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder ein Probeabo geklickt um zu schauen, was sich vielleicht inzwischen verbessert hat. Ergebnis: nichts. Zumindest sind die mir bekannten und gemeldeten Probleme immer noch nicht gelöst bzw behoben.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
                     <div class="review-card neg">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
-                            <span>2★</span>
+                            <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Cookies müssen immer wieder abgelehnt werden, trotz „ablehnen + speichern“. Warum erfolgt diese Speicherung nicht persistent? Sehr lästig.
-Beim Vergrößern des ePapers (Fingergeste auf dem iPad), damit man Artikel lesen kann, springt die Darstellung (viel zu) oft auf die vorhergehende oder folgende Doppelseite.
-In der Ergebnisliste der Artikelsuche fehlt jeweils das Erscheinungsdatum der gefundenen Artikel (genauso auf der Website). Ich vermute dahinter eine unlautere Absicht (Clickbait). 
-Außerdem taugen die Suchergebnisse nichts (Artikel aus der Printausgabe werden nicht gefunden).
-Daher aktuell nur 2 Sterne möglich.</div>
+                            <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -221,8 +226,8 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 <div class="filter-group">
                     <span class="filter-label">Plattform:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('ios', this)"><i class="fab fa-apple"></i></button>
-                    <button class="filter-btn" onclick="setFilter('android', this)"><i class="fab fa-android"></i></button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
                 </div>
 
                 <div class="filter-group">
@@ -265,16 +270,23 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { 
-                        x: { stacked: true, grid: { display: false } }, 
-                        y: { stacked: true, grid: { color: '#e2e8f0' } } 
+                        x: { stacked: true, grid: { display: false }, ticks: { color: '#64748b' } }, 
+                        y: { stacked: true, grid: { color: '#e2e8f0' }, ticks: { color: '#64748b', padding: 10 } } 
                     },
-                    plugins: { legend: { position: 'bottom' } }
+                    plugins: { legend: { position: 'bottom', labels: { color: '#64748b' } } }
                 }
             });
             
             function updateChartColors() {
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
+                // Get colors from CSS variables equivalent
+                const textColor = isDark ? '#cbd5e1' : '#64748b';
+                const gridColor = isDark ? '#334155' : '#e2e8f0';
+                
+                chart.options.scales.x.ticks.color = textColor;
+                chart.options.scales.y.ticks.color = textColor;
+                chart.options.scales.y.grid.color = gridColor;
+                chart.options.plugins.legend.labels.color = textColor;
                 chart.update();
             }
             updateChartColors();
@@ -298,8 +310,8 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }
 
-            function setFilter(store, btn) {
-                currentFilter = store;
+            function setFilter(app, btn) {
+                currentFilter = app;
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -314,6 +326,13 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 filterData();
             }
 
+            function setSearch(term) {
+                const input = document.getElementById('search');
+                input.value = term;
+                filterData();
+                input.scrollIntoView({behavior: 'smooth'});
+            }
+
             function copyText(text) { navigator.clipboard.writeText(text); alert('Text kopiert!'); }
 
             function filterData() {
@@ -322,7 +341,7 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 container.innerHTML = '';
 
                 let filtered = REVIEWS.filter(r => {
-                    const storeMatch = (currentFilter === 'all' || r.store === currentFilter);
+                    const storeMatch = (currentFilter === 'all' || r.app === currentFilter);
                     const searchMatch = (r.text + r.app).toLowerCase().includes(q);
                     return storeMatch && searchMatch;
                 });
@@ -336,7 +355,6 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // SMART SEARCH HIGHLIGHTING
                     let displayText = r.text;
                     if (q.length >= 2) {
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -357,17 +375,20 @@ Daher aktuell nur 2 Sterne möglich.</div>
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${icon} <strong>${r.app}</strong> (${r.store.toUpperCase()}) • ${r.rating}⭐
+                                ${icon} <strong>${r.app}</strong> • ${r.rating}⭐
                             </span>
                             <span>${r.fmt_date || r.date}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            <span class="review-text">${displayText}</span>
+                            <span class="review-text clamped">${displayText}</span>
+                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 });
+                
+                initReadMore(); // Re-Init Read More for new items
             }
             
             filterData();
