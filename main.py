@@ -376,7 +376,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
             
             <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
+                <h3 style="margin-top:0;">Analyse</h3>
                 <p>{summary}</p>
             </div>
 
@@ -386,7 +386,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
+                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme</h3>
                     <div class="card buzz-container">
                         {buzz_html}
                     </div>
@@ -395,7 +395,7 @@ def run_analysis_and_generate_html(full_history, new_only):
 
             <div class="review-grid">
                 <div>
-                    <h3>👍 Top Stimmen</h3>
+                    <h3>🤩 Top Stimmen</h3>
                     {''.join([f'''
                     <div class="review-card pos">
                         <div class="meta">
