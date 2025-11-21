@@ -40,26 +40,6 @@ APP_CONFIG = [
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
 ]
 
-STOP_WORDS = {
-    "die", "der", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
-    "ich", "du", "er", "sie", "es", "wir", "ihr", "sie", "mich", "mir", "meine", "meiner", "mein",
-    "sich", "uns", "euch", "ihnen", "ihrem", "ihres", "dieser", "diese", "dieses", "diesen",
-    "und", "oder", "aber", "als", "wenn", "dass", "weil", "denn", "ob", "wie", "wo", "was",
-    "in", "im", "an", "am", "auf", "aus", "bei", "beim", "mit", "nach", "von", "vom", "zu", "zum", "zur",
-    "über", "unter", "vor", "hinter", "neben", "durch", "für", "gegen", "ohne", "um", "wegen", "seit",
-    "ist", "sind", "war", "wäre", "wird", "werden", "wurde", "haben", "hat", "hatte", "habe", "gibt",
-    "kann", "können", "konnte", "muss", "müssen", "musste", "soll", "sollen", "sollte", "will", "wollen",
-    "geht", "ging", "lassen", "lässt", "machen", "macht", "getan", "sehen", "sieht", "schon", "nun",
-    "nicht", "nichts", "nie", "wieder", "immer", "oft", "selten", "manchmal", "erst", "bereits",
-    "noch", "jetzt", "heute", "damals", "hier", "da", "dort", "mal", "einmal", "viel", "sehr", "auch",
-    "ganz", "gar", "mehr", "weniger", "nur", "doch", "etwas", "so", "dann", "wann", "warum", "wer",
-    "einfach", "leider", "halt", "eben", "wohl", "zwar", "vielleicht", "bestimmt", "bitte", "danke",
-    "app", "apps", "anwendung", "version", "update", "updates", "ios", "android", "handy", "tablet",
-    "telefon", "iphone", "ipad", "samsung", "pixel", "gerät", "geräte", "nutzer", "kunde", "kunden",
-    "schwäbische", "nordkurier", "zeitung", "artikel", "lesen", "leser", "hallo", "moin", "tag",
-    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern"
-}
-
 # ---------------------------------------------------------
 # 2. HILFSFUNKTIONEN
 # ---------------------------------------------------------
@@ -99,6 +79,7 @@ def calculate_trends(reviews):
         return round(sum(f)/len(f), 2) if f else 0.0
     return {'overall': round(sum(r for d, r in dated_reviews)/len(dated_reviews), 2), 'last_7d': get_avg(7), 'last_30d': get_avg(30)}
 
+# Chart Data (Gestapelte Balken)
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
     stats = {}
@@ -233,18 +214,50 @@ def run_analysis_and_generate_html(full_history, new_only):
             ki_data.update(json.loads(resp.text.replace("```json","").replace("```","").strip()))
         except: pass
 
-    # Fallback & Filter
-    top_list = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)[:3]
-    bot_list = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)[:3]
-    if not top_list: top_list = ki_data.get('topReviews', [])
-    if not bot_list: bot_list = ki_data.get('bottomReviews', [])
+    # --- ANTI-DOPPELGÄNGER LOGIK & FALLBACK ---
 
+    seen_texts = set()
+    top_list = []
+    bot_list = []
+
+    # 1. Python Filter
+    candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_pos:
+        if len(top_list) >= 3: break
+        if r['text'] not in seen_texts:
+            top_list.append(r)
+            seen_texts.add(r['text'])
+
+    candidates_neg = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)
+    for r in candidates_neg:
+        if len(bot_list) >= 3: break
+        if r['text'] not in seen_texts:
+            bot_list.append(r)
+            seen_texts.add(r['text'])
+
+    # 2. KI Fallback
+    if len(top_list) < 1:
+        for r in ki_data.get('topReviews', []):
+            if len(top_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                top_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    if len(bot_list) < 1:
+        for r in ki_data.get('bottomReviews', []):
+            if len(bot_list) >= 3: break
+            if r.get('text') not in seen_texts:
+                bot_list.append(r)
+                seen_texts.add(r.get('text'))
+
+    # Metadaten
     for r in top_list + bot_list:
         if not r.get('app'):
             m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
             if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
+
     for r in full_history:
         if 'date' in r:
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
@@ -254,7 +267,7 @@ def run_analysis_and_generate_html(full_history, new_only):
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
@@ -298,15 +311,15 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
+            /* BUZZWORD DESIGN */
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
+                display: inline-flex; align-items: center; 
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                color: var(--text); font-weight: 500;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -319,6 +332,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; }}
+            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
             .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
             .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
             
@@ -340,14 +354,29 @@ def run_analysis_and_generate_html(full_history, new_only):
             </header>
 
             <div class="kpi-grid">
-                <div class="card"><div class="kpi-label">Gesamt Ø</div><div class="kpi-val">{trends['overall']} ⭐</div></div>
-                <div class="card"><div class="kpi-label">Trend (7 Tage)</div><div class="kpi-val">{trends['last_7d']} ⭐</div></div>
-                <div class="card"><div class="kpi-label">Erfasste Reviews</div><div class="kpi-val">{len(full_history)}</div></div>
+                <div class="card">
+                    <div class="kpi-label">Gesamt Ø</div>
+                    <div class="kpi-val">{trends['overall']} ⭐</div>
+                </div>
+                <div class="card">
+                    <div class="kpi-label">Trend (7 Tage)</div>
+                    <div class="kpi-val">{trends['last_7d']} ⭐</div>
+                </div>
+                <div class="card">
+                    <div class="kpi-label">Erfasste Reviews</div>
+                    <div class="kpi-val">{len(full_history)}</div>
+                </div>
             </div>
 
-            <div class="chart-container"><h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4><canvas id="trendChart"></canvas></div>
+            <div class="chart-container">
+                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
+                <canvas id="trendChart"></canvas>
+            </div>
             
-            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>{summary}</div>
+            <div class="summary-box">
+                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
+                <p>{summary}</p>
+            </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
@@ -401,10 +430,10 @@ def run_analysis_and_generate_html(full_history, new_only):
                 </div>
                 
                 <div class="filter-group">
-                    <span class="filter-label">Plattform:</span>
+                    <span class="filter-label">App:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('ios', this)"><i class="fab fa-apple"></i></button>
-                    <button class="filter-btn" onclick="setFilter('android', this)"><i class="fab fa-android"></i></button>
+                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">Nordkurier</button>
+                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">Schwäbische</button>
                 </div>
 
                 <div class="filter-group">
@@ -480,9 +509,8 @@ def run_analysis_and_generate_html(full_history, new_only):
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }}
 
-            // NEU: Filter nach STORE (Platform)
-            function setFilter(store, btn) {{
-                currentFilter = store;
+            function setFilter(app, btn) {{
+                currentFilter = app;
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -497,13 +525,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filterData();
             }}
 
-            function setSearch(term) {{
-                const input = document.getElementById('search');
-                input.value = term;
-                filterData();
-                input.scrollIntoView({{behavior: 'smooth'}});
-            }}
-
             function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
@@ -512,10 +533,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 container.innerHTML = '';
 
                 let filtered = REVIEWS.filter(r => {{
-                    // Filter Logic für Stores (ios/android)
-                    const storeMatch = (currentFilter === 'all' || r.store === currentFilter);
-                    const searchMatch = (r.text + r.app).toLowerCase().includes(q);
-                    return storeMatch && searchMatch;
+                    return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
                 }});
 
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
@@ -527,10 +545,11 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC
+                    // SMART SEARCH & HIGHLIGHT
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
+                        // Prüfen ob ALLE Wörter vorkommen
                         const allFound = terms.every(term => r.text.toLowerCase().includes(term));
                         
                         if (allFound) {{
@@ -539,7 +558,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                                 displayText = displayText.replace(regex, '<mark>$1</mark>');
                             }});
                         }} else {{
-                            return;
+                            return; // Überspringe dieses Review, wenn nicht alle Begriffe passen
                         }}
                     }}
                     
@@ -548,7 +567,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
+                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
