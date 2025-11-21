@@ -33,15 +33,15 @@
             
             .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
             
-            /* BUZZWORD DESIGN (STATIC) */
             .buzz-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
             .buzz-tag { 
-                display: inline-flex; align-items: center; 
+                display: inline-flex; align-items: center; cursor: pointer;
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500;
+                color: var(--text); font-weight: 500; transition: transform 0.2s;
             }
+            .buzz-tag:hover { transform: scale(1.05); border-color: var(--primary); }
             .buzz-tag .count { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }
 
             .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
@@ -54,7 +54,6 @@
             
             .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
             .filter-group { display: flex; gap: 5px; align-items: center; }
-            .filter-label { font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }
             .filter-btn { padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }
             .filter-btn.active { background: var(--primary); color: white; border-color: var(--primary); }
             
@@ -70,45 +69,30 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 21.11.2025 13:12</span>
+                    <span style="opacity:0.7;">Update: 21.11.2025 13:26</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
 
             <div class="kpi-grid">
-                <div class="card">
-                    <div class="kpi-label">Gesamt Ø</div>
-                    <div class="kpi-val">1.88 ⭐</div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Trend (7 Tage)</div>
-                    <div class="kpi-val">2.83 ⭐</div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Erfasste Reviews</div>
-                    <div class="kpi-val">121</div>
-                </div>
+                <div class="card"><div class="kpi-label">Gesamt Ø</div><div class="kpi-val">1.88 ⭐</div></div>
+                <div class="card"><div class="kpi-label">Trend (7 Tage)</div><div class="kpi-val">2.83 ⭐</div></div>
+                <div class="card"><div class="kpi-label">Erfasste Reviews</div><div class="kpi-val">121</div></div>
             </div>
 
-            <div class="chart-container">
-                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
-                <canvas id="trendChart"></canvas>
-            </div>
+            <div class="chart-container"><h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4><canvas id="trendChart"></canvas></div>
             
-            <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>Die analysierten Reviews zeigen deutliche Probleme mit den Apps Schwäbische und Nordkurier. Viele Nutzer berichten von häufigen Abstürzen, Flackern der Bildschirme und Problemen beim Scrollen, insbesondere im Bereich Aktuelles. Die Cookie-Verwaltung wird als lästig empfunden, da Einstellungen nicht gespeichert werden. Einige Nutzer bemängeln das Springen zwischen den Seiten beim Zoomen im ePaper. Die Suchfunktion fehlt einigen Nutzern. Es gibt aber auch positive Rückmeldungen, die die App als Erleichterung und nützlich empfinden, obwohl diese deutlich in der Minderheit sind. Insgesamt überwiegen die negativen Erfahrungen, was zu Frustration und Kündigungen von Abonnements führt.</p>
-            </div>
+            <div class="summary-box"><h3 style="margin-top:0;">🤖 KI-Analyse</h3>Die analysierten Reviews zeigen ein überwiegend negatives Bild der Apps Schwäbische und Nordkurier. Viele Nutzer berichten von Abstürzen, Flackern, Problemen beim Scrollen und Zoomen, sowie Schwierigkeiten mit der Cookie-Verwaltung. Besonders kritisiert wird die Instabilität der Apps und das Ignorieren von Nutzerfeedback durch die Entwickler. Einige wenige Nutzer loben die grundsätzliche Funktionalität und die Möglichkeit, jederzeit und überall Nachrichten zu lesen, jedoch überwiegen die negativen Erfahrungen deutlich.</div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <span class="tag"># App-Abstürze</span> <span class="tag"># Ladefehler</span> <span class="tag"># Datumsprobleme</span> <span class="tag"># Cookie-Probleme</span> <span class="tag"># Qualitätsverlust</span> 
+                    <span class="tag"># App-Abstürze</span> <span class="tag"># Cookie-Bestätigung</span> <span class="tag"># App-Unzufriedenheit</span> <span class="tag"># App hängt</span> <span class="tag"># Download-Probleme</span> 
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
                     <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">13</span></span><span class="buzz-tag" style="--intensity:0.8461538461538461;">Cookie-Abfragen/Einstellungen <span class="count">11</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Anmeldungsprobleme <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.6153846153846154;">App öffnet/lädt nicht <span class="count">8</span></span><span class="buzz-tag" style="--intensity:0.5384615384615384;">Springen/ruckeln beim Lesen <span class="count">7</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Flackern <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.3076923076923077;">Suche fehlt/schlecht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.23076923076923078;">Probleme mit "Aktuelles" <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.15384615384615385;">Datumsprobleme <span class="count">2</span></span><span class="buzz-tag" style="--intensity:0.15384615384615385;">Inhalte langsam/veraltet <span class="count">2</span></span></div>
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('App stürzt ab')">App stürzt ab <span class="count">14</span></span><span class="buzz-tag" style="--intensity:0.7142857142857143;" onclick="setSearch('Cookie-Abfragen')">Cookie-Abfragen <span class="count">10</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;" onclick="setSearch('App hängt')">App hängt <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2857142857142857;" onclick="setSearch('Anmeldungsprobleme')">Anmeldungsprobleme <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;" onclick="setSearch('App flackert')">App flackert <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;" onclick="setSearch('Seite springt')">Seite springt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;" onclick="setSearch('Suchfunktion fehlt')">Suchfunktion fehlt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.21428571428571427;" onclick="setSearch('Kann Zeitung nicht laden')">Kann Zeitung nicht laden <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.14285714285714285;" onclick="setSearch('Datumsproblematik')">Datumsproblematik <span class="count">2</span></span><span class="buzz-tag" style="--intensity:0.14285714285714285;" onclick="setSearch('Topmeldungen zu schnell')">Topmeldungen zu schnell <span class="count">2</span></span></div>
                     </div>
                 </div>
             </div>
@@ -139,11 +123,11 @@
                     </div>
                     <div class="review-card pos">
                         <div class="meta">
-                            <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
+                            <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
                             <span>5★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Ich bin total überrascht über meine „Schwäbische“! Kann jederzeit und überall nachlesen, informieren. Ist für mich eine Erleichterung! Danke</div>
+                            <div class="review-text clamped">Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -182,21 +166,32 @@ Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder e
                             <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
+                            <div class="review-text clamped">Die App ist seit dem Relaunch so furchtbar schlecht geworden, dass das morgendliche Zeitungslesen mehr Frust als Lust ist. 
+Schaut euch doch bitte all die Rezensionen der letzten Wochen und Monaten an, kaum eine gibt mehr als einen Stern. 
+Ganz schlimm finde ich das unkontrollierte Springen auf die vorige oder nächste Seite bei gezoomter Ansicht. Ich habe noch gut 10 weitere Kritikpunkte, die ich dem Support schon mitgeteilt habe. Ich hatte schon mal telefonischen Kontakt mit dem Support, meine Kritikpunkte  wurden aber alle zurückgewiesen mit dem Argument, ich würde die App falsch bedienen. Geht’s noch?
+Ich überlege tatsächlich, ob ich dieses Blatt noch weiter abonnieren soll.
+
+Meine Antwort auf die Entwicklerantwort: Ich verwende die aktuellste Version, kann aber keine Verbesserung erkennen. Gravierende Probleme bestehen nach wie vor. Auf konstruktive Kritik wird nicht eingegangen. Wo bitte finde ich ein Changelog um Verbesserungen und Änderungen einsehen zu können?
+
+Ein Rezensions-Update von mir: Auch nach mehreren Monaten, immer noch keine Lösung der gravierenden Schwächen, es ist einfach unerträglich. Es ist erschreckend, wie konstruktive Kritik der Benutzer ignoriert wird.
+
+Ein weiteres Update: nach mehr als einem halben Jahr tut sich immer noch nichts, Probleme werden ignoriert. Ich habe nun das Abo, das ich schon 40 Jahre lang habe, gekündigt. Inhaltlich und technisch ist die Schwäbische einfach nicht mehr tragbar, vom unterirdischen Kunden-Service ganz zu schweigen.
+
+bye-bye Schwäbische
+
+Noch ein Nachtrag nach weiteren zwei Monaten: Ich habe die App bei einer Nachbarin getestet, da ich mich schon längere Zeit von der Schwäbischen verabschiedet habe. Es ist nicht zu glauben, die App ist nochmal schlechter geworden. U.a. taucht jetzt alle Nase lang eine Cookie-Nachricht auf, die man bestätigen muss. Was für eine unfassbare Schlamperei. Der Kunde ist nicht König sondern der Schwäbischen schlichtweg egal! Was für ein Käseblatt.
+
+Nächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder ein Probeabo geklickt um zu schauen, was sich vielleicht inzwischen verbessert hat. Ergebnis: nichts. Zumindest sind die mir bekannten und gemeldeten Probleme immer noch nicht gelöst bzw behoben.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
                     <div class="review-card neg">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
-                            <span>2★</span>
+                            <span>1★</span>
                         </div>
                         <div class="review-content">
-                            <div class="review-text clamped">Cookies müssen immer wieder abgelehnt werden, trotz „ablehnen + speichern“. Warum erfolgt diese Speicherung nicht persistent? Sehr lästig.
-Beim Vergrößern des ePapers (Fingergeste auf dem iPad), damit man Artikel lesen kann, springt die Darstellung (viel zu) oft auf die vorhergehende oder folgende Doppelseite.
-In der Ergebnisliste der Artikelsuche fehlt jeweils das Erscheinungsdatum der gefundenen Artikel (genauso auf der Website). Ich vermute dahinter eine unlautere Absicht (Clickbait). 
-Außerdem taugen die Suchergebnisse nichts (Artikel aus der Printausgabe werden nicht gefunden).
-Daher aktuell nur 2 Sterne möglich.</div>
+                            <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                         </div>
                     </div>
@@ -211,10 +206,10 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 </div>
                 
                 <div class="filter-group">
-                    <span class="filter-label">App:</span>
+                    <span class="filter-label">Plattform:</span>
                     <button class="filter-btn active" onclick="setFilter('all', this)">Alle</button>
-                    <button class="filter-btn" onclick="setFilter('Nordkurier', this)">NK</button>
-                    <button class="filter-btn" onclick="setFilter('Schwäbische', this)">SZ</button>
+                    <button class="filter-btn" onclick="setFilter('ios', this)"><i class="fab fa-apple"></i></button>
+                    <button class="filter-btn" onclick="setFilter('android', this)"><i class="fab fa-android"></i></button>
                 </div>
 
                 <div class="filter-group">
@@ -290,8 +285,9 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
             }
 
-            function setFilter(app, btn) {
-                currentFilter = app;
+            // NEU: Filter nach STORE (Platform)
+            function setFilter(store, btn) {
+                currentFilter = store;
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -306,6 +302,13 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 filterData();
             }
 
+            function setSearch(term) {
+                const input = document.getElementById('search');
+                input.value = term;
+                filterData();
+                input.scrollIntoView({behavior: 'smooth'});
+            }
+
             function copyText(text) { navigator.clipboard.writeText(text); alert('Text kopiert!'); }
 
             function filterData() {
@@ -314,7 +317,10 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 container.innerHTML = '';
 
                 let filtered = REVIEWS.filter(r => {
-                    return (currentFilter === 'all' || r.app === currentFilter) && (r.text + r.store).toLowerCase().includes(q);
+                    // Filter Logic für Stores (ios/android)
+                    const storeMatch = (currentFilter === 'all' || r.store === currentFilter);
+                    const searchMatch = (r.text + r.app).toLowerCase().includes(q);
+                    return storeMatch && searchMatch;
                 });
 
                 if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
@@ -326,7 +332,7 @@ Daher aktuell nur 2 Sterne möglich.</div>
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC (JS Syntax Fix)
+                    // HIGHLIGHTING LOGIC
                     let displayText = r.text;
                     if (q.length >= 2) {
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -347,7 +353,7 @@ Daher aktuell nur 2 Sterne möglich.</div>
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${icon} <strong>${r.app}</strong> (${r.store.toUpperCase()}) • ${r.rating}⭐
+                                ${icon} <strong>${r.app}</strong> • ${r.rating}⭐
                             </span>
                             <span>${r.fmt_date || r.date}</span>
                         </div>
