@@ -1,5 +1,37 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Leider stürzt die App immer wieder plötzlich ab. Ansonsten ist die App schon in Ordnung. Das Zoomen in der Zeitungsansicht ist etwas nervig. Da blättert die Seite oft um wenn man am Rand zoomt.",
+        "date": "2025-11-25",
+        "id": "8e9ca1a6b2f4208e055404b9c799d2744c44ff802a9ce297c00ad2f206bd41f8"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Es wäre schön,wenn man einzelne Tage kaufen könnte. War früher mal möglich, jetzt leider nicht mehr.",
+        "date": "2025-11-21",
+        "id": "55d8ac015ad78a8cb6bc9064ff9a616b6da25da2190014253bf6f40e98fde7de"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "… Abständen ab. Im Reiter „Aktuelles“ kann ich nur manchmal bis ganz runterscrollen ohne das sich die App mindest 2x schließt. Nach dem letzten Update hat sich an dieser Tatsache auch nichts geändert. Das nervt!!!",
+        "date": "2025-11-19",
+        "id": "d0fc24058a9504de49fd91647d4a22d2faf1cfc75d5e64f011fa0f3a9fbd484d"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Gutes E-Papier",
+        "date": "2025-11-19",
+        "id": "8592fab36bf6c367b27b288ed91f8f2965202dac673c3adcac6eb9991789a512"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
@@ -26,6 +58,14 @@
     {
         "store": "ios",
         "app": "Schwäbische",
+        "rating": 4,
+        "text": "Die App tut was sie soll, aber seit einem Update stoppt jedes Mal die Medien Wiedergabe auf dem iPhone. Das ist lästig, wenn ich nur Zeitung lesen will und nebenher meine Musik laufen lasse muss ich die nach dem öffnen neu wiedergeben. Tonwiedergabe Filme o.Ä. Mache ich über die schwäbische App nicht. \nDen Journalismus mit in letzter Zeit vielen Tippfehlern bewerte ich nicht mit.",
+        "date": "2025-11-14",
+        "id": "a1330c9d77f5e23da39ce1adf40236bf1ffde5d4284f3858f62c2b222cbb9ad0"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
         "rating": 3,
         "text": "Alle paar Tage muss ich nach dem Öffnen der App wieder die Cookie-Verwaltung einstellen. Das „Speichern“ dieser Einstellung scheint nicht zu reichen. Oder ist das gewollt, weil ich zu wenige Cookies akzeptiere?",
         "date": "2025-11-13",
@@ -38,6 +78,14 @@
         "text": "Ich habe erst seit ein paar Tagen das Digitalabo und bin mit der App nicht zufrieden. Die Anzeige ist manchmal zittrig. \"Aktuelles\" kann ich nicht lesen, da stürzt die App beim Aufruf von Videos und Artikeln zuverlässig ab. Der Fehler tritt am Androidtablet und am ipad auf. Eine Neuinstallation ändert nichts. 13.11.: Nach wie vor das Problem, dass ich \"Aktuelles\" wegen Absturz nicht lesen kann. Weder auf dem ipad noch auf dem Galaxy. Die Frage nach der Android-Version erübrigt sich.",
         "date": "2025-11-13",
         "id": "60066e1af26b906dc1a41b7765023dde2d49d90a35920916c9454a265457cfaf"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Alle paar Tage muss ich nach dem Öffnen der App wieder die Cookie-Verwaltung einstellen. Das „Speichern“ dieser Einstellung scheint nicht zu reichen. Oder ist das gewollt, weil ich zu wenige Cookies akzeptiere?",
+        "date": "2025-11-13",
+        "id": "8364bbe6112eb98ca4a35b360223f0aedea9c5c4ae722b5b9f7c2904ad43f9fa"
     },
     {
         "store": "android",
@@ -146,6 +194,14 @@
     {
         "store": "ios",
         "app": "Schwäbische",
+        "rating": 2,
+        "text": "Cookies müssen immer wieder abgelehnt werden, trotz „ablehnen + speichern“. Warum erfolgt diese Speicherung nicht persistent? Sehr lästig.\nBeim Vergrößern des ePapers (Fingergeste auf dem iPad), damit man Artikel lesen kann, springt die Darstellung (viel zu) oft auf die vorhergehende oder folgende Doppelseite.\nIn der Ergebnisliste der Artikelsuche fehlt jeweils das Erscheinungsdatum der gefundenen Artikel (genauso auf der Website). Ich vermute dahinter eine unlautere Absicht (Clickbait). \nAußerdem taugen die Suchergebnisse nichts (Artikel aus der Printausgabe werden nicht gefunden).\nDaher aktuell nur 2 Sterne möglich.",
+        "date": "2025-10-22",
+        "id": "936f831eba48e4d488aeff81f68e7dc4f3eee7e9c0c305ba18ab0269f63f1332"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
         "rating": 1,
         "text": "Wieso fehlt immer noch die Suchfunktion? Man konnte immer in den alten Ausgaben nach Stichworten in einem Zeitraum oder alles durchsuchen. Diese Funktion wurde komplett gestrichen und bisher immer noch nicht wieder zurück gebracht.",
         "date": "2025-10-20",
@@ -166,6 +222,14 @@
         "text": "Die Topmeldungen laufen viel zu schnell durch. Das \"Wischen\" hakt teilweise sehr. Am 24.6. gab es ein App Update. Weiterhin laufen die Topmeldungen viel zu schnell durch. Deshalb senke ich von 2 auf 1 Stern ab. Update: nach 4!!! Monaten kommt endlich eine Antwort. Doch das Problem ist weiterhin vorhanden. Nun eigentlich 0 Sterne. Ich lösche die App.",
         "date": "2025-10-20",
         "id": "8445b63d584121094376df43a63e267d0dbd62d0f3094ec336b9270157b9f542"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Wieso fehlt immer noch die Suchfunktion? Man konnte immer in den alten Ausgaben nach Stichworten in einem Zeitraum oder alles durchsuchen. Diese Funktion wurde komplett gestrichen und bisher immer noch nicht wieder zurück gebracht.",
+        "date": "2025-10-20",
+        "id": "1da09add8477c33811d353de8f85c0db1d80d9f9c4fdabc02d4be309b2ef2c9e"
     },
     {
         "store": "android",
@@ -214,6 +278,14 @@
         "text": "In früheren Versionen konnte man die gewünschte Tages-Ausgabe wählen, also auch die Zeitung von gestern lesen, wenn man sie verpasst hat. Das geht jetzt nur noch online. Dann brauche ich auch keine App.",
         "date": "2025-10-10",
         "id": "805f4eeb86eea37a0299a27a0af518cafc8e4b9c5b6505d81996842156d25624"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "In früheren Versionen konnte man die gewünschte Tages-Ausgabe wählen, also auch die Zeitung von gestern lesen, wenn man sie verpasst hat. Das geht jetzt nur noch online. Dann brauche ich auch keine App.",
+        "date": "2025-10-10",
+        "id": "1831ee11b0d0096ab2f20f3629801ba995c8194fc07f85cd7dacbbf453c188ff"
     },
     {
         "store": "android",
@@ -280,6 +352,22 @@
         "id": "98b64c0fed8c5705107a4fd4c51371016e37a5e327f4d1152761adff3c9f118e"
     },
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Die App ist seit dem Relaunch so furchtbar schlecht geworden, dass das morgendliche Zeitungslesen mehr Frust als Lust ist. \nSchaut euch doch bitte all die Rezensionen der letzten Wochen und Monaten an, kaum eine gibt mehr als einen Stern. \nGanz schlimm finde ich das unkontrollierte Springen auf die vorige oder nächste Seite bei gezoomter Ansicht. Ich habe noch gut 10 weitere Kritikpunkte, die ich dem Support schon mitgeteilt habe. Ich hatte schon mal telefonischen Kontakt mit dem Support, meine Kritikpunkte  wurden aber alle zurückgewiesen mit dem Argument, ich würde die App falsch bedienen. Geht’s noch?\nIch überlege tatsächlich, ob ich dieses Blatt noch weiter abonnieren soll.\n\nMeine Antwort auf die Entwicklerantwort: Ich verwende die aktuellste Version, kann aber keine Verbesserung erkennen. Gravierende Probleme bestehen nach wie vor. Auf konstruktive Kritik wird nicht eingegangen. Wo bitte finde ich ein Changelog um Verbesserungen und Änderungen einsehen zu können?\n\nEin Rezensions-Update von mir: Auch nach mehreren Monaten, immer noch keine Lösung der gravierenden Schwächen, es ist einfach unerträglich. Es ist erschreckend, wie konstruktive Kritik der Benutzer ignoriert wird.\n\nEin weiteres Update: nach mehr als einem halben Jahr tut sich immer noch nichts, Probleme werden ignoriert. Ich habe nun das Abo, das ich schon 40 Jahre lang habe, gekündigt. Inhaltlich und technisch ist die Schwäbische einfach nicht mehr tragbar, vom unterirdischen Kunden-Service ganz zu schweigen.\n\nbye-bye Schwäbische\n\nNoch ein Nachtrag nach weiteren zwei Monaten: Ich habe die App bei einer Nachbarin getestet, da ich mich schon längere Zeit von der Schwäbischen verabschiedet habe. Es ist nicht zu glauben, die App ist nochmal schlechter geworden. U.a. taucht jetzt alle Nase lang eine Cookie-Nachricht auf, die man bestätigen muss. Was für eine unfassbare Schlamperei. Der Kunde ist nicht König sondern der Schwäbischen schlichtweg egal! Was für ein Käseblatt.\n\nNächster Nachtrag: wieder ist ein halbes Jahr vorbei, ich habe mir mal wieder ein Probeabo geklickt um zu schauen, was sich vielleicht inzwischen verbessert hat. Ergebnis: nichts. Zumindest sind die mir bekannten und gemeldeten Probleme immer noch nicht gelöst bzw behoben.",
+        "date": "2025-09-30",
+        "id": "ba8d59c1d2cb34d988d5f870802af1c8f45dfd112105285afc026d23a9f0d624"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Wenn man nicht alle cookies mühevoll deaktiviert. Eine echte Frechheit. Das gleiche übrigens auch bei der Online Version.",
+        "date": "2025-09-30",
+        "id": "49806b3de0104a1f1e8ab8fd86ea4c8de91e4c7b052ac394c213663802cc96c6"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
@@ -344,6 +432,14 @@
         "id": "6bc5865430568a65a1e25dd5f571e0f9b79b3bbf7a5ebca606fc674d06a1b19e"
     },
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Ich bin total überrascht über meine „Schwäbische“! Kann jederzeit und überall nachlesen, informieren. Ist für mich eine Erleichterung! Danke",
+        "date": "2025-09-10",
+        "id": "d62c9c0a83a8a36e717d611cc420feffcbbd13b06aef1cb32bdf67bb28797021"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 1,
@@ -384,6 +480,14 @@
         "id": "164e55b707a38fad9c71c2678d24b4979b11e573a1b59029dfd302347fc29884"
     },
     {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 3,
+        "text": "Eigentlich eine brauchbare App. Sie öffnet allerdings jedesmal das Datum vom Vortag, sodass die App neu gestartet werden muss. Nervig.\n\nNach der Behebung der Datumsproblematik funktioniert die App so, wie sie soll, also sehr gut. Vielen Dank an die Entwickler!\n\nNeues Problem (2025) mein iPad reagiert ( nur bei dieser App!) überempfindlich auf Berühren in dem linken oder in dem rechten Bereich des Bildschirms. Sehr störend! Denn jedesmal schaltet die App auf eine Seite zurück bzw. nach vorn.",
+        "date": "2025-09-04",
+        "id": "c78b2842f975dd0385f09b9a74d71f0055f9ebafbbcbe2d0372ed13ab9703eec"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 1,
@@ -410,10 +514,26 @@
     {
         "store": "ios",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Leider sinnlos. \nApp lässt sich auf iPhone 16 Pro max nicht öffnen. \nDamit auch nicht nutzen.",
+        "date": "2025-08-30",
+        "id": "95794ff75920476c78bf6dafdd4c43bbf524792b31a54bdca9536bfa505250f1"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
         "rating": 3,
         "text": "An sich ist die App gut, aber wer hat die Suchfunktion programmiert? Bitte dringend verbessern!",
         "date": "2025-08-27",
         "id": "1713f37b58602cea096e175dcf7ef24455f4d9ed2cf0569aa4163a1f7796fb2d"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "An sich ist die App gut, aber wer hat die Suchfunktion programmiert? Bitte dringend verbessern!",
+        "date": "2025-08-27",
+        "id": "6fa7f313da9062ec10559428680ad8e0df63bb249388cb50d961a7d1523eddaa"
     },
     {
         "store": "ios",
@@ -425,11 +545,27 @@
     },
     {
         "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Vor einiger Zeit war die App noch ganz okay, doch die guten Zeiten sind wohl vorbei. Manchmal erscheint beim Starten einfach nur das Logo auf weißem Grund und sonst tut sich nichts. Kommt man rein, schließt sich die App gerne einfach ganz plötzlich ohne Vorwarnung. Dann immer und immer wieder die nervigen Abfragen nach den Cookie Einstellungen. Auf Anraten vom Kundensupport Neuinstallation durchgeführt, Erfolg gleich null. Schmeiße den Müll bald vom Gerät runter und widme mich lieber wieder der klassischen Printausgabe. Die besten Dinge sind eben einfacher Natur.",
+        "date": "2025-08-24",
+        "id": "86328cb26e7c8b851bde59a6c0ee4b3ddb235276e140b44b4f454d7129ddb82d"
+    },
+    {
+        "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Seiten füllende Berichte, teilweise nach 1 bis 2 Tagen gleicher Text noch einmal; Aktuelles wird zu spät berichtet; Zeitung ist nicht attraktiv und teuer",
         "date": "2025-08-21",
         "id": "7376729a681358eb77dc0f155349e965c15525be34e3346409d64571fa0c3412"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Seiten füllende Berichte, teilweise nach 1 bis 2 Tagen gleicher Text noch einmal; Aktuelles wird zu spät berichtet; Zeitung ist nicht attraktiv und teuer",
+        "date": "2025-08-21",
+        "id": "17828a40694c2888a0153c152ec3154537347ec58f95224dcb4352977f5c39bd"
     },
     {
         "store": "ios",
@@ -441,6 +577,14 @@
     },
     {
         "store": "ios",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Es wird doch möglich sein, zuvor heruntergeladene Ausgaben später lesen zu können. Beispiel: Man lädt sich zwei Ausgaben nacheinander herunter. Fängt man mit der Ausgabe von gestern an, fährt mit dem Zug zwischenzeitlich in ein Funkloch und möchte dann die heutige Ausgabe lesen, funktioniert das nicht. Wie kann das in 2025 noch ein Ding der Unmöglichkeit sein?",
+        "date": "2025-07-23",
+        "id": "4b1d0c8fc5503868bcd998be79cd826bc1bedd2dcc917573b1ab138fedf3fd89"
+    },
+    {
+        "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Seit neustem funktioniert die Auswahl der Regionen nicht mehr!!",
@@ -449,11 +593,27 @@
     },
     {
         "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Seit neustem funktioniert die Auswahl der Regionen nicht mehr!!",
+        "date": "2025-07-17",
+        "id": "51a9aa93bd52d5b40f77c8c320e500b37b0795a545a017247ba8ce2b53e6a34a"
+    },
+    {
+        "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Cookies müssen ständig innerhalb fünf Minuten mehrmals bestätigt werden während dem Lesen. Dies macht die App sehr unattraktiv.",
         "date": "2025-06-25",
         "id": "02605471708d4f6c26887720a3196b17e7c0f029f3ff64a3b9fe7c736b2f4107"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Cookies müssen ständig innerhalb fünf Minuten mehrmals bestätigt werden während dem Lesen. Dies macht die App sehr unattraktiv.",
+        "date": "2025-06-25",
+        "id": "c2499ef51a70666deb833f26a615774f184319f47337be39f0e93d4e7f86d0b6"
     },
     {
         "store": "ios",
@@ -473,11 +633,35 @@
     },
     {
         "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Es nervt. Die gewählte Einstellung kann nicht abgespeichert werden.",
+        "date": "2025-06-23",
+        "id": "f6458cf11d88c4a266878e87dc22a03d4300d2e4212c9e2a553fda7c69ae3474"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.",
+        "date": "2025-06-23",
+        "id": "51e65841ba31f38f18689f1a42e23d00111fe60cb6c770f53eb5629b92c843d5"
+    },
+    {
+        "store": "ios",
         "app": "Schwäbische",
         "rating": 2,
         "text": "Die App ist weit von Perfektion entfernt. Immer wieder Cookieanfragen, beim Vergrößern rutscht das Bild weg, Blätterfunktion geht bei anderen Medien besser, Also Luft nach oben.",
         "date": "2025-06-21",
         "id": "47dfbbb30267d93196fb390944c1e12f653aadaeab32e857b6943d7bd03f05c2"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Die App ist weit von Perfektion entfernt. Immer wieder Cookieanfragen, beim Vergrößern rutscht das Bild weg, Blätterfunktion geht bei anderen Medien besser, Also Luft nach oben.",
+        "date": "2025-06-21",
+        "id": "e7736c53fda4f7eb56e97738a06e6521d75fad4b283caab266c7220bd791447d"
     },
     {
         "store": "ios",
@@ -497,6 +681,22 @@
     },
     {
         "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "In der aktuellen Version klappt zwischendurch  immer wieder das Fenster mit den Cookie Einstellungen auf,  manchmal 4-5x. Das nervt und macht das Lesen echt nicht zum Vergnügen. Dieser Fehler sollte schnellstmöglich behoben werden. Deshalb im Moment leider nur ein Stern. Wenn dieses Problem behoben wird (möglichst zeitnah), gibt es von mir wieder mehr Sterne.",
+        "date": "2025-06-20",
+        "id": "c80a483fc86fdcbba9883c4e45146650469e0f8c3fd2cd197cabb195e4cd8205"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "App ist nicht in der Lage, die zu Abstimmung zu Cookies und ähnlichen zu speichern und wiederholt die Abfrage in Sekundentakt völlig unverständlich wie bei einem kommerziellen Anbieter so etwas durch das Testen schlüpfen kann.",
+        "date": "2025-06-20",
+        "id": "58e6dcb367b5b5e841d0d11b96c222c8627189a42f8c0d5943316f12911efe19"
+    },
+    {
+        "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Wie schon gestern wird auch heute die Schwäbische nur zu einem kleinen Teil heruntergeladen,",
@@ -510,6 +710,22 @@
         "text": "Beim starten der „alten“ App kommt die Meldung, dass diese durch eine neue ersetzt wird. \nEine neue ist aber aus dem AppStore nicht ladbar!!!!\nDa passt irgendwie nichts!",
         "date": "2025-06-16",
         "id": "cd608bec79ca0d146ef8edb0020bd175b6cf58eb9a7cb1e23a9836937dbec219"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Wie schon gestern wird auch heute die Schwäbische nur zu einem kleinen Teil heruntergeladen,",
+        "date": "2025-06-16",
+        "id": "599e1261572afd7eb3227abcbb80ff8d4541b7e3e733d4d77de1e17c4cbb69c0"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Beim starten der „alten“ App kommt die Meldung, dass diese durch eine neue ersetzt wird. \nEine neue ist aber aus dem AppStore nicht ladbar!!!!\nDa passt irgendwie nichts!",
+        "date": "2025-06-16",
+        "id": "16325cb2b01f7857348a0c318ff70a97ee398c8c8545a3d8be5097a1d32ed14a"
     },
     {
         "store": "ios",
@@ -538,10 +754,26 @@
     {
         "store": "ios",
         "app": "Nordkurier",
+        "rating": 2,
+        "text": "Die App hängt öfters und jedes Mal Muss man sich neu anmelden",
+        "date": "2025-04-12",
+        "id": "67f6b4b7b8798d6fa3b478d86beeafd85721331b1a57f931d85b392b483f384f"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
         "rating": 5,
         "text": "Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯",
         "date": "2025-03-23",
         "id": "1219002f54cfcbcb5a427351bcc5db43313a390ad96b4ba06bba4091d02aa1a4"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯",
+        "date": "2025-03-23",
+        "id": "cf5393bcca12109f5b525fac241c384da0925cf7d7d82100e05cf7f0d51efba6"
     },
     {
         "store": "ios",
@@ -555,9 +787,25 @@
         "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
+        "text": "Die App stürzt seit Version 5.7.28 beim Starten ab auf kompatiblen Geräten wie iPhone 5s mit iOS 12. \n\nAuch in der letzte veröffentlichte sofort Absturz. Es nervt etwas, dass die negative Bewertung und der Kontakt zur IT nicht viel bringen...\n\nBitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlossen. Wie lange dauert die Beseitigung des nervendes Fehlers.",
+        "date": "2025-02-20",
+        "id": "f0f672d8e0f3a92adfc28b99612a999b04c37f60c1baa09cf51e9d4a303175da"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
         "text": "Warum ist der bestehende Zugang gesperrt?",
         "date": "2025-01-24",
         "id": "b5543f853fa1a39bd25edae0cde5c36af48592342caf383fefb3ed530506b99c"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Warum ist der bestehende Zugang gesperrt?",
+        "date": "2025-01-24",
+        "id": "db0c60131d6140f5bd9698c793ccd84027f9eca807acbd05cb569c78057f0cc9"
     },
     {
         "store": "ios",
@@ -570,6 +818,14 @@
     {
         "store": "ios",
         "app": "Nordkurier",
+        "rating": 2,
+        "text": "Ich hatte die Hoffnung, dass es mit dem Update besser läuft. Im Gegenteil, jetzt sind die verschiedenen Regionen „weg“, ich sehe also keine Nachrichten. Die Rubrik meine Heimat aktualisiert sich seit Wochen nicht mehr, da werden immer noch die Weihnachtsmärkte angepriesen, da tut sich leider gar nichts mehr. Morgens der erste Blick in die App ist vorbei. Macht keinen Spaß mehr und ist wenig informativ. Schade!",
+        "date": "2025-01-15",
+        "id": "876623d44263c8fbcb24ef25f2d9342aa89cc2e140df9ab9f788d7699047aa9c"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
         "rating": 1,
         "text": "Man kann keine gespeicherten Inhalte öffnen, was für ein zahlenden Kunden natürlich sehr ärgerlich ist. Die App hat seit dem ich sie kenne, ich war vorher bei der SVZ, leider nur Probleme. Ich nutze das Digital Abo und stehe kurz davor das Abo beim Nordkurier endgültig zu kündigen. Hier fühlt man sich als Kunde und Leser nicht ernst genommen.",
         "date": "2024-12-22",
@@ -578,10 +834,26 @@
     {
         "store": "ios",
         "app": "Nordkurier",
+        "rating": 1,
+        "text": "Man kann keine gespeicherten Inhalte öffnen, was für ein zahlenden Kunden natürlich sehr ärgerlich ist. Die App hat seit dem ich sie kenne, ich war vorher bei der SVZ, leider nur Probleme. Ich nutze das Digital Abo und stehe kurz davor das Abo beim Nordkurier endgültig zu kündigen. Hier fühlt man sich als Kunde und Leser nicht ernst genommen.",
+        "date": "2024-12-22",
+        "id": "380ddd920aba04883116ea1a58aeec30cf003b38413ed458bbac5dc4d3259492"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Schade, das war mal besser.",
         "date": "2024-12-15",
         "id": "33d1046dc8bc8b2af0566143bc713f62e3e7a5815734ce339bd4259c3429fa06"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Schade, das war mal besser.",
+        "date": "2024-12-15",
+        "id": "2d6453c951582832d96cd7eecea67158a191b5e3672c85aa995b739ba4d1317e"
     },
     {
         "store": "ios",
@@ -595,9 +867,25 @@
         "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
+        "text": "Die neue App ist widerlich.",
+        "date": "2024-12-04",
+        "id": "3acb1e58cf929af47d272a4b7b1dbdb24e8c00a9be2fe49f22cac51b100b9868"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
         "text": "doch sie haben es hin bekommen- Gratulation-Sarkasmus aus.\n\nIn der vorherigen Version hatte man überregional und regional auf einer Seite, man konnte seine Region einfach mit auswählen und war über Bundesland, eigene Region und bundesweit informiert- einfach nur runter scrollen - nun große Bilder nur NULL aus der Region- es sei denn man meldet sich an, oder geht in mindestens 2-3 Schritten durchs Menü - die App hat in diesem Zustand eine deutliche Verschlechterung der Usability erfahren - sehr schade und irre traurig 😢",
         "date": "2024-11-19",
         "id": "bad10b4373688141c836af03450ff0460bc225b6ad87d3ae26572c9c2b46a18c"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "doch sie haben es hin bekommen- Gratulation-Sarkasmus aus.\n\nIn der vorherigen Version hatte man überregional und regional auf einer Seite, man konnte seine Region einfach mit auswählen und war über Bundesland, eigene Region und bundesweit informiert- einfach nur runter scrollen - nun große Bilder nur NULL aus der Region- es sei denn man meldet sich an, oder geht in mindestens 2-3 Schritten durchs Menü - die App hat in diesem Zustand eine deutliche Verschlechterung der Usability erfahren - sehr schade und irre traurig 😢",
+        "date": "2024-11-19",
+        "id": "ad3a68d4ab3f04eed76db178582ece8e5befe7ff0a277ef7a09b2116b598436c"
     },
     {
         "store": "ios",
@@ -610,6 +898,14 @@
     {
         "store": "ios",
         "app": "Nordkurier",
+        "rating": 5,
+        "text": "Keine Dienstleistung für den Kunden. Servicebereich ist über das Netz nicht erreichbar. Die Dienstleistung war bei der SVZ sehr viel besser.",
+        "date": "2024-11-09",
+        "id": "5a794e66293585094db7c12120768598b05612a9c3445b3953f13d05e1c6aa09"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
         "rating": 1,
         "text": "Bin von der Nnn App gekommen und wurde dann zwangsweise auf diese App gestoßen \n\nSeitdem habe ich eigentlich keine Lust mehr mir die Nachrichten anzuschauen\n\n1. wenn ich auf eine Nachricht klicke wird mir diese oft nicht vollständig angezeigt \n\n2. Blättern der Zeitung mit Wisch klappt nicht? was soll das ? \n\n3. für mich auch wichtig: zusatzlinhalte wie insbesondere die Rätselseite sind mit iPad oder iPhone unbenutzbar und schrecklich von der Bedienung\n\nIch weiß nicht woher die 5 Sterne von anderen Leuten kommen aber im Vergleich zur Vorgänger App ist das eine Riesen Entäuschung",
         "date": "2024-10-22",
@@ -618,10 +914,26 @@
     {
         "store": "ios",
         "app": "Nordkurier",
+        "rating": 1,
+        "text": "Bin von der Nnn App gekommen und wurde dann zwangsweise auf diese App gestoßen \n\nSeitdem habe ich eigentlich keine Lust mehr mir die Nachrichten anzuschauen\n\n1. wenn ich auf eine Nachricht klicke wird mir diese oft nicht vollständig angezeigt \n\n2. Blättern der Zeitung mit Wisch klappt nicht? was soll das ? \n\n3. für mich auch wichtig: zusatzlinhalte wie insbesondere die Rätselseite sind mit iPad oder iPhone unbenutzbar und schrecklich von der Bedienung\n\nIch weiß nicht woher die 5 Sterne von anderen Leuten kommen aber im Vergleich zur Vorgänger App ist das eine Riesen Entäuschung",
+        "date": "2024-10-22",
+        "id": "f40ab690b2236934383b8013af07d6d7e8456bdb51027e59ed5c00037fe2ab90"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Für mich als Leserin aus Schwerin ist sehr deutlich, dass die lokale Berichterstattung schlechter geworden ist.\nIch war gerade im Urlaub und habe nur selten die Zeitung gelesen,\nich kann also nicht gut beurteilen, ob sich in den letzten 3 Wochen etwas verändert hat.\nIch denke darüber nach, dass Abo zu kündigen. Es fällt mir aber auch schwer, weil die lokale Zeitung ein Stück Kultur ist, dass ich von meiner Kindheit her kenne. \n\nMargret",
         "date": "2024-09-25",
         "id": "8c202abe642df5931d0f89d20b6075c8c4c90992d72a3edf6e62a940fd3de998"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Für mich als Leserin aus Schwerin ist sehr deutlich, dass die lokale Berichterstattung schlechter geworden ist.\nIch war gerade im Urlaub und habe nur selten die Zeitung gelesen,\nich kann also nicht gut beurteilen, ob sich in den letzten 3 Wochen etwas verändert hat.\nIch denke darüber nach, dass Abo zu kündigen. Es fällt mir aber auch schwer, weil die lokale Zeitung ein Stück Kultur ist, dass ich von meiner Kindheit her kenne. \n\nMargret",
+        "date": "2024-09-25",
+        "id": "66e25bd296a010dfed86ded8ed36304a32ded11ca079c2dfeb197d37aee3ced9"
     },
     {
         "store": "ios",
@@ -635,9 +947,25 @@
         "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
+        "text": "Auf iPad wird der Bildschirm nicht voll genutzt. Das war damals bei dr SVZ auch, wurde aber schnell geändert. Hier kann man das kaum lesen wegen dem ungenutzten Rahmen um die App, so dass man immer vergrößern muss. Immer mal wieder - bitte im Web lesen! Wieso? Was schlimmeres gibt es kaum. Will ich zurück, klickt man schnell verkehrt und zack ist man raus aus der Seite. In der App wischen und klicken- klappt selten und schlecht gemacht. Auch die Aktualität von Artikeln, gerne mal 2 Tage alt. Ich geh zur Konkurrenz, wenn das nicht schnell verbessert wird. Von der SVZ lernen, das wäre ja zu leicht.",
+        "date": "2024-09-16",
+        "id": "98fb365d35aad49c0b0056098996706b75c0c72809cf2b1ce8facb8ddbcfa39e"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
         "text": "Beim Öffnen der App wird nicht automatisch die neueste Zeitung angezeigt. Über die Rätselseite sagt man am besten gar nichts - das hat mit einer Online-Zeitung nichts zu tun…",
         "date": "2024-09-15",
         "id": "f4efcf2b706cfcefe31ffebe2e2d5d4fc4cc4e04390eb8e4f0c635e80a556157"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Beim Öffnen der App wird nicht automatisch die neueste Zeitung angezeigt. Über die Rätselseite sagt man am besten gar nichts - das hat mit einer Online-Zeitung nichts zu tun…",
+        "date": "2024-09-15",
+        "id": "b4cd78f935b9323125fd0a259e35d201cff5d133b898016aab04e329a6ed09ff"
     },
     {
         "store": "ios",
