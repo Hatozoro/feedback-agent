@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "schlechteste App welche ich je auf dem Handy gehabt habe 😔",
+        "date": "2025-11-28",
+        "id": "fc1dd681e581aeeff2187c9af8a36779ecf0bf1cbc35e29ebf04738185aa193e"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 3,
