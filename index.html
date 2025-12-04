@@ -76,7 +76,7 @@
             <header>
                 <div>
                     <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: 03.12.2025 06:27</span>
+                    <span style="opacity:0.7;">Update: 04.12.2025 06:26</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -103,18 +103,18 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">Analyse</h3>
-                <p>Die Reviews zeigen ein gemischtes Bild der Apps Schwäbische und Nordkurier. Viele Nutzer berichten von technischen Problemen wie Abstürzen, Flackern des Bildschirms und Problemen beim Zoomen oder Umblättern von Seiten. Besonders häufig wird das Abstürzen im Bereich Aktuelles kritisiert. Einige Nutzer bemängeln auch das wiederholte Abfragen von Cookie-Einstellungen. Positive Rückmeldungen loben die Möglichkeit, jederzeit und überall Nachrichten lesen zu können, was eine Erleichterung darstellt. Es gibt auch Beschwerden über fehlende Funktionen wie eine Suchfunktion in älteren Ausgaben. Insgesamt scheint es erhebliche Stabilitätsprobleme und Usability-Mängel zu geben, die das Nutzungserlebnis beeinträchtigen.</p>
+                <p>Die analysierten Reviews zeigen, dass viele Nutzer mit der Stabilität und Performance der Apps (Schwäbische Zeitung und Nordkurier) unzufrieden sind. Häufige Probleme sind Abstürze, Flackern des Bildschirms, Schwierigkeiten beim Zoomen und Umblättern, sowie das wiederholte Abfragen von Cookie-Einstellungen. Besonders der Bereich Aktuelles scheint fehleranfällig zu sein. Einige Nutzer bemängeln auch das Fehlen einer Suchfunktion und die Qualität der Vorlesefunktion. Es gibt aber auch positive Rückmeldungen, die die generelle Verfügbarkeit und den Informationsgehalt loben.</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <span class="tag"># Regionsauswahl</span> <span class="tag"># App-Performance</span> <span class="tag"># Datumsproblem</span> <span class="tag"># Benutzerfreundlichkeit</span> <span class="tag"># Cookie-Einstellungen</span> 
+                    <span class="tag"># Einstellungsfehler</span> <span class="tag"># App-Funktionalität</span> <span class="tag"># App-Abstürze</span> <span class="tag"># Benutzerunfreundlich</span> <span class="tag"># Regionsauswahl</span> 
                 </div>
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme</h3>
                     <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">15</span></span><span class="buzz-tag" style="--intensity:0.6;">Cookie-Abfrage <span class="count">9</span></span><span class="buzz-tag" style="--intensity:0.3333333333333333;">Anmeldung <span class="count">5</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">Aktuelles stürzt ab <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">App lässt sich nicht öffnen <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">Funktioniert nicht <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">Flackern <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2;">Suchfunktion fehlt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;">App schlecht <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;">Seite springt <span class="count">3</span></span></div>
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;">App stürzt ab <span class="count">15</span></span><span class="buzz-tag" style="--intensity:0.7333333333333333;">Cookie <span class="count">11</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">lässt sich nicht öffnen <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">Anmeldung <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.26666666666666666;">Aktuelles <span class="count">4</span></span><span class="buzz-tag" style="--intensity:0.2;">ruckelt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;">Seite springt <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.2;">Suchfunktion <span class="count">3</span></span><span class="buzz-tag" style="--intensity:0.13333333333333333;">nicht zufrieden <span class="count">2</span></span><span class="buzz-tag" style="--intensity:0.13333333333333333;">flackern <span class="count">2</span></span></div>
                     </div>
                 </div>
             </div>
@@ -271,11 +271,11 @@ Daher aktuell nur 2 Sterne möglich.</div>
             let chart = new Chart(ctx, {
                 type: 'bar',
                 data: {
-                    labels: ["20.11.", "21.11.", "22.11.", "23.11.", "24.11.", "25.11.", "26.11.", "27.11.", "28.11.", "29.11.", "30.11.", "01.12.", "02.12.", "03.12."],
+                    labels: ["21.11.", "22.11.", "23.11.", "24.11.", "25.11.", "26.11.", "27.11.", "28.11.", "29.11.", "30.11.", "01.12.", "02.12.", "03.12.", "04.12."],
                     datasets: [
-                        { label: 'Positiv (4-5★)', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0], backgroundColor: '#22c55e' },
-                        { label: 'Neutral (3★)', data: [0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8' },
-                        { label: 'Negativ (1-2★)', data: [0, 1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0], backgroundColor: '#ef4444' }
+                        { label: 'Positiv (4-5★)', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0], backgroundColor: '#22c55e' },
+                        { label: 'Neutral (3★)', data: [0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8' },
+                        { label: 'Negativ (1-2★)', data: [1, 0, 0, 0, 0, 0, 0, 1, 0, 0, 0, 0, 0, 0], backgroundColor: '#ef4444' }
                     ]
                 },
                 options: {
