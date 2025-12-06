@@ -10,6 +10,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Ich bin zwar angemeldet, kann aucheinzelneArtikellesen, das hochladen der Tageszeitung und die Spiele sind aber gesperrt. \"Etwas ist schiefgelaufen, versuchen sie es doch gleich nochmal\" - der tägliche Kommentar. Ich habe die App gelöscht und nochmals heruntergeladen. Immer noch dasselbe. So überzeugt man nicht.",
+        "date": "2025-12-04",
+        "id": "a4dfc96ed60c49b6ba4b043f9f506a0b39baa6d25af81b703274dfd554afdaff"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "Ich habe erst seit ein paar Tagen das Digitalabo und bin mit der App nicht zufrieden. Die Anzeige ist manchmal zittrig. \"Aktuelles\" kann ich nicht lesen, da stürzt die App beim Aufruf von Videos und Artikeln zuverlässig ab. Der Fehler tritt am Androidtablet und am ipad auf. Eine Neuinstallation ändert nichts. 13.11.: Nach wie vor das Problem, dass ich \"Aktuelles\" wegen Absturz nicht lesen kann. Weder auf dem ipad noch auf dem Galaxy. Die Frage nach der Android-Version erübrigt sich. 01.12. edit",
         "date": "2025-12-01",
