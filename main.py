@@ -21,7 +21,7 @@ from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
 
 load_dotenv()
-API_KEY = os.getenv("GEMINI_API_KEY")
+API_KEY = "AIzaSyDUsJxv1YXMvhud_iqY5NlrUqhS8QMpbK8"
 
 # KI Initialisierung
 if API_KEY:
