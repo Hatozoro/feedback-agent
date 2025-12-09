@@ -21,16 +21,13 @@ from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
 
 load_dotenv()
-API_KEY = "AIzaSyDUsJxv1YXMvhud_iqY5NlrUqhS8QMpbK8"
+API_KEY = os.getenv("GEMINI_API_KEY")
 
 # KI Initialisierung
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
-        model = genai.GenerativeModel(
-            model_name="gemini-2.0-flash",
-            generation_config={"response_mime_type": "application/json"}
-        )
+        model = genai.GenerativeModel(model_name="gemini-2.0-flash", generation_config={"response_mime_type": "application/json"})
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
         print("✅ KI-Module erfolgreich geladen.")
     except Exception as e:
@@ -50,7 +47,7 @@ APP_CONFIG = [
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
 ]
 
-# Stopwords für lokalen Fallback
+# Erweiterte Stopwords für bessere lokale Ergebnisse
 STOP_WORDS = {
     "die", "der", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
     "ich", "du", "er", "sie", "es", "wir", "ihr", "sie", "mich", "mir", "meine", "meiner", "mein",
@@ -68,7 +65,8 @@ STOP_WORDS = {
     "app", "apps", "anwendung", "version", "update", "updates", "ios", "android", "handy", "tablet",
     "telefon", "iphone", "ipad", "samsung", "pixel", "gerät", "geräte", "nutzer", "kunde", "kunden",
     "schwäbische", "nordkurier", "zeitung", "artikel", "lesen", "leser", "hallo", "moin", "tag",
-    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern"
+    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern",
+    "läuft", "funktioniert", "problem", "probleme", "fehler", "stürzt", "absturz" # Generische Begriffe raus
 }
 
 # ---------------------------------------------------------
@@ -188,24 +186,27 @@ def is_genuine_positive(review):
 # 4. HYBRID INTELLIGENCE (KI + CACHE + LOCAL FALLBACK)
 # ---------------------------------------------------------
 def get_local_buzzwords(reviews):
+    """FALLBACK 2: Berechnet Wortpaare lokal, wenn KI & Cache fehlen."""
     text_blob = " ".join([r.get('text', '') for r in reviews]).lower()
     text_blob = re.sub(r'[^\w\säöüß]', '', text_blob)
     words = text_blob.split()
     bigrams = []
     for i in range(len(words) - 1):
         w1, w2 = words[i], words[i+1]
-        if len(w1) > 2 and len(w2) > 2 and w1 not in STOP_WORDS and w2 not in STOP_WORDS:
-            bigrams.append(f"{w1} {w2}")
+        if len(w1) > 4 and len(w2) > 4 and w1 not in STOP_WORDS and w2 not in STOP_WORDS:
+            bigrams.append(f"{w1.capitalize()} {w2.capitalize()}")
     return Counter(bigrams).most_common(12)
 
 def get_local_topics(texts):
+    """FALLBACK 2: Einfache Themenfindung."""
     words = []
     for t in texts:
-        words.extend([w for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 4])
+        words.extend([w for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 5])
     common = [w.capitalize() for w, c in Counter(words).most_common(5)]
     return common if common else ["Allgemeines Feedback"]
 
 def get_ai_data_hybrid(reviews, cache):
+    # Init Results mit Cache oder leer
     result_topics = cache.get('topics', [])
     result_buzzwords = cache.get('buzzwords', [])
     result_summary = cache.get('summary', "Keine Analyse verfügbar.")
@@ -215,6 +216,7 @@ def get_ai_data_hybrid(reviews, cache):
     rich_reviews = [r for r in reviews if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = reviews
 
+    # Versuche KI
     if model:
         try:
             print("--- Starte KI Analyse ---")
@@ -247,6 +249,7 @@ def get_ai_data_hybrid(reviews, cache):
 
             print("✅ KI Analyse erfolgreich. Cache wird aktualisiert.")
 
+            # Cache Speichern
             new_cache = {
                 "topics": result_topics,
                 "buzzwords": result_buzzwords,
@@ -260,6 +263,7 @@ def get_ai_data_hybrid(reviews, cache):
         except Exception as e:
             print(f"⚠️ KI Fehler ({e}). Nutze Cache/Fallback.")
 
+    # Fallback auf Lokal wenn immer noch leer (auch kein Cache da war)
     if not result_buzzwords:
         result_buzzwords = get_local_buzzwords(reviews)
 
@@ -282,7 +286,8 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             res.append({
                 "store": "ios", "app": app_name, "rating": int(e['im:rating']['label']),
                 "text": e['content']['label'], "date": e.get('updated', {}).get('label', '')[:10],
-                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']})
+                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']}),
+                "reply": False
             })
         return res
     except: return []
@@ -294,9 +299,11 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         out = []
         for r in res:
             d = r['at'].strftime('%Y-%m-%d')
+            has_reply = True if r.get('replyContent') else False
             out.append({
                 "store": "android", "app": app_name, "rating": r['score'], "text": r['content'], "date": d,
-                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']})
+                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']}),
+                "reply": has_reply
             })
         return out
     except: return []
@@ -734,30 +741,63 @@ def run_analysis_and_generate_html(full_history, new_only):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard Version 24.0 generiert.")
+    print("✅ Dashboard HTML erfolgreich generiert.")
 
 # ---------------------------------------------------------
-# 7. MAIN EXECUTION + TEAMS
+# 7. TEAMS MESSAGECARD (ENTERPRISE / ADAPTIVE)
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
-    if not new_reviews:
-        return
+    if not new_reviews: return
 
-    pos = sum(1 for r in new_reviews if r['rating'] >= 4)
-    neg = sum(1 for r in new_reviews if r['rating'] <= 2)
+    top_reviews = new_reviews[:10]
+    pos = sum(1 for r in new_reviews if r['rating']>=4)
+    neu = sum(1 for r in new_reviews if r['rating']==3)
+    neg = sum(1 for r in new_reviews if r['rating']<=2)
 
-    text_body = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n\n"
-    text_body += f"👍 Positiv: {pos} | 🚨 Kritisch: {neg}\n\n"
-    text_body += "**Auszug:**\n"
+    card = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "themeColor": "0076D7",
+        "summary": f"Neues App Feedback ({len(new_reviews)})",
+        "sections": [
+            {
+                "activityTitle": f"🚀 **Neues Feedback ({len(new_reviews)})**",
+                "facts": [
+                    {"name": "Positiv:", "value": str(pos)},
+                    {"name": "Neutral:", "value": str(neu)},
+                    {"name": "Negativ:", "value": str(neg)}
+                ],
+                "markdown": True
+            }
+        ],
+        "potentialAction": [
+            {
+                "@type": "OpenUri",
+                "name": "Zum Dashboard",
+                "targets": [{"os": "default", "uri": "https://Hatozoro.github.io/feedback-agent/"}]
+            }
+        ]
+    }
 
-    for r in new_reviews[:3]:
-        text_body += f"- {r['rating']}★: {r['text'][:60]}...\n"
+    for r in top_reviews:
+        icon = "🍏" if r['store'] == 'ios' else "🤖"
+        star = "⭐" * r['rating']
+        section = {
+            "title": f"{icon} {r['app']} ({star})",
+            "text": r['text'],
+            "markdown": True
+        }
+        card['sections'].append(section)
 
-    text_body += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+    if len(new_reviews) > 10:
+        card['sections'].append({
+            "text": f"... und {len(new_reviews) - 10} weitere auf dem Dashboard.",
+            "markdown": True
+        })
 
     try:
-        requests.post(webhook_url, json={"text": text_body}, timeout=10)
-        print("✅ Teams Nachricht gesendet.")
+        requests.post(webhook_url, json=card)
+        print("✅ Enterprise Teams Message gesendet.")
     except Exception as e:
         print(f"❌ Teams Fehler: {e}")
 
