@@ -20,28 +20,28 @@ import numpy as np
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
 
-# Lädt die .env Datei
 load_dotenv()
 
-# API Key Logik: Priorität hat .env, sonst Fallback
+# API KEY aus .env laden
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# KI Initialisierung (Gemini 1.5 Flash - Stabil & Schnell)
+# KI Initialisierung
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
+        # Wir nutzen 1.5 Flash, da es am stabilsten ist, wenn Quota vorhanden ist
         model = genai.GenerativeModel(
             model_name="gemini-1.5-flash",
             generation_config={"response_mime_type": "application/json"}
         )
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        print("✅ KI-Module erfolgreich geladen (Gemini 1.5 Flash).")
+        print("✅ KI-Module geladen.")
     except Exception as e:
-        print(f"⚠️ KI-Start fehlgeschlagen (Fallback-Modus aktiv): {e}")
+        print(f"⚠️ KI-Start fehlgeschlagen: {e}")
         model = None
         embedder = None
 else:
-    print("ℹ️ Kein API Key gefunden (Fallback-Modus aktiv).")
+    print("ℹ️ Kein API Key gefunden.")
     model = None
     embedder = None
 
@@ -53,7 +53,7 @@ APP_CONFIG = [
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
 ]
 
-# Stopwords für lokalen Fallback (Erweitert)
+# RIESIGE STOPWORD LISTE FÜR DEN NOTFALL (Falls Fehler 429 kommt)
 STOP_WORDS = {
     "die", "der", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
     "ich", "du", "er", "sie", "es", "wir", "ihr", "sie", "mich", "mir", "meine", "meiner", "mein",
@@ -72,7 +72,21 @@ STOP_WORDS = {
     "telefon", "iphone", "ipad", "samsung", "pixel", "gerät", "geräte", "nutzer", "kunde", "kunden",
     "schwäbische", "nordkurier", "zeitung", "artikel", "lesen", "leser", "hallo", "moin", "tag",
     "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern",
-    "läuft", "funktioniert", "problem", "probleme", "fehler", "stürzt", "absturz"
+    "läuft", "funktioniert", "problem", "probleme", "fehler", "stürzt", "absturz", "kein", "keine", "mehr", "wird",
+    "beim", "beiden", "bin", "bis", "bist", "da", "dadurch", "daher", "dabei", "darum", "das", "dass", "dein", "deine",
+    "dem", "den", "der", "des", "dessen", "dich", "dir", "doch", "dort", "durch", "ein", "eine", "einem", "einen",
+    "einer", "eines", "einige", "einigen", "einiger", "einiges", "einmal", "er", "es", "euch", "euer", "eure",
+    "für", "gegen", "gewesen", "hab", "habe", "haben", "hat", "hatte", "hatten", "hier", "hin", "hinter", "ich",
+    "ihm", "ihn", "ihnen", "ihr", "ihre", "ihrem", "ihren", "ihrer", "ihres", "im", "in", "indem", "ins", "ist",
+    "jede", "jedem", "jeden", "jeder", "jedes", "jene", "jenem", "jenen", "jener", "jenes", "jetzt", "kann",
+    "kannst", "können", "könnt", "machen", "mein", "meine", "meinem", "meinen", "meiner", "meines", "mich",
+    "mir", "mit", "muss", "musst", "musste", "nach", "nicht", "nichts", "noch", "nun", "nur", "ob", "oder", "ohne",
+    "sehr", "sein", "seine", "seinem", "seinen", "seiner", "seines", "selbst", "sich", "sie", "sind", "so",
+    "solche", "solchem", "solchen", "solcher", "solches", "soll", "sollte", "sondern", "sonst", "über", "um",
+    "und", "uns", "unser", "unsere", "unserem", "unseren", "unserer", "unseres", "unter", "viel", "vom", "von",
+    "vor", "während", "war", "waren", "warst", "was", "weg", "weil", "weiter", "welche", "welchem", "welchen",
+    "welcher", "welches", "wenn", "werde", "werden", "wie", "wieder", "will", "wir", "wird", "wirst", "wo",
+    "wollen", "wollte", "würde", "würden", "zu", "zum", "zur", "zwar", "zwischen"
 }
 
 # ---------------------------------------------------------
@@ -191,28 +205,31 @@ def is_genuine_positive(review):
     return True
 
 # ---------------------------------------------------------
-# 4. HYBRID INTELLIGENCE (KI + CACHE + LOCAL FALLBACK)
+# 4. HYBRID INTELLIGENCE (INTELLIGENTER FALLBACK)
 # ---------------------------------------------------------
 def get_local_buzzwords(reviews):
+    """FALLBACK 2: Verbesserte Wort-Logik"""
     text_blob = " ".join([r.get('text', '') for r in reviews]).lower()
     text_blob = re.sub(r'[^\w\säöüß]', '', text_blob)
     words = text_blob.split()
     bigrams = []
     for i in range(len(words) - 1):
         w1, w2 = words[i], words[i+1]
-        if len(w1) > 4 and len(w2) > 4 and w1 not in STOP_WORDS and w2 not in STOP_WORDS:
+        # Filtert harte Stopwords und zu kurze Wörter
+        if len(w1) > 3 and len(w2) > 3 and w1 not in STOP_WORDS and w2 not in STOP_WORDS:
             bigrams.append(f"{w1.capitalize()} {w2.capitalize()}")
     return Counter(bigrams).most_common(12)
 
 def get_local_topics(texts):
+    """FALLBACK 2: Verbesserte Themen-Logik"""
     words = []
     for t in texts:
-        words.extend([w for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 5])
-    common = [w.capitalize() for w, c in Counter(words).most_common(5)]
+        # Nur Substantive (Großschreibung simulieren durch Länge + Stopword Filter)
+        words.extend([w.capitalize() for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 4])
+    common = [w for w, c in Counter(words).most_common(5)]
     return common if common else ["Allgemeines Feedback"]
 
 def get_ai_data_hybrid(reviews, cache):
-    # Lade Ergebnisse aus dem Cache
     result_topics = cache.get('topics', [])
     result_buzzwords = cache.get('buzzwords', [])
     result_summary = cache.get('summary', "Keine Analyse verfügbar.")
@@ -222,10 +239,10 @@ def get_ai_data_hybrid(reviews, cache):
     rich_reviews = [r for r in reviews if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = reviews
 
-    # Versuche KI, wenn Modell vorhanden
+    # Versuche KI, wenn Modell vorhanden UND kein 429 Fehler erwartet wird
     if model:
         try:
-            print("--- Starte KI Analyse (Gemini 1.5 Flash) ---")
+            print("--- Starte KI Analyse ---")
             text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
 
             prompt_buzz = f"""
@@ -269,11 +286,13 @@ def get_ai_data_hybrid(reviews, cache):
         except Exception as e:
             print(f"⚠️ KI Fehler ({e}). Nutze Cache/Fallback.")
 
-    # Fallbacks wenn alles fehlschlägt (und Cache leer ist)
+    # Fallback auf Lokal wenn KI versagt hat
     if not result_buzzwords:
+        print("⚠️ Nutze lokalen Buzzword Fallback")
         result_buzzwords = get_local_buzzwords(reviews)
 
     if not result_topics:
+        print("⚠️ Nutze lokalen Topic Fallback")
         result_topics = get_local_topics([r['text'] for r in reviews[:50]])
 
     return result_topics, result_buzzwords, {"summary": result_summary, "topReviews": result_top, "bottomReviews": result_bottom}
@@ -381,16 +400,15 @@ def run_analysis_and_generate_html(full_history, new_only):
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
-    # Breakdown HTML Generator
     breakdown_html = ""
     for app, stores in trends.get('breakdown', {}).items():
         ios_score = stores.get('ios', 0)
         android_score = stores.get('android', 0)
-        breakdown_html += f'<div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
-        breakdown_html += f'<span style="font-size:0.95rem; opacity:0.8;"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
+        breakdown_html += f'<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
+        breakdown_html += f'<span style="font-size:0.9rem"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_labels = json.dumps(chart['labels'])
@@ -435,12 +453,13 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; 
+                display: inline-flex; align-items: center; cursor: pointer;
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500;
+                color: var(--text); font-weight: 500; transition: transform 0.2s;
             }}
+            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -453,7 +472,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             
-            /* FILTER & SORTIERUNG DESIGN */
             .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
             .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
@@ -514,7 +532,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     </div>
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme</h3>
+                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
                     <div class="card buzz-container">
                         {buzz_html}
                     </div>
@@ -657,7 +675,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 if (type === 'app') filterApp = value;
                 if (type === 'store') filterStore = value;
                 
-                // Reset active class in group
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -703,7 +720,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
-                    // HIGHLIGHTING LOGIC
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -724,7 +740,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
+                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
@@ -747,10 +763,10 @@ def run_analysis_and_generate_html(full_history, new_only):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard HTML erfolgreich generiert.")
+    print("✅ Dashboard Version 34.0 generiert.")
 
 # ---------------------------------------------------------
-# 7. TEAMS MESSAGECARD (Actionable)
+# 7. TEAMS MESSAGECARD (Actionable & Safe)
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
     if not new_reviews: return
