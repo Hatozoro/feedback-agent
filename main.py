@@ -20,13 +20,13 @@ import numpy as np
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
 
-# Lädt Variablen aus der .env Datei
+# Lädt die .env Datei
 load_dotenv()
 
-# API Key aus Umgebungsvariablen holen
+# API Key Logik: Priorität hat .env, sonst Fallback
 API_KEY = os.getenv("GEMINI_API_KEY")
 
-# KI Initialisierung (Gemini 1.5 Flash - Stable)
+# KI Initialisierung (Gemini 1.5 Flash - Stabil & Schnell)
 if API_KEY:
     try:
         genai.configure(api_key=API_KEY)
@@ -41,7 +41,7 @@ if API_KEY:
         model = None
         embedder = None
 else:
-    print("ℹ️ Kein API Key in .env gefunden (Fallback-Modus aktiv).")
+    print("ℹ️ Kein API Key gefunden (Fallback-Modus aktiv).")
     model = None
     embedder = None
 
@@ -53,7 +53,7 @@ APP_CONFIG = [
     {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
 ]
 
-# Stopwords für lokalen Fallback
+# Stopwords für lokalen Fallback (Erweitert)
 STOP_WORDS = {
     "die", "der", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
     "ich", "du", "er", "sie", "es", "wir", "ihr", "sie", "mich", "mir", "meine", "meiner", "mein",
@@ -212,6 +212,7 @@ def get_local_topics(texts):
     return common if common else ["Allgemeines Feedback"]
 
 def get_ai_data_hybrid(reviews, cache):
+    # Lade Ergebnisse aus dem Cache
     result_topics = cache.get('topics', [])
     result_buzzwords = cache.get('buzzwords', [])
     result_summary = cache.get('summary', "Keine Analyse verfügbar.")
@@ -221,6 +222,7 @@ def get_ai_data_hybrid(reviews, cache):
     rich_reviews = [r for r in reviews if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = reviews
 
+    # Versuche KI, wenn Modell vorhanden
     if model:
         try:
             print("--- Starte KI Analyse (Gemini 1.5 Flash) ---")
@@ -253,6 +255,7 @@ def get_ai_data_hybrid(reviews, cache):
 
             print("✅ KI Analyse erfolgreich. Cache wird aktualisiert.")
 
+            # Cache Speichern
             new_cache = {
                 "topics": result_topics,
                 "buzzwords": result_buzzwords,
@@ -266,7 +269,7 @@ def get_ai_data_hybrid(reviews, cache):
         except Exception as e:
             print(f"⚠️ KI Fehler ({e}). Nutze Cache/Fallback.")
 
-    # Fallback auf Lokal
+    # Fallbacks wenn alles fehlschlägt (und Cache leer ist)
     if not result_buzzwords:
         result_buzzwords = get_local_buzzwords(reviews)
 
@@ -378,15 +381,16 @@ def run_analysis_and_generate_html(full_history, new_only):
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
 
+    # Breakdown HTML Generator
     breakdown_html = ""
     for app, stores in trends.get('breakdown', {}).items():
         ios_score = stores.get('ios', 0)
         android_score = stores.get('android', 0)
-        breakdown_html += f'<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
-        breakdown_html += f'<span style="font-size:0.9rem"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
+        breakdown_html += f'<div style="margin-bottom:10px; padding-bottom:10px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
+        breakdown_html += f'<span style="font-size:0.95rem; opacity:0.8;"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_labels = json.dumps(chart['labels'])
@@ -431,13 +435,12 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
+                display: inline-flex; align-items: center; 
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                color: var(--text); font-weight: 500;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -450,6 +453,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
             
+            /* FILTER & SORTIERUNG DESIGN */
             .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
             .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
@@ -510,7 +514,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     </div>
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
+                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme</h3>
                     <div class="card buzz-container">
                         {buzz_html}
                     </div>
@@ -653,6 +657,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 if (type === 'app') filterApp = value;
                 if (type === 'store') filterStore = value;
                 
+                // Reset active class in group
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -698,6 +703,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
+                    // HIGHLIGHTING LOGIC
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -718,7 +724,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
+                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
@@ -741,10 +747,10 @@ def run_analysis_and_generate_html(full_history, new_only):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard Version 31.0 generiert.")
+    print("✅ Dashboard HTML erfolgreich generiert.")
 
 # ---------------------------------------------------------
-# 7. TEAMS MESSAGECARD (ENTERPRISE / ADAPTIVE)
+# 7. TEAMS MESSAGECARD (Actionable)
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
     if not new_reviews: return
@@ -754,6 +760,7 @@ def send_teams_notification(new_reviews, webhook_url):
     neu = sum(1 for r in new_reviews if r['rating']==3)
     neg = sum(1 for r in new_reviews if r['rating']<=2)
 
+    # Legacy MessageCard (Beste Unterstützung für Buttons)
     card = {
         "@type": "MessageCard",
         "@context": "http://schema.org/extensions",
@@ -779,6 +786,7 @@ def send_teams_notification(new_reviews, webhook_url):
         ]
     }
 
+    # Reviews als Abschnitte hinzufügen
     for r in top_reviews:
         icon = "🍏" if r['store'] == 'ios' else "🤖"
         star = "⭐" * r['rating']
