@@ -43,7 +43,7 @@ else:
     embedder = None
 
 DATA_FILE = "data/reviews_history.json"
-CACHE_FILE = "data/analysis_cache.json"  # NEU: Hier speichern wir die letzte KI-Analyse
+CACHE_FILE = "data/analysis_cache.json"
 
 APP_CONFIG = [
     {"name": "Nordkurier", "ios_id": "1250964862", "android_id": "de.nordkurier.live", "country": "de"},
@@ -72,7 +72,7 @@ STOP_WORDS = {
 }
 
 # ---------------------------------------------------------
-# 2. DATA MANAGEMENT (HISTORY & CACHE)
+# 2. DATA MANAGEMENT
 # ---------------------------------------------------------
 def generate_id(review):
     unique_string = f"{review.get('text', '')[:50]}{review.get('date', '')}{review.get('app', '')}{review.get('store', '')}"
@@ -93,7 +93,6 @@ def save_history(history_dict):
     with open(DATA_FILE, 'w', encoding='utf-8') as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
 
-# NEU: Cache Funktionen
 def load_analysis_cache():
     if os.path.exists(CACHE_FILE):
         try:
@@ -119,18 +118,17 @@ def calculate_trends(reviews):
         'Schwäbische': {'ios': [], 'android': []}
     }
 
-    replied_count = 0
     ios_total = 0
     android_total = 0
 
     for r in reviews:
-        if r.get('reply'): replied_count += 1
         if r.get('store') == 'ios': ios_total += 1
         elif r.get('store') == 'android': android_total += 1
 
         try:
             r_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
             rating = float(r['rating'])
+
             if r.get('text'):
                 dated_reviews.append((r_date, rating))
 
@@ -139,7 +137,7 @@ def calculate_trends(reviews):
         except: continue
 
     if not dated_reviews:
-        return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0, 'breakdown': {}, 'replied_total': 0, 'ios_total': 0, 'android_total': 0}
+        return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0, 'breakdown': {}, 'ios_total': 0, 'android_total': 0}
 
     def get_avg(days):
         cutoff = today - timedelta(days=days)
@@ -158,7 +156,6 @@ def calculate_trends(reviews):
         'last_7d': get_avg(7),
         'last_30d': get_avg(30),
         'breakdown': final_breakdown,
-        'replied_total': replied_count,
         'ios_total': ios_total,
         'android_total': android_total
     }
@@ -191,7 +188,6 @@ def is_genuine_positive(review):
 # 4. HYBRID INTELLIGENCE (KI + CACHE + LOCAL FALLBACK)
 # ---------------------------------------------------------
 def get_local_buzzwords(reviews):
-    """FALLBACK 2: Berechnet Wortpaare lokal, wenn KI & Cache fehlen."""
     text_blob = " ".join([r.get('text', '') for r in reviews]).lower()
     text_blob = re.sub(r'[^\w\säöüß]', '', text_blob)
     words = text_blob.split()
@@ -203,7 +199,6 @@ def get_local_buzzwords(reviews):
     return Counter(bigrams).most_common(12)
 
 def get_local_topics(texts):
-    """FALLBACK 2: Einfache Themenfindung."""
     words = []
     for t in texts:
         words.extend([w for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 4])
@@ -211,14 +206,6 @@ def get_local_topics(texts):
     return common if common else ["Allgemeines Feedback"]
 
 def get_ai_data_hybrid(reviews, cache):
-    """
-    Versucht folgende Reihenfolge:
-    1. KI Generierung
-    2. Wenn KI failt -> Lade aus Cache
-    3. Wenn Cache leer -> Lokale Berechnung
-    """
-
-    # Init Results mit Cache oder leer
     result_topics = cache.get('topics', [])
     result_buzzwords = cache.get('buzzwords', [])
     result_summary = cache.get('summary', "Keine Analyse verfügbar.")
@@ -228,13 +215,11 @@ def get_ai_data_hybrid(reviews, cache):
     rich_reviews = [r for r in reviews if len(r.get('text', '')) > 40]
     if len(rich_reviews) < 10: rich_reviews = reviews
 
-    # Versuche KI
     if model:
         try:
             print("--- Starte KI Analyse ---")
             text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
 
-            # Prompt 1: Buzzwords
             prompt_buzz = f"""
             Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
             Output JSON Liste: [ {{"term": "Thema", "count": 12}}, ... ]
@@ -244,7 +229,6 @@ def get_ai_data_hybrid(reviews, cache):
             data_buzz = json.loads(resp_buzz.text.replace("```json", "").replace("```", "").strip())
             result_buzzwords = [(i['term'], i['count']) for i in data_buzz if isinstance(i, dict)]
 
-            # Prompt 2: Summary & Topics & Highlights
             prompt_deep = f"""
             Analysiere diese Reviews (max 50).
             1. Erstelle 5 kurze Themen-Cluster Labels (JSON Liste von Strings).
@@ -263,7 +247,6 @@ def get_ai_data_hybrid(reviews, cache):
 
             print("✅ KI Analyse erfolgreich. Cache wird aktualisiert.")
 
-            # Cache Speichern
             new_cache = {
                 "topics": result_topics,
                 "buzzwords": result_buzzwords,
@@ -277,7 +260,6 @@ def get_ai_data_hybrid(reviews, cache):
         except Exception as e:
             print(f"⚠️ KI Fehler ({e}). Nutze Cache/Fallback.")
 
-    # Fallback auf Lokal wenn immer noch leer (auch kein Cache da war)
     if not result_buzzwords:
         result_buzzwords = get_local_buzzwords(reviews)
 
@@ -300,8 +282,7 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             res.append({
                 "store": "ios", "app": app_name, "rating": int(e['im:rating']['label']),
                 "text": e['content']['label'], "date": e.get('updated', {}).get('label', '')[:10],
-                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']}),
-                "reply": False
+                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']})
             })
         return res
     except: return []
@@ -313,11 +294,9 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         out = []
         for r in res:
             d = r['at'].strftime('%Y-%m-%d')
-            has_reply = True if r.get('replyContent') else False
             out.append({
                 "store": "android", "app": app_name, "rating": r['score'], "text": r['content'], "date": d,
-                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']}),
-                "reply": has_reply
+                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']})
             })
         return out
     except: return []
@@ -341,18 +320,13 @@ def run_analysis_and_generate_html(full_history, new_only):
     trends = calculate_trends(full_history)
     chart = prepare_chart_data(full_history)
 
-    # Lade Cache
     cache = load_analysis_cache()
-
-    # Hole KI Daten (oder Cache, oder Lokal)
     topics, buzzwords, ki_data = get_ai_data_hybrid(full_history, cache)
 
-    # --- ANTI-DOPPELGÄNGER LOGIK ---
     seen_texts = set()
     top_list = []
     bot_list = []
 
-    # 1. Python Filter
     candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
     for r in candidates_pos:
         if len(top_list) >= 3: break
@@ -367,7 +341,6 @@ def run_analysis_and_generate_html(full_history, new_only):
             bot_list.append(r)
             seen_texts.add(r['text'])
 
-    # 2. KI Fallback aus Cache/KI
     if len(top_list) < 1:
         for r in ki_data.get('topReviews', []):
             if len(top_list) >= 3: break
@@ -382,7 +355,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 bot_list.append(r)
                 seen_texts.add(r.get('text'))
 
-    # Metadaten fixen
     for r in top_list + bot_list:
         if not r.get('app'):
             m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
@@ -510,10 +482,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                         <i class="fab fa-apple"></i> {trends['ios_total']} &nbsp;|&nbsp; 
                         <i class="fab fa-android"></i> {trends['android_total']}
                     </div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">ENTWICKLER ANTWORTEN</div>
-                    <div class="kpi-val">{trends['replied_total']} <span style="font-size:1rem; color:var(--text); font-weight:normal;">Reviews</span></div>
                 </div>
             </div>
 
@@ -678,7 +646,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 if (type === 'app') filterApp = value;
                 if (type === 'store') filterStore = value;
                 
-                // Reset active class in group
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -723,7 +690,6 @@ def run_analysis_and_generate_html(full_history, new_only):
 
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    const replyBadge = r.reply ? '<span style="font-size:0.7em; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:5px;">Antwort</span>' : '';
                     
                     let displayText = r.text;
                     if (q.length >= 2) {{
@@ -745,7 +711,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐ ${{replyBadge}}
+                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
@@ -757,8 +723,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                     `;
                     container.appendChild(div);
                 }});
-                
-                initReadMore();
             }}
             
             filterData();
@@ -770,63 +734,30 @@ def run_analysis_and_generate_html(full_history, new_only):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard HTML erfolgreich generiert.")
+    print("✅ Dashboard Version 24.0 generiert.")
 
 # ---------------------------------------------------------
-# 7. TEAMS MESSAGECARD (ENTERPRISE / ADAPTIVE)
+# 7. MAIN EXECUTION + TEAMS
 # ---------------------------------------------------------
 def send_teams_notification(new_reviews, webhook_url):
-    if not new_reviews: return
+    if not new_reviews:
+        return
 
-    top_reviews = new_reviews[:10]
-    pos = sum(1 for r in new_reviews if r['rating']>=4)
-    neu = sum(1 for r in new_reviews if r['rating']==3)
-    neg = sum(1 for r in new_reviews if r['rating']<=2)
+    pos = sum(1 for r in new_reviews if r['rating'] >= 4)
+    neg = sum(1 for r in new_reviews if r['rating'] <= 2)
 
-    card = {
-        "@type": "MessageCard",
-        "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": f"Neues App Feedback ({len(new_reviews)})",
-        "sections": [
-            {
-                "activityTitle": f"🚀 **Neues Feedback ({len(new_reviews)})**",
-                "facts": [
-                    {"name": "Positiv:", "value": str(pos)},
-                    {"name": "Neutral:", "value": str(neu)},
-                    {"name": "Negativ:", "value": str(neg)}
-                ],
-                "markdown": True
-            }
-        ],
-        "potentialAction": [
-            {
-                "@type": "OpenUri",
-                "name": "Zum Dashboard",
-                "targets": [{"os": "default", "uri": "https://Hatozoro.github.io/feedback-agent/"}]
-            }
-        ]
-    }
+    text_body = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n\n"
+    text_body += f"👍 Positiv: {pos} | 🚨 Kritisch: {neg}\n\n"
+    text_body += "**Auszug:**\n"
 
-    for r in top_reviews:
-        icon = "🍏" if r['store'] == 'ios' else "🤖"
-        star = "⭐" * r['rating']
-        section = {
-            "title": f"{icon} {r['app']} ({star})",
-            "text": r['text'],
-            "markdown": True
-        }
-        card['sections'].append(section)
+    for r in new_reviews[:3]:
+        text_body += f"- {r['rating']}★: {r['text'][:60]}...\n"
 
-    if len(new_reviews) > 10:
-        card['sections'].append({
-            "text": f"... und {len(new_reviews) - 10} weitere auf dem Dashboard.",
-            "markdown": True
-        })
+    text_body += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
 
     try:
-        requests.post(webhook_url, json=card)
-        print("✅ Enterprise Teams Message gesendet.")
+        requests.post(webhook_url, json={"text": text_body}, timeout=10)
+        print("✅ Teams Nachricht gesendet.")
     except Exception as e:
         print(f"❌ Teams Fehler: {e}")
 
