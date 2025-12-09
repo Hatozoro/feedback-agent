@@ -25,7 +25,7 @@ from google_play_scraper import Sort, reviews as play_reviews
 # 1. SETUP
 # ---------------------------------------------------------
 load_dotenv()
-API_KEY = os.getenv("AIzaSyDx_yTmW_lVwpHx_6ScIMy6jOtYRTp_xAs")
+API_KEY = "AIzaSyDx_yTmW_lVwpHx_6ScIMy6jOtYRTp_xAs"
 
 if API_KEY:
     try:
