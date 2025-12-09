@@ -1,3 +1,4 @@
+# komplette Datei — überarbeitete Version mit Teams- und Dashboard-Updates
 import os
 import json
 import time
@@ -31,8 +32,12 @@ if API_KEY:
         genai.configure(api_key=API_KEY)
         model = genai.GenerativeModel(model_name="gemini-2.0-flash", generation_config={"response_mime_type": "application/json"})
         embedder = SentenceTransformer('all-MiniLM-L6-v2')
-    except: model = None; embedder = None
-else: model = None; embedder = None
+    except Exception:
+        model = None
+        embedder = None
+else:
+    model = None
+    embedder = None
 
 DATA_FILE = "data/reviews_history.json"
 APP_CONFIG = [
@@ -53,7 +58,8 @@ def load_history():
             with open(DATA_FILE, "r", encoding="utf-8") as f:
                 raw_data = json.load(f)
                 return {r['id']: r for r in raw_data if 'id' in r}
-        except: pass
+        except Exception:
+            pass
     return {}
 
 def save_history(history_dict):
@@ -65,55 +71,21 @@ def save_history(history_dict):
 def calculate_trends(reviews):
     today = datetime.now().date()
     dated_reviews = []
-
-    # Breakdown Speicher
-    breakdown = {
-        'Nordkurier': {'ios': [], 'android': []},
-        'Schwäbische': {'ios': [], 'android': []}
-    }
-
-    replied_count = 0
-    ios_total = 0
-    android_total = 0
-
     for r in reviews:
-        if r.get('reply'): replied_count += 1
-        if r.get('store') == 'ios': ios_total += 1
-        elif r.get('store') == 'android': android_total += 1
-
         try:
-            r_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
-            rating = float(r['rating'])
-            if r.get('text'):
-                dated_reviews.append((r_date, rating))
+            review_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
+            if r.get('text') and r.get('rating') is not None:
+                dated_reviews.append((review_date, float(r['rating'])))
+        except Exception:
+            continue
 
-            if r['app'] in breakdown and r['store'] in breakdown[r['app']]:
-                breakdown[r['app']][r['store']].append(rating)
-        except: continue
-
-    if not dated_reviews: return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0, 'breakdown': {}, 'replied_total': 0, 'ios_total':0, 'android_total':0}
-
+    if not dated_reviews:
+        return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0}
     def get_avg(days):
         cutoff = today - timedelta(days=days)
         f = [r for d, r in dated_reviews if d >= cutoff]
         return round(sum(f)/len(f), 2) if f else 0.0
-
-    final_breakdown = {}
-    for app, stores in breakdown.items():
-        final_breakdown[app] = {}
-        for store, ratings in stores.items():
-            avg = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
-            final_breakdown[app][store] = avg
-
-    return {
-        'overall': round(sum(r for d, r in dated_reviews)/len(dated_reviews), 2),
-        'last_7d': get_avg(7),
-        'last_30d': get_avg(30),
-        'breakdown': final_breakdown,
-        'replied_total': replied_count,
-        'ios_total': ios_total,
-        'android_total': android_total
-    }
+    return {'overall': round(sum(r for d, r in dated_reviews)/len(dated_reviews), 2), 'last_7d': get_avg(7), 'last_30d': get_avg(30)}
 
 def prepare_chart_data(reviews, days=14):
     today = datetime.now().date()
@@ -133,7 +105,6 @@ def prepare_chart_data(reviews, days=14):
     return {'labels': fmt_labels, 'pos': [stats[d]['pos'] for d in labels], 'neg': [stats[d]['neg'] for d in labels], 'neu': [stats[d]['neu'] for d in labels]}
 
 def get_ai_buzzwords(reviews):
-    """Die fehlende Funktion wurde hier wieder eingefügt."""
     if not model: return []
     text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
     prompt = f"""
@@ -145,13 +116,16 @@ def get_ai_buzzwords(reviews):
         resp = model.generate_content(prompt)
         data = json.loads(resp.text.replace("```json", "").replace("```", "").strip())
         return [(i['term'], i['count']) for i in data if isinstance(i, dict)]
-    except: return []
+    except Exception:
+        return []
 
 def is_genuine_positive(review):
     bad_words = ["absturz", "stürzt", "fehler", "schlecht", "katastrophe", "mies", "flackern", "unbrauchbar", "geht nicht"]
-    if review.get('rating', 0) < 4: return True
+    if review.get('rating', 0) < 4:
+        return True
     text = review.get('text', '').lower()
-    if any(word in text for word in bad_words): return False
+    if any(word in text for word in bad_words):
+        return False
     return True
 
 # ---------------------------------------------------------
@@ -168,11 +142,11 @@ def fetch_ios_reviews(app_name, app_id, country="de", count=20):
             res.append({
                 "store": "ios", "app": app_name, "rating": int(e['im:rating']['label']),
                 "text": e['content']['label'], "date": e.get('updated', {}).get('label', '')[:10],
-                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']}),
-                "reply": False
+                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']})
             })
         return res
-    except: return []
+    except Exception:
+        return []
 
 def fetch_android_reviews(app_name, app_id, country="de", count=20):
     print(f"   -> Android: {app_name}...")
@@ -181,14 +155,13 @@ def fetch_android_reviews(app_name, app_id, country="de", count=20):
         out = []
         for r in res:
             d = r['at'].strftime('%Y-%m-%d')
-            has_reply = True if r.get('replyContent') else False
             out.append({
                 "store": "android", "app": app_name, "rating": r['score'], "text": r['content'], "date": d,
-                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']}),
-                "reply": has_reply
+                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']})
             })
         return out
-    except: return []
+    except Exception:
+        return []
 
 def get_fresh_reviews(count=20):
     hist = load_history()
@@ -206,6 +179,7 @@ def get_fresh_reviews(count=20):
 # 4. INTELLIGENZ
 # ---------------------------------------------------------
 def get_semantic_topics(reviews):
+    # returns list of topic strings or ["KI nicht bereit"] / ["Zu wenige Daten"]
     if not embedder or not model: return ["KI nicht bereit"]
     txts = [r['text'] for r in reviews[:300] if len(r.get('text','')) > 15]
     if len(txts) < 5: return ["Zu wenige Daten"]
@@ -224,20 +198,51 @@ def get_semantic_topics(reviews):
     try:
         p = f'Erstelle Labels (1-2 Wörter) für diese Themen: {json.dumps(samples, ensure_ascii=False)}. Output JSON Liste.'
         return json.loads(model.generate_content(p).text.replace("```json","").replace("```","").strip())
-    except: return ["Allgemein"]
+    except Exception:
+        # Fallback: try simple keyword extraction
+        words = Counter()
+        for t in txts:
+            for w in re.findall(r'\b\w{4,}\b', t.lower()):
+                words[w] += 1
+        return [w for w, _ in words.most_common(5)][:5]
+
+# ---------------------------------------------------------
+# Hilfsfunktion: weise bis zu 3 topic-labels einer Review zu (einfaches Matching)
+# ---------------------------------------------------------
+def assign_topics_to_review(review_text, global_topics):
+    if not global_topics:
+        return []
+    text = review_text.lower()
+    assigned = []
+    for topic in global_topics:
+        if not isinstance(topic, str): continue
+        t = topic.lower()
+        # match if topic token appears or topic words appear in text
+        if len(t) < 2: continue
+        # split multi-word topic and check any token
+        tokens = re.findall(r'\w+', t)
+        if any(tok in text for tok in tokens):
+            assigned.append(topic)
+        # if exact phrase present
+        elif t in text:
+            assigned.append(topic)
+        if len(assigned) >= 3:
+            break
+    return assigned
 
 # ---------------------------------------------------------
 # 5. DASHBOARD GENERATOR
 # ---------------------------------------------------------
-def run_analysis_and_generate_html(full_history, new_only):
+def run_analysis_and_generate_html(full_history, new_only, global_topics=None, output_path="public/index.html"):
     trends = calculate_trends(full_history)
     chart = prepare_chart_data(full_history)
-    topics = get_semantic_topics(full_history)
+    topics = global_topics or get_semantic_topics(full_history)
     buzzwords = get_ai_buzzwords(full_history)
 
     ki_data = {"summary": "Keine Analyse.", "topReviews": [], "bottomReviews": []}
     rich = [r for r in full_history if len(r.get('text', '')) > 40]
-    if len(rich) < 10: rich = full_history
+    if len(rich) < 10:
+        rich = full_history
 
     if model and rich:
         print("--- KI Analyse ---")
@@ -251,13 +256,15 @@ def run_analysis_and_generate_html(full_history, new_only):
         try:
             resp = model.generate_content(p)
             ki_data.update(json.loads(resp.text.replace("```json","").replace("```","").strip()))
-        except: pass
+        except Exception:
+            pass
 
-    # --- ANTI-DOPPELGÄNGER LOGIK ---
+    # --- ANTI-DOPPELGÄNGER LOGIK (STRIKT) ---
     seen_texts = set()
     top_list = []
     bot_list = []
 
+    # 1. Python Filter
     candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
     for r in candidates_pos:
         if len(top_list) >= 3: break
@@ -272,6 +279,7 @@ def run_analysis_and_generate_html(full_history, new_only):
             bot_list.append(r)
             seen_texts.add(r['text'])
 
+    # 2. KI Fallback (Nur wenn Python nichts gefunden hat)
     if len(top_list) < 1:
         for r in ki_data.get('topReviews', []):
             if len(top_list) >= 3: break
@@ -286,31 +294,44 @@ def run_analysis_and_generate_html(full_history, new_only):
                 bot_list.append(r)
                 seen_texts.add(r.get('text'))
 
+    # Metadaten auffüllen
     for r in top_list + bot_list:
         if not r.get('app'):
             m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
-            if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
+            if m:
+                r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
 
     summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
 
     for r in full_history:
         if 'date' in r:
-            try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
-            except: r['fmt_date'] = r['date']
+            try:
+                r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
+            except Exception:
+                r['fmt_date'] = r['date']
+
+    # ----------------------------
+    # Total Bewertung je App und Store
+    # ----------------------------
+    totals = defaultdict(lambda: {"count":0, "sum":0.0})
+    for r in full_history:
+        key = (r.get('app','unknown'), r.get('store','unknown'))
+        totals[key]['count'] += 1
+        try:
+            totals[key]['sum'] += float(r.get('rating', 0))
+        except Exception:
+            pass
+    totals_rows = []
+    for (app, store), v in totals.items():
+        avg = round(v['sum']/v['count'], 2) if v['count'] else 0.0
+        totals_rows.append({"app": app, "store": store, "count": v['count'], "avg": avg})
 
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};">{w} <span class="count">{c}</span></span>'
     buzz_html += '</div>'
-
-    breakdown_html = ""
-    for app, stores in trends.get('breakdown', {}).items():
-        ios_score = stores.get('ios', 0)
-        android_score = stores.get('android', 0)
-        breakdown_html += f'<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
-        breakdown_html += f'<span style="font-size:0.9rem"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
 
     js_reviews = json.dumps(full_history, ensure_ascii=False)
     js_labels = json.dumps(chart['labels'])
@@ -318,6 +339,7 @@ def run_analysis_and_generate_html(full_history, new_only):
     js_neg = json.dumps(chart['neg'])
     js_neu = json.dumps(chart['neu'])
 
+    # HTML bauen (nur Erweiterung: Totals-Tabelle)
     html = f"""
     <!DOCTYPE html>
     <html lang="de" data-theme="light">
@@ -353,15 +375,15 @@ def run_analysis_and_generate_html(full_history, new_only):
             
             .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
             
+            /* BUZZWORD DESIGN */
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
+                display: inline-flex; align-items: center; 
                 padding: 6px 12px; border-radius: 20px; 
                 background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
                 border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                color: var(--text); font-weight: 500;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
             .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
@@ -373,20 +395,22 @@ def run_analysis_and_generate_html(full_history, new_only):
             .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
             .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
-            .filter-group {{ display: flex; gap: 5px; align-items: center; }}
-            .filter-label {{ font-size: 0.85rem; color: #64748b; text-transform: uppercase; font-weight: bold; margin-right: 5px; }}
-            .filter-btn {{ padding: 8px 16px; border: 1px solid var(--border); background: var(--card); color: var(--text); border-radius: 8px; cursor: pointer; font-size: 0.9rem; }}
-            .filter-btn.active {{ background: var(--primary); color: white; border-color: var(--primary); }}
+            
+            /* NEW FILTER GROUP DESIGN */
+            .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
+            .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
+            .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
+            .filter-btn {{ padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }}
+            .filter-btn:hover {{ background: rgba(0,0,0,0.05); }}
+            .filter-btn.active {{ background: var(--primary); color: white; }}
             
             .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
             .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
             .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
             .meta {{ font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }}
-            
-            /* FILTER ROW STYLE */
-            .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
-            .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
+            table.totals {{ width:100%; border-collapse: collapse; }}
+            table.totals th, table.totals td {{ border:1px solid var(--border); padding:8px; text-align:left; }}
         </style>
     </head>
     <body>
@@ -405,19 +429,12 @@ def run_analysis_and_generate_html(full_history, new_only):
                     <div class="kpi-val">{trends['overall']} ⭐</div>
                 </div>
                 <div class="card">
-                    <div class="kpi-label">DETAILS PRO APP</div>
-                    <div style="margin-top:15px;">{breakdown_html}</div>
+                    <div class="kpi-label">Trend (7 Tage)</div>
+                    <div class="kpi-val">{trends['last_7d']} ⭐</div>
                 </div>
                 <div class="card">
-                    <div class="kpi-label">Reviews pro Store</div>
-                    <div style="margin-top:10px; font-size:1.1rem;">
-                        <i class="fab fa-apple"></i> {trends['ios_total']} &nbsp;|&nbsp; 
-                        <i class="fab fa-android"></i> {trends['android_total']}
-                    </div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">ENTWICKLER ANTWORTEN</div>
-                    <div class="kpi-val">{trends['replied_total']} <span style="font-size:1rem; color:var(--text); font-weight:normal;">Reviews</span></div>
+                    <div class="kpi-label">Erfasste Reviews</div>
+                    <div class="kpi-val">{len(full_history)}</div>
                 </div>
             </div>
 
@@ -427,28 +444,36 @@ def run_analysis_and_generate_html(full_history, new_only):
             </div>
             
             <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
+                <h3 style="margin-top:0;">Analyse</h3>
                 <p>{summary}</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
                     <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <div class="card" style="min-height:100px;">
-                        {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
-                    </div>
+                    {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
+                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme</h3>
                     <div class="card buzz-container">
                         {buzz_html}
                     </div>
                 </div>
             </div>
 
+            <div class="card" style="margin-bottom:20px;">
+                <h3 style="margin-top:0;">Total Bewertung je App & Store</h3>
+                <table class="totals">
+                    <thead><tr><th>App</th><th>Store</th><th>Anzahl</th><th>Ø Bewertung</th></tr></thead>
+                    <tbody>
+                        {''.join([f"<tr><td>{row['app']}</td><td>{row['store']}</td><td>{row['count']}</td><td>{row['avg']}</td></tr>" for row in totals_rows])}
+                    </tbody>
+                </table>
+            </div>
+
             <div class="review-grid">
                 <div>
-                    <h3>👍 Top Stimmen</h3>
+                    <h3>🤩 Top Stimmen</h3>
                     {''.join([f'''
                     <div class="review-card pos">
                         <div class="meta">
@@ -539,27 +564,19 @@ def run_analysis_and_generate_html(full_history, new_only):
                 options: {{
                     responsive: true, maintainAspectRatio: false,
                     scales: {{ 
-                        x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ color: '#64748b' }} }}, 
-                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }}, ticks: {{ color: '#64748b', padding: 10 }} }} 
+                        x: {{ stacked: true, grid: {{ display: false }} }}, 
+                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }} }} 
                     }},
-                    plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#64748b' }} }} }}
+                    plugins: {{ legend: {{ position: 'bottom' }} }}
                 }}
             }});
             
             function updateChartColors() {{
                 const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                const textColor = isDark ? '#cbd5e1' : '#64748b';
-                const gridColor = isDark ? '#334155' : '#e2e8f0';
-                
-                chart.options.scales.x.ticks.color = textColor;
-                chart.options.scales.y.ticks.color = textColor;
-                chart.options.scales.y.grid.color = gridColor;
-                chart.options.plugins.legend.labels.color = textColor;
+                chart.options.scales.y.grid.color = isDark ? '#334155' : '#e2e8f0';
                 chart.update();
             }}
             updateChartColors();
-
-            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
 
             function initReadMore() {{
                 document.querySelectorAll('.review-content').forEach(div => {{
@@ -582,6 +599,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 if (type === 'app') filterApp = value;
                 if (type === 'store') filterStore = value;
                 
+                // Reset active class in group
                 const group = btn.parentElement;
                 group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
                 btn.classList.add('active');
@@ -597,13 +615,6 @@ def run_analysis_and_generate_html(full_history, new_only):
                 filterData();
             }}
 
-            function setSearch(term) {{
-                const input = document.getElementById('search');
-                input.value = term;
-                filterData();
-                input.scrollIntoView({{behavior: 'smooth'}});
-            }}
-
             function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
 
             function filterData() {{
@@ -614,7 +625,7 @@ def run_analysis_and_generate_html(full_history, new_only):
                 let filtered = REVIEWS.filter(r => {{
                     const appMatch = (filterApp === 'all' || r.app === filterApp);
                     const storeMatch = (filterStore === 'all' || r.store === filterStore);
-                    const searchMatch = (r.text + r.store + r.app).toLowerCase().includes(q);
+                    const searchMatch = (r.text + r.store).toLowerCase().includes(q);
                     return appMatch && storeMatch && searchMatch;
                 }});
 
@@ -626,8 +637,8 @@ def run_analysis_and_generate_html(full_history, new_only):
 
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    const replyBadge = r.reply ? '<span style="font-size:0.7em; background:#dcfce7; color:#166534; padding:2px 6px; border-radius:4px; margin-left:5px;">Antwort</span>' : '';
                     
+                    // HIGHLIGHTING LOGIC
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -648,19 +659,17 @@ def run_analysis_and_generate_html(full_history, new_only):
                     div.innerHTML = `
                         <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
                             <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐ ${{replyBadge}}
+                                ${{icon}} <strong>${{r.app}}</strong> • ${{r.rating}}⭐
                             </span>
                             <span>${{r.fmt_date || r.date}}</span>
                         </div>
                         <div style="line-height:1.5;">
-                            <span class="review-text clamped">${{displayText}}</span>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
+                            <span class="review-text">${{displayText}}</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
                         </div>
                     `;
                     container.appendChild(div);
                 }});
-                initReadMore();
             }}
             
             filterData();
@@ -669,32 +678,98 @@ def run_analysis_and_generate_html(full_history, new_only):
     </html>
     """
 
-    os.makedirs("public", exist_ok=True)
-    with open("public/index.html", "w", encoding="utf-8") as f:
+    os.makedirs(os.path.dirname(output_path), exist_ok=True)
+    with open(output_path, "w", encoding="utf-8") as f:
         f.write(html)
     print("✅ Dashboard HTML erfolgreich generiert.")
 
 # ---------------------------------------------------------
-# 7. MAIN EXECUTION
+# 7. MAIN EXECUTION + TEAMS
 # ---------------------------------------------------------
-def send_teams_notification(new_reviews, webhook_url):
+def send_teams_notification(new_reviews, webhook_url, global_topics=None, dashboard_url=None):
+    """
+    Sendet Teams MessageCard (Actionable) mit:
+    - 3-stufiger Zusammenfassung (Pos/Neu/Neg)
+    - Reviews gruppiert pro Datum, jede Review als Box mit App, Store, Rating, Text, Themen (bis 3)
+    - Dashboard-Link als Button (OpenUri)
+    """
     if not new_reviews:
         return
 
+    # counts by sentiment
     pos = sum(1 for r in new_reviews if r['rating'] >= 4)
+    neu = sum(1 for r in new_reviews if r['rating'] == 3)
     neg = sum(1 for r in new_reviews if r['rating'] <= 2)
 
-    text_body = f"📢 **NEUES FEEDBACK!** ({len(new_reviews)})\n\n"
-    text_body += f"👍 Positiv: {pos} | 🚨 Kritisch: {neg}\n\n"
-    text_body += "**Auszug:**\n"
+    # Group by date (YYYY-MM-DD)
+    grouped = defaultdict(list)
+    for r in new_reviews:
+        grouped[r.get('date', 'unbekannt')].append(r)
 
-    for r in new_reviews[:3]:
-        text_body += f"- {r['rating']}★: {r['text'][:60]}...\n"
+    # Build sections: for each date, create a markdown block with boxed reviews
+    sections = []
+    summary_text = f"**NEUES FEEDBACK** ({len(new_reviews)})\n\n👍 Positiv: {pos} | ➖ Neutral: {neu} | 🚨 Negativ: {neg}\n"
+    sections.append({
+        "activityTitle": "📢 NEUES FEEDBACK",
+        "text": summary_text
+    })
 
-    text_body += "\n[Zum Dashboard](https://Hatozoro.github.io/feedback-agent/)"
+    # For each date, add a section with full reviews
+    # Limit per date to, say, 20 reviews to avoid giant messages
+    for date in sorted(grouped.keys(), reverse=True):
+        items = grouped[date]
+        # header for date
+        date_display = datetime.strptime(date, '%Y-%m-%d').strftime('%d.%m.%Y') if re.match(r'\d{4}-\d{2}-\d{2}', date) else date
+        text_md = f"**{date_display}**  \n\n"
+        for r in items[:20]:
+            app = r.get('app', 'App')
+            store = r.get('store', 'unknown')
+            store_icon = "" if store == 'ios' else "🤖" if store == 'android' else store
+            rating = r.get('rating', '?')
+            text = r.get('text', '').replace('\n', ' ').strip()
+            # assign topics
+            topics = assign_topics_to_review(text, global_topics or [])
+            topics_display = (" • ".join(topics)) if topics else ""
+            # create a boxed look using markdown rules (Teams supports simple markdown)
+            text_md += f"> **{app}** {store_icon} • **{rating}★**\n>\n> {text}\n"
+            if topics_display:
+                text_md += f"> _Themen_: {topics_display}\n"
+            text_md += "\n"
+        sections.append({"activityTitle": f"{date_display} — {len(items)} neue", "text": text_md})
+
+    # Construct actionable MessageCard payload (Office 365 Connector Card style)
+    card = {
+        "@type": "MessageCard",
+        "@context": "http://schema.org/extensions",
+        "summary": f"NEUES FEEDBACK ({len(new_reviews)})",
+        "themeColor": "0078D7",
+        "sections": sections,
+        "potentialAction": []
+    }
+
+    # Add OpenUri action if dashboard_url provided
+    if dashboard_url:
+        card["potentialAction"].append({
+            "@type": "OpenUri",
+            "name": "Zum Dashboard",
+            "targets": [
+                {"os": "default", "uri": dashboard_url}
+            ]
+        })
+
+    # Optional: add a button that links to the Teams group chat (if provided via env)
+    teams_chat_link = os.getenv("TEAMS_CHAT_LINK")  # optional, could be deep link to teams
+    if teams_chat_link:
+        card["potentialAction"].append({
+            "@type": "OpenUri",
+            "name": "App-Team Chat öffnen",
+            "targets": [{"os": "default", "uri": teams_chat_link}]
+        })
 
     try:
-        requests.post(webhook_url, json={"text": text_body}, timeout=10)
+        headers = {"Content-Type": "application/json"}
+        resp = requests.post(webhook_url, json=card, headers=headers, timeout=10)
+        resp.raise_for_status()
         print("✅ Teams Nachricht gesendet.")
     except Exception as e:
         print(f"❌ Teams Fehler: {e}")
@@ -702,9 +777,14 @@ def send_teams_notification(new_reviews, webhook_url):
 if __name__ == "__main__":
     full, new = get_fresh_reviews()
     save_history({r['id']: r for r in full})
-    run_analysis_and_generate_html(full, new)
+
+    # Ermittele globale topics (einmal) und übergebe sie an das Dashboard und die Teams-Nachricht
+    global_topics = get_semantic_topics(full)
+    run_analysis_and_generate_html(full, new, global_topics=global_topics, output_path="public/index.html")
 
     teams = os.getenv("TEAMS_WEBHOOK_URL")
-    if teams: send_teams_notification(new, teams)
+    dashboard_url = os.getenv("DASHBOARD_URL") or "https://Hatozoro.github.io/feedback-agent/"
+    if teams:
+        send_teams_notification(new, teams, global_topics=global_topics, dashboard_url=dashboard_url)
 
     print("✅ Durchlauf beendet.")
