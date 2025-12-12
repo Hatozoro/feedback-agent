@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "umständlich, aufwendig, großer Zeitaufwand, man kann nicht einstellen was man will, geht man zurück kommt gleich neues Passwort anfordern.",
+        "date": "2025-12-10",
+        "id": "0e540562dc217f81997d56fae966b9d16ec6ffc5c8cf66b6572162529e6c7702"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Ich habe ebenfalls das Problem mit den Abstürzen und das Flackern. Sehr nervig. 3 Monate später kann ich die Zeitung immer noch nicht auf dem Handy nutzen",
