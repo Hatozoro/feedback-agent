@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 5,
+        "text": "Super 👍",
+        "date": "2025-12-13",
+        "id": "7fc469f08d447b487fff4ffc1507c3edaa544bf83cb2fe2a929ccafe1c30768b"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Leider scheint sich das Problem mit der Regionalauswahl ausgebreitet zu haben. Es erscheint seit neuestem nur noch ein Suchfeld, wo vorher die Region ausgewählt werden konnte. \nAußerdem erscheint immer beim ersten Aufrufen der App eine Fehlermeldung, dass keine Internet Verbindung bestünde, was nicht stimmt. \nDas macht die App ziemlich unbrauchbar",
+        "date": "2025-12-12",
+        "id": "f634fe560d7ca0a3767aa7312ab8edfce1a37478c4607a59594871b2ea87c575"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 1,
         "text": "umständlich, aufwendig, großer Zeitaufwand, man kann nicht einstellen was man will, geht man zurück kommt gleich neues Passwort anfordern.",
         "date": "2025-12-10",
