@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Nein danke nie wieder",
+        "date": "2025-12-15",
+        "id": "8195ed9b0611da2d3b04470abdf99266788cf186f1dd6548d616a87d6e324a5f"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "Super 👍",
