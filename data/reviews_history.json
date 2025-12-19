@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht.",
+        "date": "2025-12-17",
+        "id": "e71cfb2af063a56e2df127516d4792194b4922802fc3e6a8021d1adbcb5e6ea5"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Nein danke nie wieder",
