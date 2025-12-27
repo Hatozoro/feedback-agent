@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 1,
+        "text": "Ich hatte schön öfters ein Probeabo, aber es verging kein Abo ohe das es mal keine Zeitung gab. Der Telefonische Anruf beim Nordkurier Kunden Service ergab eine Antwort, was wollen Sie denn, sie haben ein Probeabo für 10 Euro. Jetzt hatte ich vor kurzen wieder ein E -Paper Abo, funktioniert e auch 4 Tage. Nach 4 Tage wurde es wieder abgeschaltet ohne eine Benachrichtigung. Ein Telefonat von mir ergab, es sind noch keine 3 Monate her von ihren Letzten Abo. Ein toller Service, nur weiter so.",
+        "date": "2025-12-25",
+        "id": "88eb14627d962e63e46ed62831acc66a1a13ca349608edc3dbbd361c907e7a12"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht.",
         "date": "2025-12-17",
