@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "digitalzeitung lässt sich trotz bezahlt und registriert nicht freischalten !",
+        "date": "2025-12-27",
+        "id": "9e5346fd1512a138ff59b0d8592bc62c2af0f024bbf075f4354b2e6de865eab1"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Ich hatte schön öfters ein Probeabo, aber es verging kein Abo ohe das es mal keine Zeitung gab. Der Telefonische Anruf beim Nordkurier Kunden Service ergab eine Antwort, was wollen Sie denn, sie haben ein Probeabo für 10 Euro. Jetzt hatte ich vor kurzen wieder ein E -Paper Abo, funktioniert e auch 4 Tage. Nach 4 Tage wurde es wieder abgeschaltet ohne eine Benachrichtigung. Ein Telefonat von mir ergab, es sind noch keine 3 Monate her von ihren Letzten Abo. Ein toller Service, nur weiter so.",
