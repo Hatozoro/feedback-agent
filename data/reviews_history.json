@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "die Zeitung ist wie gewohnt, sogar schneller geladen, da ich in griechenland bin und hier besseres und schnelleres internet als in Deutschland zur Verfügung habe! Wenn ich einen Film anschauen möchte, stürzt die App sofort ab! Mehrmals versucht! Was ist da los.....??? Sie machen Werbung für gute Unterhaltung! Warum funktioniert das nicht? Bitte um Unterstützung!",
+        "date": "2026-01-02",
+        "id": "ac8e154b69204859955797efad43bd3990baecd7c2bde61bcedc6d9c17ed948f"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 2,
         "text": "digitalzeitung lässt sich trotz bezahlt und registriert nicht freischalten !",
         "date": "2025-12-27",
