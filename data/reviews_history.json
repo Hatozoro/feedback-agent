@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "\"... und Verbesserungen der UI\"? (in den Patchnotes) DER? Ist \"... des UI\" gemeint (das User-Interface) oder \"... der UX\" (die User-Experience)? 🤔",
+        "date": "2026-01-07",
+        "id": "37c4693094d0ed4568b6fbe0e13ac47509ba4391fe454ab2d1bb4516f3e40534"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 2,
         "text": "Ich bin seit einigen Jahren Leser der App. Die Werbeanzeigen nerven. Nun komme ich überhaupt nicht mehr an die App ohne ALLEM zuzustimmen. Die Entscheidungsmöglichkeit \"zustimmen oder ablehnen \" reagiert nicht!!!",
