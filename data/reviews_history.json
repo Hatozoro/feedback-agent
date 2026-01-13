@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Ich habe seit einigen Jahren ein Digitalabo. Seit mehreren Tagen ist die App nicht nutzbar: Wie schon bei vielen anderen Nutzern auch \"zittert, ruckelt und wackelt\" die App. Der Text bleibt einfach nicht stehen. So ist es nicht möglich die Artikel zu lesen. Dies haben schon viele App-Nutzer gemeldet. Ist hier eine Besserung in Sicht und falls ja, ab wann? Ich bezahle für eine Abo welches nicht nutzbar ist! Merkliste geht auch nicht mehr.",
+        "date": "2026-01-11",
+        "id": "5d7b3772b44969fbe2a7eba9ef8884a35a0d51b2dc3abc5959a8f9debb157962"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 4,
         "text": "\"... und Verbesserungen der UI\"? (in den Patchnotes) DER? Ist \"... des UI\" gemeint (das User-Interface) oder \"... der UX\" (die User-Experience)? 🤔",
         "date": "2026-01-07",
