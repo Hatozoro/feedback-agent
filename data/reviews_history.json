@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 2,
+        "text": "Auf Galaxy Tab S10 FE mit der aktuellen Androidversion ist keine offline Lesefunktion mehr möglich, nur mit Netzempfang, obwohl die entsprechende Ausgabe schon heruntergeladen wurde. Das ist sehr ärgerlich. Wenn man viel unterwegs ist hat man nicht immer stabilen Netzempfang. Reklamation in der App selber funktioniert auch nicht, da kommt auch ne Fehlermeldung, wenn man auf absenden drückt, und der ganze Text ist weg",
+        "date": "2026-01-12",
+        "id": "c1e706ecbe2dd2ab3062f72a0d9989ebf179fdb9371510d75816f296e88ae393"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 1,
         "text": "Ich habe seit einigen Jahren ein Digitalabo. Seit mehreren Tagen ist die App nicht nutzbar: Wie schon bei vielen anderen Nutzern auch \"zittert, ruckelt und wackelt\" die App. Der Text bleibt einfach nicht stehen. So ist es nicht möglich die Artikel zu lesen. Dies haben schon viele App-Nutzer gemeldet. Ist hier eine Besserung in Sicht und falls ja, ab wann? Ich bezahle für eine Abo welches nicht nutzbar ist! Merkliste geht auch nicht mehr.",
         "date": "2026-01-11",
