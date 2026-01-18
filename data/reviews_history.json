@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "App stürzt ständig ab. Es kann kein Artikel zu Ende gelesen werden. zusätzlich flackern vorher die untere und obere Leiste des Smartphones. das ganze geht nun schon länger so und die App ist daher nicht nutzbar. Es muss doch möglich sein, das zu beheben. Nach den Rezessionen ist das kein Einzelfall.",
+        "date": "2026-01-16",
+        "id": "92935a347eae0e086b363169f4db04c3d03d4dbb40ab3ff775da36af2ff7867c"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 2,
         "text": "Mit Samsung Galaxy S10 FE kein offline lesen mehr möglich",
         "date": "2026-01-14",
