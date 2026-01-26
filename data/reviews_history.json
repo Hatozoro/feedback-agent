@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 3,
+        "text": "Ich habe seit einigen Jahren ein Digitalabo. Seit mehreren Tagen ist die App nicht nutzbar: Wie schon bei vielen anderen Nutzern auch \"zittert, ruckelt und wackelt\" die App. Der Text bleibt einfach nicht stehen. So ist es nicht möglich die Artikel zu lesen. Dies haben schon viele App-Nutzer gemeldet. Ist hier eine Besserung in Sicht und falls ja, ab wann? Ich bezahle für eine Abo welches nicht nutzbar ist! Merkliste geht auch nicht mehr.",
+        "date": "2026-01-24",
+        "id": "cf2c8af2dc23e07076d41aa9fa4480bab031824bb0ca7ce797de68ec749dbdcf"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Der letzte Update war völlig überflüssig und war eine eindeutige Verschlimmbesserung. Hakelt beim zoomen, und bein zoomen am Seitenrand blättert die App gerne eine Seite weiter, was ziemlich nervt. Stichwortsuche geht auch nicht mehr, was sehr schade ist. Texte markieren zum kopieren geht auch meist nicht. Ich will die alte Version wieder :-( Ansonsten macht die App, was sie soll",
+        "date": "2026-01-24",
+        "id": "e2344a47042f337c4d5e6cebb90ead325501d13093d11f3ca21baec51391a1ca"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 1,
         "text": "Vorlesen von langen Texten funktioniert nicht",
         "date": "2026-01-21",
