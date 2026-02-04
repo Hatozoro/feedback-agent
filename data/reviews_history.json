@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Ich freue mich, dass Sie den Fehler, dass die Seiten hin und her springen, jetzt bereinigt haben. Jetzt bin ich mit der App sehr zufrieden.",
+        "date": "2026-02-01",
+        "id": "e2e5f6992ccaafa1b124168f5d456725a0dadffc93206e74118a4855d6598363"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 3,
