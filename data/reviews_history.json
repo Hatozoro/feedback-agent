@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "Sehr gute Berichterstattung und Journalismus. Steht's bemüht seine Leser auf dem laufenden zu halten. Abonnement sind fair und übersichtlich.",
+        "date": "2026-02-05",
+        "id": "f0fd5de38d92c8f50bc7866c481c52281c9cbed4a1b794b3bbc3548035fec9bf"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 5,
