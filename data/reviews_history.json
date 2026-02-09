@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Seit einiger Zeit steht beim Öffnen der App über WLAN auf dem IPad, aber auch bei Android, „prüfen Sie die Internetverbindung“. Die ist aber in Ordnung, weil „Aktuelles“ gelesen werden kann und andere Apps funktionieren. Scheinbar mag die App unsere Verbindung über den Kabel Router von Vodafone nicht. Die Zeitung kann jedenfalls nicht geladen werden. Es ist aber die einzige App, welche sich so verhält, liegt es jetzt an uns? Alles geprüft, kein Fehler zu finden.",
+        "date": "2026-02-07",
+        "id": "3767881080dbcbfbea3b6cc8470d81e4d25407286b92a1334b5d192b4a8da061"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 5,
