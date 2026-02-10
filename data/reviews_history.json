@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Seit einiger Zeit steht bei der Zeitung \"prüfen Sie ihre Internetverbindung\". Die WLan-Verbindung ist aber in Ordnung, da \"Aktuelles\" geladen werden kann und andere Apps wie z.Bsp. Onlinebanking funktionieren. Ich kann die \"Zeitung\" so aber nicht laden. Ist bei 3 Geräten so, mit Android als auch mit IPadOS. Wir haben einen Kabel Router von Vodafone und wenn alle anderen Apps funktionieren, kann ich mir nicht vorstellen, dass es an diesem liegt.",
+        "date": "2026-02-08",
+        "id": "81dbd23c2ab3093931aee02b02bca91147f13877bc0b3b6c76bc5455f75d7525"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
