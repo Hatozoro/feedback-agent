@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird.",
+        "date": "2026-02-10",
+        "id": "8eeb8fa657da82d51974e3fc0d3b1afca4cfc67ac8f2fd6fcbd0bdf50a4ed700"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 2,
         "text": "Seit einiger Zeit steht bei der Zeitung \"prüfen Sie ihre Internetverbindung\". Die WLan-Verbindung ist aber in Ordnung, da \"Aktuelles\" geladen werden kann und andere Apps wie z.Bsp. Onlinebanking funktionieren. Ich kann die \"Zeitung\" so aber nicht laden. Ist bei 3 Geräten so, mit Android als auch mit IPadOS. Wir haben einen Kabel Router von Vodafone und wenn alle anderen Apps funktionieren, kann ich mir nicht vorstellen, dass es an diesem liegt.",
