@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 5,
+        "text": "Alles gut",
+        "date": "2026-02-14",
+        "id": "60fd8e28bcab653e770178d3f7eb5f03668f65be88638aa54099f4d9bca9720a"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird.",
         "date": "2026-02-10",
