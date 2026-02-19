@@ -1,6 +1,22 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "die Zeitung ist wie gewohnt, sogar schneller geladen, da ich in griechenland bin und hier besseres und schnelleres internet als in Deutschland zur Verfügung habe! Wenn ich einen Film anschauen möchte, stürzt die App sofort ab! Mehrmals versucht! Was ist da los.....??? Sie machen Werbung für gute Unterhaltung! Warum funktioniert das nicht? Bitte um Unterstützung! 17, Februar!Trotz Aktualisierung der App stürzt sie mehrmals während des Filmes ab! Das Problem ist immer noch nicht behoben, leider!",
+        "date": "2026-02-17",
+        "id": "faf4b8953ed59185bba3b3965b9d7cb0a456570c43798e5600965ecae635d2da"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Seit einiger Zeit steht bei der Zeitung \"prüfen Sie ihre Internetverbindung\". Die WLan-Verbindung ist aber in Ordnung, da \"Aktuelles\" geladen werden kann und andere Apps z.B. Onlinebanking funktionieren. Ich kann die \"Zeitung\" aber nicht laden. Ist bei 3 Geräten so, mit Android als auch mit IPadOS. Wir haben einen Kabel Router von Vodafone und wenn alle anderen Apps funktionieren, kann ich mir nicht vorstellen, dass es an diesem liegt. Nachtrag: Seit ein paar Tagen geht alles wieder, was war?",
+        "date": "2026-02-17",
+        "id": "a91598b827115cce36883c28d9015e4a89f8f0b4061cdebc9fa36eb683545095"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "Alles gut",
