@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Mit Bedauern muss ich feststellen dass die Ausgabe Sonntag/ Montag die eigentliche am Samstag Abend zugestellt werden soll ,Stand jetzt Montag 17:05 Uhr , immer noch nicht zugestellt wurde. \nFalls die Zeitung noch irgendwann kommt erhalte ich eine „alte“ Zeitung mit redaktionsstand vom Samstag Morgen. Und dies ist kein Einzelfall sondern die letzten Wochen schon mehrmals so vorgekommen. Seit Einführung der Vorabendzustellung habe ich die Zeitung noch nie am Vorabend erhalten sondern frühestens am folgenden Morgen bzw. dann irgendwann unter tags und die Sonntagausgabe frühestens am Montag Morgen . Werde demnächst das Abo kündigen wenn sich daran nichts ändert.",
+        "date": "2026-02-23",
+        "id": "117c0c8b7abcdd59709187c7ab6cffad3f7490bfd6d0ca5a4fd6d9d0af7d8b9f"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
