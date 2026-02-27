@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 3,
+        "text": "Nach dem Öffnen der App gibt es eine Rubrik Aktuelles. Die rollt aber derart schnell automatisch durch, dass es unmöglich ist die Schlagzeile zu lesen - damit ist sie Sinnfrei und verdirbt als Aushängeschild gleich die weitere Nutzung.",
+        "date": "2026-02-25",
+        "id": "b2cdac2322f3c2e0ec63ae588c7880ebb2cc4d58858db5fb6f7b5250516126d6"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
