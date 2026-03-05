@@ -3,6 +3,14 @@
         "store": "android",
         "app": "Nordkurier",
         "rating": 3,
+        "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird. 03.03.26 Neues Update, Blindflug behoben.",
+        "date": "2026-03-03",
+        "id": "4b308f3af981d90471a831d074c6bd9c330fdff61e8c114f16a280b40d6147e5"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 3,
         "text": "Nach dem Öffnen der App gibt es eine Rubrik Aktuelles. Die rollt aber derart schnell automatisch durch, dass es unmöglich ist die Schlagzeile zu lesen - damit ist sie Sinnfrei und verdirbt als Aushängeschild gleich die weitere Nutzung.",
         "date": "2026-02-25",
         "id": "b2cdac2322f3c2e0ec63ae588c7880ebb2cc4d58858db5fb6f7b5250516126d6"
