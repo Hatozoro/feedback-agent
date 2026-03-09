@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "wenn ich mir Mal mir Zeit nehmen will mein abo zu nutzen komme ich trotz eurer herausragender Führung nicht zum lesen. ich finde mich nicht zurecht. mein problem oder uner problem? Gruss kuwertz jetzt weiß ich nicht weiter",
+        "date": "2026-03-07",
+        "id": "759ba4dcc1a600d56268c8e901ffa97b3d88fed6060534b65c9377ee75e56904"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 3,
         "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird. 03.03.26 Neues Update, Blindflug behoben.",
