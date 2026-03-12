@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Keine APP VORHANDEN",
+        "date": "2026-03-11",
+        "id": "3d2524ecbb46b408b11ddc714cb551cfe66f98feb4468d552cf70d23416dedf2"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 5,
         "text": "pünktlich geliefert kann mich super informieren",
