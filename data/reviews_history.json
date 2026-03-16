@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "So ein informationstötender Kommerz",
+        "date": "2026-03-14",
+        "id": "87a11887d49003a2202a104dab460c4d1d657cb4458dd6a91f957a98b7c146ec"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 1,
