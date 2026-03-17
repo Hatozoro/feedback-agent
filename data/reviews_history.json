@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "Immer gut über das Wichtigste informiert, wenn die weite Reise zur \"Trauminsel Rügen\" nicht mehr möglich ist ...",
+        "date": "2026-03-15",
+        "id": "a5fed949d8a2ef99dce96522c6710dceda2c60f3ee48085aff1c2b3dd36da2dd"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
