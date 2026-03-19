@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 4,
+        "text": "spannende und aktuelle Nachrichten",
+        "date": "2026-03-18",
+        "id": "9436b43f178815d06815f6ed8c390c38874ce8e7d06fac8109fd3e4c0a7eb553"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Das speichern von Artikeln funktioniert trotz Anmeldung nicht! Auch das sortieren bei \nTraueranzeigen nach Lokalzeitungen nicht. Da wird alles durcheinander angezeigt. Fehlerhafte App schon seit Wochen. Also bitte beheben. Dann gibt’s auch den ein oder anderen Stern mehr!",
+        "date": "2026-03-16",
+        "id": "228b27d58533e8674d1b419a291c3521a094ac78fca975126d91548fcb98189b"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 5,
         "text": "Immer gut über das Wichtigste informiert, wenn die weite Reise zur \"Trauminsel Rügen\" nicht mehr möglich ist ...",
         "date": "2026-03-15",
