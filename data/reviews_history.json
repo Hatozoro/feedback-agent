@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Seit gestern lässt sich die Zeitung nicht mehr downloaden. Man soll sich registrieren um als Leser der gedruckten Ausgabe auch digital zu lesen. Nun haben wir aber nur ein digitales Abo. Was soll das also?",
+        "date": "2026-03-20",
+        "id": "0ad46a7a4f7d6f28cb40893a7c6fe665906ca497f496108aa6283e15f4236f23"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 4,
         "text": "spannende und aktuelle Nachrichten",
