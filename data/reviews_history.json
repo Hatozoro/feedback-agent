@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Die Bedienung der App ist nach wie vor unterirdisch. Weshalb muss ich nach jeder Aktuallisierung der App meine Zugangsdaten neu eingeben?",
+        "date": "2026-03-22",
+        "id": "775932ebef11a7d20ca2a35f033e1df14906ab63fc223f11dfa09df915579730"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 2,
