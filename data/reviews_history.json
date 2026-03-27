@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Ich möchte wissen wie ich die Rätselzeitung digital bekomm e?",
+        "date": "2026-03-25",
+        "id": "d331ec585d0fdd32e6e179e9ce26a3fd4c4a0fce19ef26c09534aae918bcc7d8"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
