@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 5,
+        "text": "hurra 😃",
+        "date": "2026-03-29",
+        "id": "f46f6bec400d0a05462383bc6242a11e4ed253d914183bd75b82d2acdaef29a9"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Ich möchte wissen wie ich die Rätselzeitung digital bekomm e?",
         "date": "2026-03-25",
