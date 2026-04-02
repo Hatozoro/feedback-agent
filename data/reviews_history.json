@@ -8,6 +8,14 @@
         "id": "f46f6bec400d0a05462383bc6242a11e4ed253d914183bd75b82d2acdaef29a9"
     },
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Zu viele Rechtschreibfehler. Nicht neutral. Wiederholung von Artikel kurz nacheinander.",
+        "date": "2026-03-29",
+        "id": "16c6b94b6d1d0eaf440e188a4e16803e968f9dbaeee701abe1e9fd73c139584e"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 2,
