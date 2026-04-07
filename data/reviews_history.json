@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Pluralismus, Vielfalt und professioneller Journalismus wird vermisst.",
+        "date": "2026-04-01",
+        "id": "98ad46db611245943900eca977d2351921e318568d3a5e0720c79f17aa9c9c03"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 5,
