@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Diese App ist die größte Datenkrake von allen meinen Apps. Ca. 1200 (mit Duckduckgo gemessene) Google-Tracking-Versuche pro Tag, selbst wenn die App gar nicht geöffnet ist. Und das bei einer Bezahlversion! Unter dem Punkt \"Aktuelles\" findet man fast nur Clickbaits und Videos, kaum echte Informationen. Man kommt sich vor wie bei \"Bild\". Das wirkt unseriös, und als zahlender Abonnent fühle ich mich ziemlich veräppelt. 2 Punkte, weil der Zeitungsteil gut gemacht ist.",
+        "date": "2026-04-12",
+        "id": "44b39dc990ad54afb87d9147c9df261982779b959b725929d4e18eff35fb4485"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird. 03.03.26 Neues Update, Blindflug behoben. 07.04.26: Neues Update, alte Fehler wieder da!",
