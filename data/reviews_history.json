@@ -1,11 +1,27 @@
 [
     {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Mit dem neuesten Update findet man unter den eigentlichen redaktionellen Artikeln dermaßen viel Spam („Auch interessant“) und Werbung, dass ich mich spontan gefragt habe, ob ich mich noch in der richtigen App bewege. So sehe ich Werbung für fragwürdige Onlineshops, die allgemein als unseriös bekannt sind. Auch die Inhalte der anderen, nicht sofort als Reklame erkennbaren Artikel erscheint mir zum größten Teil fragwürdig, verbirgt sich doch hinter  fast allen der Versuch, meist wirkungslose oder überteuerte Produkte zu verkaufen. Das hat in einer seriösen App von einer seriösen Zeitung mit seriöser Berichterstattung nichts zu suchen. Gerne Werbung für regionale Anbieter, aber „Ausverkauf wegen Geschäftsaufgabe“, wo regionale Hersteller  vorgegaukelt und dann billigste Produkte aus China an den Mann oder die Frau gebracht werden sollen?! Das geht gar nicht! \nEinnahmen aus dem Anzeigengeschäft sind sicher notwendig - aber hier sollte sorgfältig überprüft werden, wofür wirklich geworben wird. Bisher war der Nordkurier in dieser Hinsicht wohltuend anders.  Es wäre sehr schade, wenn sich das Niveau meiner Heimatzeitung nach und nach dem angleicht, was ich eben nicht will - eine weitere Boulevard-Zeitung. Schließlich bezahle ich für mein Nordkurier-Abo, auch deshalb, weil ich von Werbung und irgendwelchen anderen fragwürdigen Inhalten verschont werden will - und bisher habe ich für diesen Mehrwert gerne gezahlt. \n\nDas Speichern von Artikeln aus der App heraus funktioniert auch nach dem Update immer noch nicht. Einige User hatten das in der Vergangenheit schon angesprochen, ich hatte auf das Update gehofft. Iim Moment lässt sich ein Artikel nur aus der Zeitungsansicht heraus speichern. Leider gibt es auch Artikel, die man erst später (oder manchmal auch gar nicht) auf diese Art speichern kann. Da aber die Funktion des Lesezeichens in der App vorgesehen ist, wäre es schön, wenn das auch zuverlässig funktioniert.\n\nMeine in einer früheren Rezension geäußerte Kritik zu den Cookie Einstellungen kann ich etwas relativieren: das Fenster mit den Einstellungen erscheint in der letzten Zeit nicht mehr so oft. Nur noch manchmal zwischendurch…",
+        "date": "2026-04-18",
+        "id": "d3a9632032d69676afa44c9b8dc5d94e02800db4c5b48d9eab81380a41a6de27"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 2,
         "text": "Diese App ist die größte Datenkrake von allen meinen Apps. Ca. 1200 (mit Duckduckgo gemessene) Google-Tracking-Versuche pro Tag, selbst wenn die App gar nicht geöffnet ist. Und das bei einer Bezahlversion! Unter dem Punkt \"Aktuelles\" findet man fast nur Clickbaits und Videos, kaum echte Informationen. Man kommt sich vor wie bei \"Bild\". Das wirkt unseriös, und als zahlender Abonnent fühle ich mich ziemlich veräppelt. 2 Punkte, weil der Zeitungsteil gut gemacht ist.",
         "date": "2026-04-12",
         "id": "44b39dc990ad54afb87d9147c9df261982779b959b725929d4e18eff35fb4485"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "Passen oft nicht zum Inhalt des Artikels",
+        "date": "2026-04-08",
+        "id": "95a9ef410737da40b0de79f1221145104419109e272c8cf8c42644eb9f900fd1"
     },
     {
         "store": "android",
