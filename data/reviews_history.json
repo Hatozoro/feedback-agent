@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "*MOBILES Lesen: extrem hoher Datenverbrauch. Andere Apps lassen sich öffnen, diese \"rödelt\". *WERBUNG: Werbeblöcke, trotz kostenpflichtigem Abo. *STARTSEITE: Lässt sich nur sehr eingeschränkt anpassen. Rubrik \"Video\" lässt sich nicht ausblenden. \"Meine Orte\" lassen sich nicht nach oben ziehen. Rubrik \"Gesundheit\" und \"Bauen & Wohnen\" wird immer wieder aktiviert, obwohl in den Einstellungen deaktiviert wurden. *Texte lassen sich nicht kopieren um z. B. Baustellen in den Kalender einzutragen.",
+        "date": "2026-04-19",
+        "id": "fa6b2e32896e97127c338a417933d6bd28f2ed2c5b38f7032f8b8e35741ffc50"
+    },
+    {
         "store": "ios",
         "app": "Nordkurier",
         "rating": 1,
