@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "immer aktuell",
+        "date": "2026-04-20",
+        "id": "88dd2556991651a8441a07663257a1bfd49850e4ba3a6c5aeb13c7bee1b0dcbb"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 2,
         "text": "*MOBILES Lesen: extrem hoher Datenverbrauch. Andere Apps lassen sich öffnen, diese \"rödelt\". *WERBUNG: Werbeblöcke, trotz kostenpflichtigem Abo. *STARTSEITE: Lässt sich nur sehr eingeschränkt anpassen. Rubrik \"Video\" lässt sich nicht ausblenden. \"Meine Orte\" lassen sich nicht nach oben ziehen. Rubrik \"Gesundheit\" und \"Bauen & Wohnen\" wird immer wieder aktiviert, obwohl in den Einstellungen deaktiviert wurden. *Texte lassen sich nicht kopieren um z. B. Baustellen in den Kalender einzutragen.",
@@ -14,6 +22,14 @@
         "text": "Mit dem neuesten Update findet man unter den eigentlichen redaktionellen Artikeln dermaßen viel Spam („Auch interessant“) und Werbung, dass ich mich spontan gefragt habe, ob ich mich noch in der richtigen App bewege. So sehe ich Werbung für fragwürdige Onlineshops, die allgemein als unseriös bekannt sind. Auch die Inhalte der anderen, nicht sofort als Reklame erkennbaren Artikel erscheint mir zum größten Teil fragwürdig, verbirgt sich doch hinter  fast allen der Versuch, meist wirkungslose oder überteuerte Produkte zu verkaufen. Das hat in einer seriösen App von einer seriösen Zeitung mit seriöser Berichterstattung nichts zu suchen. Gerne Werbung für regionale Anbieter, aber „Ausverkauf wegen Geschäftsaufgabe“, wo regionale Hersteller  vorgegaukelt und dann billigste Produkte aus China an den Mann oder die Frau gebracht werden sollen?! Das geht gar nicht! \nEinnahmen aus dem Anzeigengeschäft sind sicher notwendig - aber hier sollte sorgfältig überprüft werden, wofür wirklich geworben wird. Bisher war der Nordkurier in dieser Hinsicht wohltuend anders.  Es wäre sehr schade, wenn sich das Niveau meiner Heimatzeitung nach und nach dem angleicht, was ich eben nicht will - eine weitere Boulevard-Zeitung. Schließlich bezahle ich für mein Nordkurier-Abo, auch deshalb, weil ich von Werbung und irgendwelchen anderen fragwürdigen Inhalten verschont werden will - und bisher habe ich für diesen Mehrwert gerne gezahlt. \n\nDas Speichern von Artikeln aus der App heraus funktioniert auch nach dem Update immer noch nicht. Einige User hatten das in der Vergangenheit schon angesprochen, ich hatte auf das Update gehofft. Iim Moment lässt sich ein Artikel nur aus der Zeitungsansicht heraus speichern. Leider gibt es auch Artikel, die man erst später (oder manchmal auch gar nicht) auf diese Art speichern kann. Da aber die Funktion des Lesezeichens in der App vorgesehen ist, wäre es schön, wenn das auch zuverlässig funktioniert.\n\nMeine in einer früheren Rezension geäußerte Kritik zu den Cookie Einstellungen kann ich etwas relativieren: das Fenster mit den Einstellungen erscheint in der letzten Zeit nicht mehr so oft. Nur noch manchmal zwischendurch…",
         "date": "2026-04-18",
         "id": "d3a9632032d69676afa44c9b8dc5d94e02800db4c5b48d9eab81380a41a6de27"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Leider hat sich der redaktionelle Inhalt der SZ sehr verschlechtert. Es kommen sehr oft die gleichen Inhalte verteilt auf verschiedene Ausgaben vor. Berichte wechseln z.B zwischen Sigmaringen und Bad Saulgau. Gibt es wenig zu berichten, erscheinen oft Informationen über komplett entfernte Ortschaften. Ebenfalls erscheinen alte Artikel immer wieder mal um als Lückenfüller zu dienen. Alles in allem hat sich die SZ sehr schlecht verändert, von der Funktionsweise der online Ausgabe und App ganz zu schweigen. Das können andere besser.",
+        "date": "2026-04-14",
+        "id": "e17da6d94a928fbc1dd3e350628474eb6f4807f2d2c27a4246a6a658aa62e2d6"
     },
     {
         "store": "android",
