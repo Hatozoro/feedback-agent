@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 4,
+        "text": "Zuviele Beiträge aus der Uckermark die mich so gaaar nicht interessiert. Ich brauche mehr über die Prignitz und Ostseeküste zwischen Warnemünde und Kägsdorf und Rerik. Danke",
+        "date": "2026-04-25",
+        "id": "7302d78a8c636a63337a22923c8ac1768609fedc0d9d7cdf8e36253fe217003f"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 5,
         "text": "immer aktuell",
         "date": "2026-04-20",
