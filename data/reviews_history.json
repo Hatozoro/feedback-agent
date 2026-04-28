@@ -2,10 +2,26 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 1,
+        "text": "Nach dem letzten Update (Dez. 25) ist das Ausschneiden eines Bereiches nur im Blindflug möglich, da sich das Auswahlmenü nicht zurück zieht. Update 10.02.26: Noch immer kein Update, mit dem der Fehler behoben wird. 03.03.26 Neues Update, Blindflug behoben. 07.04.26: Neues Update, alte Fehler wieder da! Welches Gefühl beschreibt am besten Ihre Reaktion auf diesen Artikel - was soll diese schwach.... Leiste?",
+        "date": "2026-04-26",
+        "id": "a281a42606eca55f569b3b523f904a8d254c35d7827c222b841f929dcd8f7a8f"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 4,
         "text": "Zuviele Beiträge aus der Uckermark die mich so gaaar nicht interessiert. Ich brauche mehr über die Prignitz und Ostseeküste zwischen Warnemünde und Kägsdorf und Rerik. Danke",
         "date": "2026-04-25",
         "id": "7302d78a8c636a63337a22923c8ac1768609fedc0d9d7cdf8e36253fe217003f"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Leider ist die Schwäbische längst nicht mehr, was sie mal war. Im Laichinger Lokalteil liest mal viele Ankündigungen auf Events oder auch überregionales. Ansonsten kommt nicht viel.\nDann kommen immer wieder Berichte an einanderfolgenden Tagen doppelt. ( Bericht über Blaubeurer Bürgermeister, Bericht über Ärztin, die ins Kloster will). \nDer Lokalteil von Ehingen und Umgebung ist sehr ausführlich, einen Blick Richtung Geislingen oder Bad Urach gibt’s fast gar nicht.",
+        "date": "2026-04-25",
+        "id": "e28816193f545c667cb3d50d560e5cf4d87be70f215e426316d9390f250eb5e3"
     },
     {
         "store": "android",
