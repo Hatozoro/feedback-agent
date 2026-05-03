@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Wenn ich im Browser (Firefox & Samsung) den Nordkurier lesen will kommt der Hinweis Sie sind nicht angemeldet. Zum Anmelden werde ich auf die Nordkurier-App geleitet. Dort kann ich mich anmelden, aber die Anmeldung wird nicht zum Browser weitergeleitet. Ich kann also nicht im Browser die Nordkurier lesen und die PDF-Datei herunterladen. - Welches Gefühl beschreibt am besten Ihre Reaktion auf diesen Artikel - was soll diese schwach.... Leiste?",
+        "date": "2026-05-01",
+        "id": "f9092ffc86e80f2396ea1f591e03436580a74047f9d4d1265988924aecdb332f"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Aus irgendwelchen Gründen wird mir vor jedem Abschnitt in der Artikelübersicht ein riesiges Werbebanner angezeigt. Wenn das Problem gelöst wird, gibt es wieder mehr Sterne. Edit: Bei der Cookie-Auswahl funktioniert das Abwählen der Drittanbietercookies jetzt auch nicht mehr. -> Abzug auf 2 Sterne. Edit 2: Und noch mehr nervige Werbung -> 1 Stern Lieber im Browser mit Adblocker lesen.",
