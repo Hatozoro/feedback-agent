@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Trotz angemeldet geht die Zeitung nicht. Leute das Abbo kostet Geld und geht nich!",
+        "date": "2026-05-03",
+        "id": "648958d5becce657398a0cf51264f66c19a48140829ca31abed7d3c18bb7fa20"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Wenn ich im Browser (Firefox & Samsung) den Nordkurier lesen will kommt der Hinweis Sie sind nicht angemeldet. Zum Anmelden werde ich auf die Nordkurier-App geleitet. Dort kann ich mich anmelden, aber die Anmeldung wird nicht zum Browser weitergeleitet. Ich kann also nicht im Browser die Nordkurier lesen und die PDF-Datei herunterladen. - Welches Gefühl beschreibt am besten Ihre Reaktion auf diesen Artikel - was soll diese schwach.... Leiste?",
