@@ -3,9 +3,49 @@
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
+        "text": "Stürzt ab, wenn ich eine Artikel lesen möchte. Und mit dem Absturz bringt sie zeitgleich auch eine andere App zum Absturz. Bei mir die Huawei Health App.",
+        "date": "2026-05-04",
+        "id": "93ff6316073de5f496f4938ee54c01e71dd1c53ef4f54bd1e0d6464344448834"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
         "text": "Trotz angemeldet geht die Zeitung nicht. Leute das Abbo kostet Geld und geht nich!",
         "date": "2026-05-03",
         "id": "648958d5becce657398a0cf51264f66c19a48140829ca31abed7d3c18bb7fa20"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Seit dem letzten Update kommt in der Rubrik Aktuelles Werbung, nachdem man einen Artikel gelesen hat und zurück auf die Gesamtübersicht geht. Das passiert immer nach öffnen der App. Ich bin als zahlender Abbonent nicht bereit unerwünschte Werbung zu akzeptieren. Ich möchte weder irgendwelche Spiele installieren, oder die Bild abonnieren. Bitte die Werbung umgehend beenden.",
+        "date": "2026-05-03",
+        "id": "e91d5339afa1dfef01a5d8588cac200dc2aa92817dfc8bbd2757d485bbac0ea3"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 2,
+        "text": "update 05/26: die werbung in displaygröße ist mehr als störend. option ohne werbung? regionale vielfalt,merkliste/bei abo:E-paper & archiv. mit SVZ/NNN nicht zu vergleich! hell-/dunkelmode & schriftgröße nicht in-app,nur systemfolgend (artikel schlecht lesbar, zu klein, im browser ist es besser) * suche nicht überall verfügbar & schlecht (browser: top, app: 0 sinnvolle treffer bei gleicher suche) weiter fehlen: * ansicht bild-/textlastig *'meine news' mit freier auswahl*startseite festlegen",
+        "date": "2026-05-03",
+        "id": "4f6642157a7adb923b3883a482262c3cbcc73841f96b87825fbc182e973ef376"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "App lässt sich nach Update nicht mehr öffnen und stürzt direkt nach dem Start ab.",
+        "date": "2026-05-03",
+        "id": "3cfded4ae478e6271a8b1fbd7e22e52328a081d4bc9dc9dcb1d147be0ec35e7c"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Mit dem aktuellen Update wurde extrem viel Werbung in die App gebaut",
+        "date": "2026-05-02",
+        "id": "832ce48589305f38dca0fcf70da6c99023382ee0bb99898cc916de0c1edfe06b"
     },
     {
         "store": "android",
