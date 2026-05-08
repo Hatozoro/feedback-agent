@@ -1,5 +1,21 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Leider crasht die App seit dem letzten Update. Es muss ein iOS spezifisches Problem sein, da die App bei Android funktioniert. \nLiebe Entwickler, schaut euch bitte die Crash Reports an.",
+        "date": "2026-05-06",
+        "id": "43ebdd3f21bc354756cea0aff02261bebc471fe73de6c20105aab2ad8b0c4adb"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Bei einem bezahlten Abo finde ich es unmöglich, auch noch Werbung anschauen zu müssen.",
+        "date": "2026-05-06",
+        "id": "c5ead3d2097f35186b149d8224e1fc0ef612add13e189ecc5b2a10cb017bb621"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
