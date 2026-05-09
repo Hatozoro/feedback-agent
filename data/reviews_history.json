@@ -1,5 +1,21 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "lustiger Inhalt",
+        "date": "2026-05-08",
+        "id": "ab28854aa7f41659271165b9270aefdbafd6e565966f7547b0948059833325f3"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Seit einiger Zeit lässt sich die App nicht öffnen. Sie stürzt immer ab. Dafür bezahle ich kein Geld.",
+        "date": "2026-05-07",
+        "id": "b7dba792e7a8e781d152dfab2e6d167bd03a1b6885040b4a54af334079f5fb85"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
