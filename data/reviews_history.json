@@ -11,6 +11,22 @@
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
+        "text": "Seit dem App-Update auf die Version 5.18 (iPad iOS 15.8) startet die App nicht mehr. Die wenige Tage später veröffentlichte Version 5.19 behebt das Problem nicht. Meine Rückfrage beim Support zum Downgrade auf eine frühere Version wurde abschlägig beantwortet. Auf neueren iOS funktioniert die App offenbar noch. Ist dann wohl nicht so wichtig, wenn man Leser verliert die nicht über die aktuellste Hardware verfügen. Schade, denn mir bleibt so nur die Abkehr von der Schwäbischen nach mehr als 40 Jahren.",
+        "date": "2026-05-08",
+        "id": "aeb697561ed7f1337447a77c219c3f23e7ebb3763c707c76a2bd70fa77cbd74c"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Obwohl ich nicht wenig Geld für den Zugang zahle, ploppt immer wieder Werbung auf. Zudem finde ich die App immer unübersichtlicher. Die Suchfunktion ist auch nicht besonders häufig fündig. Ich schaue mir demnächst mal an, was der Südkurier für meine Region zu bieten hat. Kommentarfunktion wurde auch für zahlende Kunden abgestellt. Stattdessen hat man nun nur noch so seltsame Mood-Balken",
+        "date": "2026-05-08",
+        "id": "5b1186a91b38b44baae3580020ef6b95891c2c771391a07bcd18d57f9e2e8b40"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
         "text": "Seit einiger Zeit lässt sich die App nicht öffnen. Sie stürzt immer ab. Dafür bezahle ich kein Geld.",
         "date": "2026-05-07",
         "id": "b7dba792e7a8e781d152dfab2e6d167bd03a1b6885040b4a54af334079f5fb85"
