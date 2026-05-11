@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Seit dem letzten Update wird ständig Werbung eingeblendet, die sich nicht schließen lässt. Dadurch muss ich die App komplett schließen und erneut öffnen. Außerdem bin ich nicht bereit, trotz bezahltem Abo Werbung sehen zu müssen. Bitte behebt dieses Problem schnellstmöglich.",
+        "date": "2026-05-09",
+        "id": "71688572445c3d2808210bb979c53faa407bf3eb9bbc04a2db9331cf2796cb08"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 4,
         "text": "lustiger Inhalt",
