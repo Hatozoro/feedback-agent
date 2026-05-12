@@ -1,5 +1,21 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Seit den letzten Update vor einer Woche läßt sich die App nicht mehr öffnen. Stürzt beim ersten Start gleich ab.\niPad Air 2, SW-Stand 15.8.7",
+        "date": "2026-05-10",
+        "id": "7e14839ba4952ef3e0adcbc6b6fb9919c13419db47050665747b61011a44fbf8"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Unglaublich schlechtes Nutzer- bzw. Anmeldeverfahren. Obwohl ich ein Abo habe, konnte ich mich nicht automatisch in der App anmelden.",
+        "date": "2026-05-10",
+        "id": "7942af8b94d98f7d8e75bd97a8d8042bd770783a7126b1e6f87cf6990146f955"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 1,
