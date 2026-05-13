@@ -3,6 +3,22 @@
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
+        "text": "Werbung obwohl man dafür zahlt",
+        "date": "2026-05-11",
+        "id": "ff2693cc509ae96af6da80cd400d80a72e62e2be302349b0ee273e1e81e96d8e"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Aufgezwungene, störende Werbung, obwohl kostenpflichtig.",
+        "date": "2026-05-11",
+        "id": "b690b2e4eb9827a98762e96da6d6e10382ff15789b4106e71067863531df1821"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
         "text": "Seit den letzten Update vor einer Woche läßt sich die App nicht mehr öffnen. Stürzt beim ersten Start gleich ab.\niPad Air 2, SW-Stand 15.8.7",
         "date": "2026-05-10",
         "id": "7e14839ba4952ef3e0adcbc6b6fb9919c13419db47050665747b61011a44fbf8"
