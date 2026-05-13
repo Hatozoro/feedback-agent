@@ -254,7 +254,7 @@ def get_ai_data_hybrid(reviews: list[dict], cache: dict) -> tuple[list, list, di
 
             # ── Buzzwords ────────────────────────────────────────────────────
             resp_buzz = model.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
 Output: JSON-Liste [ {{"term": "Thema", "count": 12}}, ... ]
 Reviews: {json.dumps(texts, ensure_ascii=False)}"""
@@ -268,7 +268,7 @@ Reviews: {json.dumps(texts, ensure_ascii=False)}"""
                 for r in rich[:50]
             ]
             resp_deep = model.models.generate_content(
-                model="gemini-1.5-flash",
+                model="gemini-2.0-flash",
                 contents=f"""Analysiere diese App-Reviews.
 1. Erstelle 5 kurze Themen-Cluster-Labels (JSON-Liste von Strings).
 2. Schreibe ein Management-Summary auf Deutsch (2-3 Sätze, prägnant).
