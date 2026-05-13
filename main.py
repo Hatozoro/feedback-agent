@@ -290,7 +290,7 @@ Daten: {json.dumps(sample, ensure_ascii=False)}"""
             }})
         except Exception as exc:
             log.warning("KI-Fehler (%s) – nutze Cache/Fallback.", exc)
-    # ── Fallbacks ──────────────────────────────────────────────────────────────
+    # ── Fallbacks ─────────────────────────────────────────────────────────────
     if not buzzwords:
         log.info("Nutze lokalen Buzzword-Fallback.")
         buzzwords = _local_buzzwords(reviews)
@@ -689,7 +689,7 @@ let filterApp   = 'all';
 let filterStore = 'all';
 let currentSort = 'newest';
 
-// ── THEME ──────────────────────────────────────────────────────────────────
+// ── THEME ───────────────────────────────────────────────────────────────
 const saved = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', saved);
 
@@ -700,7 +700,7 @@ function toggleTheme() {{
     updateChartColors();
 }}
 
-// ── CHART ──────────────────────────────────────────────────────────────────
+// ── CHART ───────────────────────────────────────────────────────────────────
 const ctx = document.getElementById('trendChart').getContext('2d');
 const chart = new Chart(ctx, {{
     type: 'bar',
