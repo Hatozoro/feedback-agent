@@ -1,836 +1,1026 @@
-import os
-import json
-import time
-import hashlib
-import requests
-import re
-from collections import Counter, defaultdict
-from requests.exceptions import HTTPError
-from datetime import datetime, timedelta
+"""
+App Feedback Pro – Dashboard Generator
+Scrapes iOS & Android reviews, runs hybrid AI analysis, generates a HTML dashboard.
+"""
 
 # ---------------------------------------------------------
 # 1. IMPORTS & SETUP
 # ---------------------------------------------------------
+import os
+import json
+import logging
+import hashlib
+import re
+import requests
+from collections import Counter
+from datetime import datetime, timedelta
+from typing import Any
+
 import google.generativeai as genai
 from dotenv import load_dotenv
-from sentence_transformers import SentenceTransformer
-from sklearn.cluster import KMeans
-from sklearn.metrics.pairwise import cosine_similarity
-import numpy as np
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
 
 load_dotenv()
 
-# API KEY aus .env laden
-API_KEY = os.getenv("GEMINI_API_KEY")
+logging.basicConfig(
+    level=logging.INFO,
+    format="%(asctime)s [%(levelname)s] %(message)s",
+    datefmt="%H:%M:%S",
+)
+log = logging.getLogger("feedback_agent")
 
-# KI Initialisierung
-if API_KEY:
-    try:
-        genai.configure(api_key=API_KEY)
-        # Wir nutzen 1.5 Flash, da es am stabilsten ist, wenn Quota vorhanden ist
-        model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"response_mime_type": "application/json"}
-        )
-        embedder = SentenceTransformer('all-MiniLM-L6-v2')
-        print("✅ KI-Module geladen.")
-    except Exception as e:
-        print(f"⚠️ KI-Start fehlgeschlagen: {e}")
-        model = None
-        embedder = None
-else:
-    print("ℹ️ Kein API Key gefunden.")
-    model = None
-    embedder = None
-
-DATA_FILE = "data/reviews_history.json"
+# ---------------------------------------------------------
+# 2. CONSTANTS & CONFIG
+# ---------------------------------------------------------
+DATA_FILE  = "data/reviews_history.json"
 CACHE_FILE = "data/analysis_cache.json"
 
-APP_CONFIG = [
-    {"name": "Nordkurier", "ios_id": "1250964862", "android_id": "de.nordkurier.live", "country": "de"},
-    {"name": "Schwäbische", "ios_id": "432491155", "android_id": "de.schwaebische.epaper", "country": "de"}
+APP_CONFIG: list[dict] = [
+    {"name": "Nordkurier", "ios_id": "1250964862", "android_id": "de.nordkurier.live",      "country": "de"},
+    {"name": "Schwäbische","ios_id": "432491155",  "android_id": "de.schwaebische.epaper", "country": "de"},
 ]
 
-# RIESIGE STOPWORD LISTE FÜR DEN NOTFALL (Falls Fehler 429 kommt)
-STOP_WORDS = {
-    "die", "der", "das", "den", "dem", "des", "ein", "eine", "einer", "eines", "einem", "einen",
-    "ich", "du", "er", "sie", "es", "wir", "ihr", "sie", "mich", "mir", "meine", "meiner", "mein",
-    "sich", "uns", "euch", "ihnen", "ihrem", "ihres", "dieser", "diese", "dieses", "diesen",
-    "und", "oder", "aber", "als", "wenn", "dass", "weil", "denn", "ob", "wie", "wo", "was",
-    "in", "im", "an", "am", "auf", "aus", "bei", "beim", "mit", "nach", "von", "vom", "zu", "zum", "zur",
-    "über", "unter", "vor", "hinter", "neben", "durch", "für", "gegen", "ohne", "um", "wegen", "seit",
-    "ist", "sind", "war", "wäre", "wird", "werden", "wurde", "haben", "hat", "hatte", "habe", "gibt",
-    "kann", "können", "konnte", "muss", "müssen", "musste", "soll", "sollen", "sollte", "will", "wollen",
-    "geht", "ging", "lassen", "lässt", "machen", "macht", "getan", "sehen", "sieht", "schon", "nun",
-    "nicht", "nichts", "nie", "wieder", "immer", "oft", "selten", "manchmal", "erst", "bereits",
-    "noch", "jetzt", "heute", "damals", "hier", "da", "dort", "mal", "einmal", "viel", "sehr", "auch",
-    "ganz", "gar", "mehr", "weniger", "nur", "doch", "etwas", "so", "dann", "wann", "warum", "wer",
-    "einfach", "leider", "halt", "eben", "wohl", "zwar", "vielleicht", "bestimmt", "bitte", "danke",
-    "app", "apps", "anwendung", "version", "update", "updates", "ios", "android", "handy", "tablet",
-    "telefon", "iphone", "ipad", "samsung", "pixel", "gerät", "geräte", "nutzer", "kunde", "kunden",
-    "schwäbische", "nordkurier", "zeitung", "artikel", "lesen", "leser", "hallo", "moin", "tag",
-    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern",
-    "läuft", "funktioniert", "problem", "probleme", "fehler", "stürzt", "absturz", "kein", "keine", "mehr", "wird",
-    "beim", "beiden", "bin", "bis", "bist", "da", "dadurch", "daher", "dabei", "darum", "das", "dass", "dein", "deine",
-    "dem", "den", "der", "des", "dessen", "dich", "dir", "doch", "dort", "durch", "ein", "eine", "einem", "einen",
-    "einer", "eines", "einige", "einigen", "einiger", "einiges", "einmal", "er", "es", "euch", "euer", "eure",
-    "für", "gegen", "gewesen", "hab", "habe", "haben", "hat", "hatte", "hatten", "hier", "hin", "hinter", "ich",
-    "ihm", "ihn", "ihnen", "ihr", "ihre", "ihrem", "ihren", "ihrer", "ihres", "im", "in", "indem", "ins", "ist",
-    "jede", "jedem", "jeden", "jeder", "jedes", "jene", "jenem", "jenen", "jener", "jenes", "jetzt", "kann",
-    "kannst", "können", "könnt", "machen", "mein", "meine", "meinem", "meinen", "meiner", "meines", "mich",
-    "mir", "mit", "muss", "musst", "musste", "nach", "nicht", "nichts", "noch", "nun", "nur", "ob", "oder", "ohne",
-    "sehr", "sein", "seine", "seinem", "seinen", "seiner", "seines", "selbst", "sich", "sie", "sind", "so",
-    "solche", "solchem", "solchen", "solcher", "solches", "soll", "sollte", "sondern", "sonst", "über", "um",
-    "und", "uns", "unser", "unsere", "unserem", "unseren", "unserer", "unseres", "unter", "viel", "vom", "von",
-    "vor", "während", "war", "waren", "warst", "was", "weg", "weil", "weiter", "welche", "welchem", "welchen",
-    "welcher", "welches", "wenn", "werde", "werden", "wie", "wieder", "will", "wir", "wird", "wirst", "wo",
-    "wollen", "wollte", "würde", "würden", "zu", "zum", "zur", "zwar", "zwischen"
+STOP_WORDS: set[str] = {
+    "die","der","das","den","dem","des","ein","eine","einer","eines","einem","einen",
+    "ich","du","er","sie","es","wir","ihr","mich","mir","meine","meiner","mein",
+    "sich","uns","euch","ihnen","ihrem","ihres","dieser","diese","dieses","diesen",
+    "und","oder","aber","als","wenn","dass","weil","denn","ob","wie","wo","was",
+    "in","im","an","am","auf","aus","bei","beim","mit","nach","von","vom","zu","zum","zur",
+    "über","unter","vor","hinter","neben","durch","für","gegen","ohne","um","wegen","seit",
+    "ist","sind","war","wäre","wird","werden","wurde","haben","hat","hatte","habe","gibt",
+    "kann","können","konnte","muss","müssen","musste","soll","sollen","sollte","will","wollen",
+    "geht","ging","lassen","lässt","machen","macht","getan","sehen","sieht","schon","nun",
+    "nicht","nichts","nie","wieder","immer","oft","selten","manchmal","erst","bereits",
+    "noch","jetzt","heute","damals","hier","da","dort","mal","einmal","viel","sehr","auch",
+    "ganz","gar","mehr","weniger","nur","doch","etwas","so","dann","wann","warum","wer",
+    "einfach","leider","halt","eben","wohl","zwar","vielleicht","bestimmt","bitte","danke",
+    "app","apps","anwendung","version","update","updates","ios","android","handy","tablet",
+    "telefon","iphone","ipad","samsung","pixel","gerät","geräte","nutzer","kunde","kunden",
+    "schwäbische","nordkurier","zeitung","artikel","lesen","leser","hallo","moin","tag",
+    "also","alle","alles","viele","zeit","seit","wochen","monaten","tagen","jahre","sterne","stern",
+    "läuft","funktioniert","problem","probleme","fehler","stürzt","absturz","kein","keine",
+    "bin","bis","bist","dadurch","daher","dabei","darum","dein","deine","dessen","dich","dir",
+    "einige","einigen","einiger","einiges","jede","jedem","jeden","jeder","jedes","jene",
+    "kannst","könnt","solche","solchem","solchen","solcher","solches","sondern","sonst",
+    "werde","welche","welchem","welchen","welcher","welches","wirst","wollte","würde","würden",
+    "hab","hatten","indem","ins","meinem","meinen","seiner","seines","selbst","unser",
+    "unsere","unserem","unseren","unserer","unseres","während","warst","weg","weiter",
 }
 
 # ---------------------------------------------------------
-# 2. DATA MANAGEMENT
+# 3. AI INITIALISATION
 # ---------------------------------------------------------
-def generate_id(review):
-    unique_string = f"{review.get('text', '')[:50]}{review.get('date', '')}{review.get('app', '')}{review.get('store', '')}"
-    return hashlib.sha256(unique_string.encode('utf-8')).hexdigest()
+def _init_ai() -> tuple[Any | None, Any | None]:
+    api_key = os.getenv("GEMINI_API_KEY")
+    if not api_key:
+        log.info("Kein GEMINI_API_KEY gefunden – KI deaktiviert.")
+        return None, None
+    try:
+        genai.configure(api_key=api_key)
+        ai_model = genai.GenerativeModel(
+            model_name="gemini-1.5-flash",
+            generation_config={"response_mime_type": "application/json"},
+        )
+        log.info("✅ Gemini-Modell geladen.")
+        return ai_model, None   # embedder entfernt – wird aktuell nicht genutzt
+    except Exception as exc:
+        log.warning("KI-Start fehlgeschlagen: %s", exc)
+        return None, None
 
-def load_history():
-    if os.path.exists(DATA_FILE):
-        try:
-            with open(DATA_FILE, "r", encoding="utf-8") as f:
-                raw_data = json.load(f)
-                return {r['id']: r for r in raw_data if 'id' in r}
-        except: pass
-    return {}
+model, embedder = _init_ai()
 
-def save_history(history_dict):
+# ---------------------------------------------------------
+# 4. DATA MANAGEMENT
+# ---------------------------------------------------------
+def _generate_id(review: dict) -> str:
+    unique = f"{review.get('text','')[:50]}{review.get('date','')}{review.get('app','')}{review.get('store','')}"
+    return hashlib.sha256(unique.encode()).hexdigest()
+
+def load_history() -> dict[str, dict]:
+    if not os.path.exists(DATA_FILE):
+        return {}
+    try:
+        with open(DATA_FILE, encoding="utf-8") as f:
+            raw = json.load(f)
+        return {r["id"]: r for r in raw if "id" in r}
+    except (json.JSONDecodeError, OSError) as exc:
+        log.error("History laden fehlgeschlagen: %s", exc)
+        return {}
+
+def save_history(history_dict: dict[str, dict]) -> None:
     os.makedirs(os.path.dirname(DATA_FILE), exist_ok=True)
-    data_list = sorted(history_dict.values(), key=lambda x: x['date'], reverse=True)
-    with open(DATA_FILE, 'w', encoding='utf-8') as f:
+    data_list = sorted(history_dict.values(), key=lambda x: x["date"], reverse=True)
+    with open(DATA_FILE, "w", encoding="utf-8") as f:
         json.dump(data_list, f, indent=4, ensure_ascii=False)
 
-def load_analysis_cache():
-    if os.path.exists(CACHE_FILE):
-        try:
-            with open(CACHE_FILE, "r", encoding="utf-8") as f:
-                return json.load(f)
-        except: pass
-    return {}
+def load_analysis_cache() -> dict:
+    if not os.path.exists(CACHE_FILE):
+        return {}
+    try:
+        with open(CACHE_FILE, encoding="utf-8") as f:
+            return json.load(f)
+    except (json.JSONDecodeError, OSError) as exc:
+        log.warning("Cache laden fehlgeschlagen: %s", exc)
+        return {}
 
-def save_analysis_cache(data):
+def save_analysis_cache(data: dict) -> None:
     os.makedirs(os.path.dirname(CACHE_FILE), exist_ok=True)
-    with open(CACHE_FILE, 'w', encoding='utf-8') as f:
+    with open(CACHE_FILE, "w", encoding="utf-8") as f:
         json.dump(data, f, indent=4, ensure_ascii=False)
 
 # ---------------------------------------------------------
-# 3. ANALYTICS & LOGIC
+# 5. ANALYTICS
 # ---------------------------------------------------------
-def calculate_trends(reviews):
+def calculate_trends(reviews: list[dict]) -> dict:
     today = datetime.now().date()
-    dated_reviews = []
-
-    breakdown = {
-        'Nordkurier': {'ios': [], 'android': []},
-        'Schwäbische': {'ios': [], 'android': []}
-    }
-
-    ios_total = 0
-    android_total = 0
+    dated: list[tuple] = []
+    breakdown: dict = {a["name"]: {"ios": [], "android": []} for a in APP_CONFIG}
+    ios_total = android_total = 0
 
     for r in reviews:
-        if r.get('store') == 'ios': ios_total += 1
-        elif r.get('store') == 'android': android_total += 1
+        store = r.get("store", "")
+        if store == "ios":
+            ios_total += 1
+        elif store == "android":
+            android_total += 1
 
         try:
-            r_date = datetime.strptime(r['date'], '%Y-%m-%d').date()
-            rating = float(r['rating'])
+            r_date  = datetime.strptime(r["date"], "%Y-%m-%d").date()
+            rating  = float(r["rating"])
+            if r.get("text"):
+                dated.append((r_date, rating))
+            if r["app"] in breakdown and store in breakdown[r["app"]]:
+                breakdown[r["app"]][store].append(rating)
+        except (KeyError, ValueError):
+            continue
 
-            if r.get('text'):
-                dated_reviews.append((r_date, rating))
-
-            if r['app'] in breakdown and r['store'] in breakdown[r['app']]:
-                breakdown[r['app']][r['store']].append(rating)
-        except: continue
-
-    if not dated_reviews:
-        return {'overall': 0.0, 'last_7d': 0.0, 'last_30d': 0.0, 'breakdown': {}, 'ios_total': 0, 'android_total': 0}
-
-    def get_avg(days):
+    def _avg(days: int) -> float:
         cutoff = today - timedelta(days=days)
-        f = [r for d, r in dated_reviews if d >= cutoff]
-        return round(sum(f)/len(f), 2) if f else 0.0
+        vals   = [rat for d, rat in dated if d >= cutoff]
+        return round(sum(vals) / len(vals), 2) if vals else 0.0
 
-    final_breakdown = {}
-    for app, stores in breakdown.items():
-        final_breakdown[app] = {}
-        for store, ratings in stores.items():
-            avg = round(sum(ratings) / len(ratings), 2) if ratings else 0.0
-            final_breakdown[app][store] = avg
-
-    overall_avg = round(sum(r['rating'] for r in reviews if r.get('rating') is not None) / (len(reviews) or 1), 2)
+    final_breakdown = {
+        app: {
+            store: round(sum(ratings) / len(ratings), 2) if ratings else 0.0
+            for store, ratings in stores.items()
+        }
+        for app, stores in breakdown.items()
+    }
+    all_ratings = [float(r["rating"]) for r in reviews if r.get("rating") is not None]
+    overall     = round(sum(all_ratings) / len(all_ratings), 2) if all_ratings else 0.0
 
     return {
-        'overall': overall_avg,
-        'last_7d': get_avg(7),
-        'last_30d': get_avg(30),
-        'breakdown': final_breakdown,
-        'ios_total': ios_total,
-        'android_total': android_total
+        "overall":      overall,
+        "last_7d":      _avg(7),
+        "last_30d":     _avg(30),
+        "breakdown":    final_breakdown,
+        "ios_total":    ios_total,
+        "android_total":android_total,
     }
 
-def prepare_chart_data(reviews, days=14):
-    today = datetime.now().date()
-    stats = {}
-    for i in range(days):
-        k = (today - timedelta(days=i)).strftime('%Y-%m-%d')
-        stats[k] = {'pos': 0, 'neg': 0, 'neu': 0}
+def prepare_chart_data(reviews: list[dict], days: int = 14) -> dict:
+    today  = datetime.now().date()
+    stats  = {
+        (today - timedelta(days=i)).strftime("%Y-%m-%d"): {"pos": 0, "neg": 0, "neu": 0}
+        for i in range(days)
+    }
     for r in reviews:
-        d = r['date']
-        rat = r.get('rating')
+        d   = r.get("date", "")
+        rat = r.get("rating")
         if d in stats and rat is not None:
-            if rat >= 4: stats[d]['pos'] += 1
-            elif rat <= 2: stats[d]['neg'] += 1
-            else: stats[d]['neu'] += 1
+            rat = float(rat)
+            if rat >= 4:   stats[d]["pos"] += 1
+            elif rat <= 2: stats[d]["neg"] += 1
+            else:          stats[d]["neu"] += 1
+
     labels = sorted(stats.keys())
-    fmt_labels = [datetime.strptime(l, '%Y-%m-%d').strftime('%d.%m.') for l in labels]
-    return {'labels': fmt_labels, 'pos': [stats[d]['pos'] for d in labels], 'neg': [stats[d]['neg'] for d in labels], 'neu': [stats[d]['neu'] for d in labels]}
+    fmt    = [datetime.strptime(l, "%Y-%m-%d").strftime("%d.%m.") for l in labels]
+    return {
+        "labels": fmt,
+        "pos":    [stats[d]["pos"] for d in labels],
+        "neg":    [stats[d]["neg"] for d in labels],
+        "neu":    [stats[d]["neu"] for d in labels],
+    }
 
-def is_genuine_positive(review):
-    bad_words = ["absturz", "stürzt", "fehler", "schlecht", "katastrophe", "mies", "flackern", "unbrauchbar", "geht nicht"]
-    if review.get('rating', 0) < 4: return True
-    text = review.get('text', '').lower()
-    if any(word in text for word in bad_words): return False
-    return True
+def _is_genuine_positive(review: dict) -> bool:
+    bad_words = {"absturz","stürzt","fehler","schlecht","katastrophe","mies","flackern","unbrauchbar"}
+    if float(review.get("rating", 0)) < 4:
+        return False
+    return not any(w in review.get("text", "").lower() for w in bad_words)
 
 # ---------------------------------------------------------
-# 4. HYBRID INTELLIGENCE (INTELLIGENTER FALLBACK)
+# 6. LOCAL NLP FALLBACKS
 # ---------------------------------------------------------
-def get_local_buzzwords(reviews):
-    """FALLBACK 2: Verbesserte Wort-Logik"""
-    text_blob = " ".join([r.get('text', '') for r in reviews]).lower()
-    text_blob = re.sub(r'[^\w\säöüß]', '', text_blob)
-    words = text_blob.split()
-    bigrams = []
-    for i in range(len(words) - 1):
-        w1, w2 = words[i], words[i+1]
-        # Filtert harte Stopwords und zu kurze Wörter
-        if len(w1) > 3 and len(w2) > 3 and w1 not in STOP_WORDS and w2 not in STOP_WORDS:
-            bigrams.append(f"{w1.capitalize()} {w2.capitalize()}")
+def _local_buzzwords(reviews: list[dict]) -> list[tuple[str, int]]:
+    blob   = " ".join(r.get("text", "") for r in reviews).lower()
+    blob   = re.sub(r"[^\w\säöüß]", "", blob)
+    words  = blob.split()
+    bigrams = [
+        f"{words[i].capitalize()} {words[i+1].capitalize()}"
+        for i in range(len(words) - 1)
+        if len(words[i]) > 3 and len(words[i+1]) > 3
+        and words[i] not in STOP_WORDS and words[i+1] not in STOP_WORDS
+    ]
     return Counter(bigrams).most_common(12)
 
-def get_local_topics(texts):
-    """FALLBACK 2: Verbesserte Themen-Logik"""
-    words = []
-    for t in texts:
-        # Nur Substantive (Großschreibung simulieren durch Länge + Stopword Filter)
-        words.extend([w.capitalize() for w in re.sub(r'[^\w\s]', '', t.lower()).split() if w not in STOP_WORDS and len(w) > 4])
-    common = [w for w, c in Counter(words).most_common(5)]
-    return common if common else ["Allgemeines Feedback"]
+def _local_topics(texts: list[str]) -> list[str]:
+    words = [
+        w.capitalize()
+        for t in texts
+        for w in re.sub(r"[^\w\s]", "", t.lower()).split()
+        if w not in STOP_WORDS and len(w) > 4
+    ]
+    return [w for w, _ in Counter(words).most_common(5)] or ["Allgemeines Feedback"]
 
-def get_ai_data_hybrid(reviews, cache):
-    result_topics = cache.get('topics', [])
-    result_buzzwords = cache.get('buzzwords', [])
-    result_summary = cache.get('summary', "Keine Analyse verfügbar.")
-    result_top = cache.get('topReviews', [])
-    result_bottom = cache.get('bottomReviews', [])
+# ---------------------------------------------------------
+# 7. HYBRID AI ANALYSIS
+# ---------------------------------------------------------
+def _parse_json_response(text: str) -> Any:
+    """Strip possible markdown fences before JSON parsing."""
+    clean = re.sub(r"```(?:json)?", "", text).strip().rstrip("`")
+    return json.loads(clean)
 
-    rich_reviews = [r for r in reviews if len(r.get('text', '')) > 40]
-    if len(rich_reviews) < 10: rich_reviews = reviews
+def get_ai_data_hybrid(reviews: list[dict], cache: dict) -> tuple[list, list, dict]:
+    topics      = cache.get("topics", [])
+    buzzwords   = cache.get("buzzwords", [])
+    summary     = cache.get("summary", "")
+    top_reviews = cache.get("topReviews", [])
+    bot_reviews = cache.get("bottomReviews", [])
 
-    # Versuche KI, wenn Modell vorhanden UND kein 429 Fehler erwartet wird
+    rich = [r for r in reviews if len(r.get("text", "")) > 40] or reviews
+
     if model:
         try:
-            print("--- Starte KI Analyse ---")
-            text_sample = [r['text'] for r in reviews[:100] if len(r.get('text','')) > 10]
+            log.info("Starte KI-Analyse …")
+            texts = [r["text"] for r in reviews[:100] if len(r.get("text", "")) > 10]
 
-            prompt_buzz = f"""
-            Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
-            Output JSON Liste: [ {{"term": "Thema", "count": 12}}, ... ]
-            Reviews: {json.dumps(text_sample, ensure_ascii=False)}
-            """
-            resp_buzz = model.generate_content(prompt_buzz)
-            data_buzz = json.loads(resp_buzz.text.replace("```json", "").replace("```", "").strip())
-            result_buzzwords = [(i['term'], i['count']) for i in data_buzz if isinstance(i, dict)]
+            # ── Buzzwords ──────────────────────────────────────────────────────
+            resp_buzz = model.generate_content(
+                f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
+Output: JSON-Liste [ {{"term": "Thema", "count": 12}}, ... ]
+Reviews: {json.dumps(texts, ensure_ascii=False)}"""
+            )
+            data_buzz = _parse_json_response(resp_buzz.text)
+            buzzwords = [(i["term"], i["count"]) for i in data_buzz if isinstance(i, dict)]
 
-            prompt_deep = f"""
-            Analysiere diese Reviews (max 50).
-            1. Erstelle 5 kurze Themen-Cluster Labels (JSON Liste von Strings).
-            2. Schreibe ein Management Summary (Deutsch).
-            3. Wähle 3 Top-Reviews (Positiv) und 3 Bottom-Reviews (Negativ).
-            Output JSON: {{ "topics": ["..."], "summary": "...", "topReviews": [{{...}}], "bottomReviews": [{{...}}] }}
-            Data: {json.dumps([{'text': r['text'], 'rating': r['rating'], 'store': r['store'], 'app': r['app']} for r in rich_reviews[:50]], ensure_ascii=False)}
-            """
-            resp_deep = model.generate_content(prompt_deep)
-            data_deep = json.loads(resp_deep.text.replace("```json", "").replace("```", "").strip())
+            # ── Deep Analysis ──────────────────────────────────────────────────
+            sample = [
+                {"text": r["text"], "rating": r["rating"], "store": r["store"], "app": r["app"]}
+                for r in rich[:50]
+            ]
+            resp_deep = model.generate_content(
+                f"""Analysiere diese App-Reviews.
+1. Erstelle 5 kurze Themen-Cluster-Labels (JSON-Liste von Strings).
+2. Schreibe ein Management-Summary auf Deutsch (2-3 Sätze, prägnant).
+3. Wähle die 3 besten positiven und 3 kritischsten negativen Reviews aus.
+Output JSON: {{"topics":["..."],"summary":"...","topReviews":[...],"bottomReviews":[...]}}
+Daten: {json.dumps(sample, ensure_ascii=False)}"""
+            )
+            data_deep   = _parse_json_response(resp_deep.text)
+            topics      = data_deep.get("topics", [])
+            summary     = data_deep.get("summary", "")
+            top_reviews = data_deep.get("topReviews", [])
+            bot_reviews = data_deep.get("bottomReviews", [])
 
-            result_topics = data_deep.get('topics', [])
-            result_summary = data_deep.get('summary', '')
-            result_top = data_deep.get('topReviews', [])
-            result_bottom = data_deep.get('bottomReviews', [])
-
-            print("✅ KI Analyse erfolgreich. Cache wird aktualisiert.")
-
-            # Cache Speichern
-            new_cache = {
-                "topics": result_topics,
-                "buzzwords": result_buzzwords,
-                "summary": result_summary,
-                "topReviews": result_top,
-                "bottomReviews": result_bottom,
-                "date": datetime.now().strftime('%Y-%m-%d')
-            }
-            save_analysis_cache(new_cache)
-
-        except Exception as e:
-            print(f"⚠️ KI Fehler ({e}). Nutze Cache/Fallback.")
-
-    # Fallback auf Lokal wenn KI versagt hat
-    if not result_buzzwords:
-        print("⚠️ Nutze lokalen Buzzword Fallback")
-        result_buzzwords = get_local_buzzwords(reviews)
-
-    if not result_topics:
-        print("⚠️ Nutze lokalen Topic Fallback")
-        result_topics = get_local_topics([r['text'] for r in reviews[:50]])
-
-    return result_topics, result_buzzwords, {"summary": result_summary, "topReviews": result_top, "bottomReviews": result_bottom}
-
-# ---------------------------------------------------------
-# 5. SCRAPING
-# ---------------------------------------------------------
-def fetch_ios_reviews(app_name, app_id, country="de", count=20):
-    print(f"   -> iOS (RSS): {app_name}...")
-    try:
-        url = f"https://itunes.apple.com/{country}/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
-        data = requests.get(url, timeout=10).json()
-        res = []
-        for e in data.get('feed', {}).get('entry', [])[:count]:
-            if 'content' not in e: continue
-            res.append({
-                "store": "ios", "app": app_name, "rating": int(e['im:rating']['label']),
-                "text": e['content']['label'], "date": e.get('updated', {}).get('label', '')[:10],
-                "id": generate_id({'app': app_name, 'store': 'ios', 'text': e['content']['label']})
+            log.info("✅ KI-Analyse erfolgreich.")
+            save_analysis_cache({
+                "topics": topics, "buzzwords": buzzwords, "summary": summary,
+                "topReviews": top_reviews, "bottomReviews": bot_reviews,
+                "date": datetime.now().strftime("%Y-%m-%d"),
             })
-        return res
-    except: return []
+        except Exception as exc:
+            log.warning("KI-Fehler (%s) – nutze Cache/Fallback.", exc)
 
-def fetch_android_reviews(app_name, app_id, country="de", count=20):
-    print(f"   -> Android: {app_name}...")
+    # ── Fallbacks ──────────────────────────────────────────────────────────────
+    if not buzzwords:
+        log.info("Nutze lokalen Buzzword-Fallback.")
+        buzzwords = _local_buzzwords(reviews)
+    if not topics:
+        log.info("Nutze lokalen Topic-Fallback.")
+        topics = _local_topics([r["text"] for r in reviews[:50]])
+
+    ki_data = {"summary": summary, "topReviews": top_reviews, "bottomReviews": bot_reviews}
+    return topics, buzzwords, ki_data
+
+# ---------------------------------------------------------
+# 8. SCRAPING
+# ---------------------------------------------------------
+def _fetch_ios(app_name: str, app_id: str, country: str = "de", count: int = 20) -> list[dict]:
+    log.info("  → iOS %s …", app_name)
     try:
-        res = play_reviews(app_id, lang=country, country=country, sort=Sort.NEWEST, count=count)[0]
-        out = []
-        for r in res:
-            d = r['at'].strftime('%Y-%m-%d')
+        url  = f"https://itunes.apple.com/{country}/rss/customerreviews/id={app_id}/sortBy=mostrecent/json"
+        data = requests.get(url, timeout=10).json()
+        out  = []
+        for e in data.get("feed", {}).get("entry", [])[:count]:
+            if "content" not in e:
+                continue
+            text = e["content"]["label"]
             out.append({
-                "store": "android", "app": app_name, "rating": r['score'], "text": r['content'], "date": d,
-                "id": generate_id({'app': app_name, 'store': 'android', 'date': d, 'text': r['content']})
+                "store":  "ios",
+                "app":    app_name,
+                "rating": int(e["im:rating"]["label"]),
+                "text":   text,
+                "date":   e.get("updated", {}).get("label", "")[:10],
+                "id":     _generate_id({"app": app_name, "store": "ios", "text": text}),
             })
         return out
-    except: return []
+    except Exception as exc:
+        log.warning("iOS-Scrape fehlgeschlagen für %s: %s", app_name, exc)
+        return []
 
-def get_fresh_reviews(count=20):
+def _fetch_android(app_name: str, app_id: str, country: str = "de", count: int = 20) -> list[dict]:
+    log.info("  → Android %s …", app_name)
+    try:
+        raw, _ = play_reviews(app_id, lang=country, country=country, sort=Sort.NEWEST, count=count)
+        return [
+            {
+                "store":  "android",
+                "app":    app_name,
+                "rating": r["score"],
+                "text":   r["content"],
+                "date":   r["at"].strftime("%Y-%m-%d"),
+                "id":     _generate_id({"app": app_name, "store": "android",
+                                        "date": r["at"].strftime("%Y-%m-%d"), "text": r["content"]}),
+            }
+            for r in raw
+        ]
+    except Exception as exc:
+        log.warning("Android-Scrape fehlgeschlagen für %s: %s", app_name, exc)
+        return []
+
+def get_fresh_reviews(count: int = 20) -> tuple[list[dict], list[dict]]:
     hist = load_history()
-    new = []
-    print(f"--- Scrape Start ---")
+    new  = []
+    log.info("=== Scrape Start ===")
     for app in APP_CONFIG:
-        for r in fetch_ios_reviews(app['name'], app['ios_id'], app['country'], count) + \
-                 fetch_android_reviews(app['name'], app['android_id'], app['country'], count):
-            if r['id'] not in hist:
-                hist[r['id']] = r
+        for r in _fetch_ios(app["name"], app["ios_id"], app["country"], count) + \
+                 _fetch_android(app["name"], app["android_id"], app["country"], count):
+            if r["id"] not in hist:
+                hist[r["id"]] = r
                 new.append(r)
-    return sorted(hist.values(), key=lambda x: x['date'], reverse=True), new
+
+    log.info("%d neue Reviews gefunden.", len(new))
+    return sorted(hist.values(), key=lambda x: x["date"], reverse=True), new
 
 # ---------------------------------------------------------
-# 6. DASHBOARD GENERATOR
+# 9. HTML DASHBOARD GENERATOR
 # ---------------------------------------------------------
-def run_analysis_and_generate_html(full_history, new_only):
+_HTML_TEMPLATE = """<!DOCTYPE html>
+<html lang="de" data-theme="light">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>App Feedback Pro</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:ital,wght@0,300;0,500;0,700;1,300&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        /* ── TOKENS ──────────────────────────────────────────── */
+        :root {{
+            --bg:          #f4f3ef;
+            --surface:     #ffffff;
+            --surface-2:   #ede9e0;
+            --text:        #1a1a1a;
+            --text-muted:  #6b6760;
+            --border:      #d8d4cc;
+            --accent:      #c84b31;
+            --accent-soft: #fdf0ed;
+            --green:       #22a06b;
+            --red:         #e53e3e;
+            --blue:        #2563eb;
+            --neutral:     #94a3b8;
+            --buzz-base:   200, 75, 49;
+            --shadow:      0 1px 4px rgba(0,0,0,.08), 0 4px 16px rgba(0,0,0,.04);
+            --radius:      10px;
+        }}
+        [data-theme="dark"] {{
+            --bg:          #141414;
+            --surface:     #1e1e1e;
+            --surface-2:   #272727;
+            --text:        #f0ede8;
+            --text-muted:  #8a8480;
+            --border:      #333;
+            --accent:      #e8623f;
+            --accent-soft: #2a1810;
+            --green:       #2ecc91;
+            --red:         #fc6a6a;
+            --shadow:      0 1px 4px rgba(0,0,0,.4);
+            --buzz-base:   232, 98, 63;
+        }}
+
+        /* ── RESET & BASE ──────────────────────────────────────── */
+        *, *::before, *::after {{ box-sizing: border-box; margin: 0; padding: 0; }}
+        body {{
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            padding: 28px 20px 60px;
+            line-height: 1.55;
+        }}
+        .container {{ max-width: 1080px; margin: 0 auto; }}
+
+        /* ── HEADER ────────────────────────────────────────────── */
+        header {{
+            display: flex; justify-content: space-between; align-items: flex-end;
+            margin-bottom: 36px;
+            border-bottom: 2px solid var(--text);
+            padding-bottom: 16px;
+        }}
+        .logo {{ font-size: 1.4rem; font-weight: 700; letter-spacing: -.3px; }}
+        .logo span {{ color: var(--accent); }}
+        .header-meta {{ font-size: .8rem; color: var(--text-muted); font-family: 'DM Mono', monospace; }}
+        .theme-btn {{
+            background: none; border: 1.5px solid var(--border);
+            color: var(--text); padding: 7px 13px; border-radius: 6px;
+            cursor: pointer; font-size: .85rem; transition: border-color .2s;
+        }}
+        .theme-btn:hover {{ border-color: var(--accent); }}
+
+        /* ── CARDS ─────────────────────────────────────────────── */
+        .card {{
+            background: var(--surface); border-radius: var(--radius);
+            border: 1px solid var(--border); box-shadow: var(--shadow);
+        }}
+        .card-pad {{ padding: 22px; }}
+
+        /* ── KPI GRID ───────────────────────────────────────────── */
+        .kpi-grid {{
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+            gap: 16px; margin-bottom: 28px;
+        }}
+        .kpi-card {{ padding: 22px 24px; }}
+        .kpi-label {{
+            font-size: .7rem; text-transform: uppercase; letter-spacing: .08em;
+            color: var(--text-muted); font-weight: 700; margin-bottom: 10px;
+        }}
+        .kpi-val {{ font-size: 2.4rem; font-weight: 700; line-height: 1; color: var(--accent); }}
+        .breakdown-row {{
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 8px 0; border-bottom: 1px solid var(--border); font-size: .9rem;
+        }}
+        .breakdown-row:last-child {{ border-bottom: none; padding-bottom: 0; }}
+        .store-scores {{ display: flex; gap: 12px; color: var(--text-muted); font-size: .85rem; }}
+
+        /* ── CHART ─────────────────────────────────────────────── */
+        .chart-wrap {{
+            padding: 22px 24px 16px; margin-bottom: 28px;
+        }}
+        .chart-wrap h4 {{ font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); margin-bottom: 14px; font-weight: 700; }}
+        .chart-inner {{ height: 230px; position: relative; }}
+
+        /* ── SUMMARY ────────────────────────────────────────────── */
+        .summary-wrap {{
+            padding: 24px 28px; margin-bottom: 28px;
+            border-left: 4px solid var(--accent);
+        }}
+        .summary-wrap h3 {{ font-size: .85rem; text-transform: uppercase; letter-spacing: .08em; margin-bottom: 12px; color: var(--text-muted); font-weight: 700; }}
+        .summary-text {{ font-size: 1rem; line-height: 1.65; color: var(--text); }}
+        .summary-placeholder {{
+            font-style: italic; color: var(--text-muted); font-size: .95rem;
+            background: var(--surface-2); border-radius: 6px; padding: 12px 16px;
+        }}
+
+        /* ── INSIGHTS ROW ───────────────────────────────────────── */
+        .insights-row {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 36px; }}
+        @media (max-width: 640px) {{ .insights-row {{ grid-template-columns: 1fr; }} }}
+        .insights-panel {{ padding: 22px; }}
+        .panel-title {{ font-size: .75rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 700; margin-bottom: 14px; }}
+
+        /* ── TOPIC TAGS ─────────────────────────────────────────── */
+        .topic-tags {{ display: flex; flex-wrap: wrap; gap: 8px; }}
+        .tag {{
+            background: var(--surface-2); border: 1px solid var(--border);
+            padding: 5px 13px; border-radius: 20px;
+            font-size: .875rem; color: var(--text);
+        }}
+
+        /* ── BUZZ TAGS ──────────────────────────────────────────── */
+        .buzz-grid {{ display: flex; flex-direction: column; gap: 6px; }}
+        .buzz-item {{
+            display: flex; justify-content: space-between; align-items: center;
+            padding: 7px 12px; border-radius: 6px; cursor: pointer;
+            background: rgba(var(--buzz-base), calc(.03 + var(--intensity) * .12));
+            border: 1px solid rgba(var(--buzz-base), calc(.1 + var(--intensity) * .4));
+            transition: transform .15s, border-color .15s;
+            font-size: .875rem; font-weight: 500;
+        }}
+        .buzz-item:hover {{ transform: translateX(3px); border-color: var(--accent); }}
+        .buzz-count {{
+            background: rgba(var(--buzz-base), .15);
+            color: var(--accent); font-size: .75rem; font-weight: 700;
+            padding: 2px 8px; border-radius: 10px; font-family: 'DM Mono', monospace;
+        }}
+
+        /* ── REVIEW CARDS ───────────────────────────────────────── */
+        .voices-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
+        @media (max-width: 640px) {{ .voices-grid {{ grid-template-columns: 1fr; }} }}
+        .voices-col h3 {{ font-size: .8rem; text-transform: uppercase; letter-spacing: .08em; color: var(--text-muted); font-weight: 700; margin-bottom: 12px; }}
+
+        .review-card {{
+            padding: 16px 18px; border-radius: var(--radius);
+            border: 1px solid var(--border); background: var(--surface);
+            margin-bottom: 12px; box-shadow: var(--shadow);
+        }}
+        .review-card.pos {{ border-top: 3px solid var(--green); }}
+        .review-card.neg {{ border-top: 3px solid var(--red); }}
+        .rev-meta {{
+            display: flex; justify-content: space-between; align-items: center;
+            font-size: .8rem; color: var(--text-muted); margin-bottom: 10px;
+            padding-bottom: 8px; border-bottom: 1px solid var(--border);
+        }}
+        .icon-ios   {{ color: var(--text); }}
+        .icon-android {{ color: #3ddc84; }}
+        .rev-body   {{ font-size: .9rem; line-height: 1.55; }}
+        .rev-body.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
+        .read-more  {{ color: var(--accent); cursor: pointer; font-size: .8rem; margin-top: 6px; font-weight: 600; display: none; }}
+
+        /* ── EXPLORER ───────────────────────────────────────────── */
+        .explorer-header {{ border-top: 2px solid var(--text); padding-top: 28px; margin-bottom: 20px; }}
+        .explorer-header h2 {{ font-size: 1.1rem; font-weight: 700; letter-spacing: -.2px; }}
+        .search-input {{
+            width: 100%; padding: 11px 16px; font-size: .95rem; font-family: 'DM Sans', sans-serif;
+            border: 1.5px solid var(--border); border-radius: var(--radius);
+            background: var(--surface); color: var(--text);
+            margin-bottom: 12px; transition: border-color .2s;
+        }}
+        .search-input:focus {{ outline: none; border-color: var(--accent); }}
+
+        .filter-row {{ display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 20px; }}
+        .filter-group {{
+            display: flex; align-items: center; gap: 4px;
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: 8px; padding: 4px 6px;
+        }}
+        .filter-label {{ font-size: .65rem; text-transform: uppercase; font-weight: 700; color: var(--text-muted); padding: 0 6px; }}
+        .filter-btn {{
+            padding: 6px 13px; border: none; background: transparent;
+            color: var(--text); border-radius: 5px; cursor: pointer; font-size: .85rem;
+            font-family: 'DM Sans', sans-serif; transition: background .15s;
+        }}
+        .filter-btn:hover {{ background: var(--surface-2); }}
+        .filter-btn.active {{ background: var(--accent); color: #fff; }}
+
+        .explorer-item {{
+            background: var(--surface); border: 1px solid var(--border);
+            border-radius: var(--radius); padding: 16px 18px; font-size: .875rem;
+            box-shadow: var(--shadow); line-height: 1.5;
+        }}
+        .explorer-meta {{
+            display: flex; justify-content: space-between;
+            font-size: .78rem; color: var(--text-muted);
+            margin-bottom: 10px; padding-bottom: 8px;
+            border-bottom: 1px solid var(--border);
+            font-family: 'DM Mono', monospace;
+        }}
+        #list-container {{ display: grid; gap: 10px; }}
+
+        mark {{ background: #fde68a; color: #92400e; padding: 0 2px; border-radius: 2px; }}
+        [data-theme="dark"] mark {{ background: #78350f; color: #fde68a; }}
+
+        .copy-btn {{ float: right; cursor: pointer; opacity: .4; color: var(--text); font-size: .85rem; }}
+        .copy-btn:hover {{ opacity: 1; color: var(--accent); }}
+
+        /* ── ANIMATIONS ─────────────────────────────────────────── */
+        @keyframes fadeUp {{ from {{ opacity:0; transform:translateY(10px); }} to {{ opacity:1; transform:none; }} }}
+        .kpi-card, .chart-wrap, .summary-wrap, .insights-panel {{ animation: fadeUp .4s ease both; }}
+        .kpi-card:nth-child(2) {{ animation-delay: .05s; }}
+        .kpi-card:nth-child(3) {{ animation-delay: .1s; }}
+    </style>
+</head>
+<body>
+<div class="container">
+
+    <!-- HEADER -->
+    <header>
+        <div>
+            <div class="logo">App Feedback<span>.</span></div>
+            <div class="header-meta">Letztes Update: {update_time}</div>
+        </div>
+        <button class="theme-btn" onclick="toggleTheme()">🌗</button>
+    </header>
+
+    <!-- KPIs -->
+    <div class="kpi-grid">
+        <div class="card kpi-card">
+            <div class="kpi-label">Gesamt Ø</div>
+            <div class="kpi-val">{overall} ⭐</div>
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-label">Details pro App</div>
+            {breakdown_html}
+        </div>
+        <div class="card kpi-card">
+            <div class="kpi-label">Reviews pro Store</div>
+            <div style="margin-top:12px; font-size:1rem; display:flex; gap:16px;">
+                <span><i class="fab fa-apple icon-ios"></i> {ios_total}</span>
+                <span><i class="fab fa-android icon-android"></i> {android_total}</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- CHART -->
+    <div class="card chart-wrap">
+        <h4>Bewertungsverlauf – letzte 14 Tage</h4>
+        <div class="chart-inner"><canvas id="trendChart"></canvas></div>
+    </div>
+
+    <!-- KI SUMMARY -->
+    <div class="card summary-wrap">
+        <h3>🤖 KI-Analyse</h3>
+        {summary_html}
+    </div>
+
+    <!-- INSIGHTS -->
+    <div class="insights-row">
+        <div class="card insights-panel">
+            <div class="panel-title">🔥 Themen-Cluster</div>
+            <div class="topic-tags">{topics_html}</div>
+        </div>
+        <div class="card insights-panel">
+            <div class="panel-title">🚨 Häufigste Probleme</div>
+            <div class="buzz-grid">{buzz_html}</div>
+        </div>
+    </div>
+
+    <!-- VOICES -->
+    <div class="voices-grid">
+        <div class="voices-col">
+            <h3>👍 Top Stimmen</h3>
+            {top_html}
+        </div>
+        <div class="voices-col">
+            <h3>⚠️ Kritische Stimmen</h3>
+            {bot_html}
+        </div>
+    </div>
+
+    <!-- EXPLORER -->
+    <div class="explorer-header">
+        <h2>🔎 Explorer</h2>
+    </div>
+    <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten …" oninput="filterData()">
+    <div class="filter-row">
+        <div class="filter-group">
+            <span class="filter-label">App</span>
+            <button class="filter-btn active" onclick="setFilter('app','all',this)">Alle</button>
+            <button class="filter-btn" onclick="setFilter('app','Nordkurier',this)">NK</button>
+            <button class="filter-btn" onclick="setFilter('app','Schwäbische',this)">SZ</button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Store</span>
+            <button class="filter-btn active" onclick="setFilter('store','all',this)">Alle</button>
+            <button class="filter-btn" onclick="setFilter('store','ios',this)"><i class="fab fa-apple"></i></button>
+            <button class="filter-btn" onclick="setFilter('store','android',this)"><i class="fab fa-android"></i></button>
+        </div>
+        <div class="filter-group">
+            <span class="filter-label">Sort</span>
+            <button class="filter-btn active" onclick="setSort('newest',this)">Neu</button>
+            <button class="filter-btn" onclick="setSort('best',this)">Beste</button>
+            <button class="filter-btn" onclick="setSort('worst',this)">Schlechteste</button>
+        </div>
+    </div>
+    <div id="list-container"></div>
+</div>
+
+<script>
+const REVIEWS = {js_reviews};
+let filterApp   = 'all';
+let filterStore = 'all';
+let currentSort = 'newest';
+
+// ── THEME ──────────────────────────────────────────────────────────────────
+const saved = localStorage.getItem('theme') || 'light';
+document.documentElement.setAttribute('data-theme', saved);
+
+function toggleTheme() {{
+    const next = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+    document.documentElement.setAttribute('data-theme', next);
+    localStorage.setItem('theme', next);
+    updateChartColors();
+}}
+
+// ── CHART ──────────────────────────────────────────────────────────────────
+const ctx = document.getElementById('trendChart').getContext('2d');
+const chart = new Chart(ctx, {{
+    type: 'bar',
+    data: {{
+        labels: {js_labels},
+        datasets: [
+            {{ label: 'Positiv (4-5★)', data: {js_pos}, backgroundColor: '#22a06b', borderRadius: 3 }},
+            {{ label: 'Neutral (3★)',   data: {js_neu}, backgroundColor: '#94a3b8', borderRadius: 3 }},
+            {{ label: 'Negativ (1-2★)',data: {js_neg}, backgroundColor: '#e53e3e', borderRadius: 3 }},
+        ],
+    }},
+    options: {{
+        responsive: true, maintainAspectRatio: false,
+        scales: {{
+            x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ color: '#888' }} }},
+            y: {{ stacked: true, grid: {{ color: 'rgba(128,128,128,.15)' }}, ticks: {{ color: '#888', padding: 8 }} }},
+        }},
+        plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#888', boxWidth: 12 }} }} }},
+    }},
+}});
+
+function updateChartColors() {{
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const c = isDark ? '#888' : '#666';
+    chart.options.scales.x.ticks.color = c;
+    chart.options.scales.y.ticks.color = c;
+    chart.options.plugins.legend.labels.color = c;
+    chart.update();
+}}
+updateChartColors();
+
+// ── READ-MORE (event delegation – works for dynamically rendered cards too) ──
+document.addEventListener('click', e => {{
+    if (e.target.classList.contains('read-more')) {{
+        const body = e.target.previousElementSibling;
+        body.classList.toggle('clamped');
+        e.target.textContent = body.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
+    }}
+}});
+
+// Initialise read-more buttons for static cards (top/bot voices)
+function initStaticReadMore() {{
+    document.querySelectorAll('.rev-body.clamped').forEach(el => {{
+        requestAnimationFrame(() => {{
+            const btn = el.nextElementSibling;
+            if (btn && el.scrollHeight > el.clientHeight + 4) btn.style.display = 'block';
+        }});
+    }});
+}}
+initStaticReadMore();
+
+// ── FILTERS ────────────────────────────────────────────────────────────────
+function setFilter(type, value, btn) {{
+    if (type === 'app')   filterApp   = value;
+    if (type === 'store') filterStore = value;
+    btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterData();
+}}
+function setSort(mode, btn) {{
+    currentSort = mode;
+    btn.parentElement.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    filterData();
+}}
+function setSearch(term) {{
+    document.getElementById('search').value = term;
+    filterData();
+    document.getElementById('search').scrollIntoView({{ behavior: 'smooth' }});
+}}
+function copyText(text) {{
+    navigator.clipboard.writeText(text).then(() => {{
+        // subtle visual feedback instead of alert()
+        const el = event.target;
+        el.classList.replace('fa-copy', 'fa-check');
+        setTimeout(() => el.classList.replace('fa-check', 'fa-copy'), 1500);
+    }});
+}}
+
+// ── EXPLORER RENDER ────────────────────────────────────────────────────────
+function escapeHtml(str) {{
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+}}
+
+function filterData() {{
+    const q   = document.getElementById('search').value.toLowerCase().trim();
+    const terms = q.length >= 2 ? q.split(' ').filter(t => t.length > 1) : [];
+    const container = document.getElementById('list-container');
+    container.innerHTML = '';
+
+    let filtered = REVIEWS.filter(r => {{
+        if (filterApp   !== 'all' && r.app   !== filterApp)   return false;
+        if (filterStore !== 'all' && r.store !== filterStore) return false;
+        if (terms.length && !terms.every(t => (r.text + r.app + r.store).toLowerCase().includes(t))) return false;
+        return true;
+    }});
+
+    if (currentSort === 'newest') filtered.sort((a,b) => a.date < b.date ? 1 : -1);
+    if (currentSort === 'best')   filtered.sort((a,b) => b.rating - a.rating);
+    if (currentSort === 'worst')  filtered.sort((a,b) => a.rating - b.rating);
+
+    if (!filtered.length) {{
+        container.innerHTML = '<div style="text-align:center;color:var(--text-muted);padding:30px;">Keine Ergebnisse</div>';
+        return;
+    }}
+
+    filtered.slice(0, 50).forEach(r => {{
+        const icon = r.store === 'ios'
+            ? '<i class="fab fa-apple icon-ios"></i>'
+            : '<i class="fab fa-android icon-android"></i>';
+
+        let displayText = escapeHtml(r.text);
+        if (terms.length) {{
+            terms.forEach(term => {{
+                const rx = new RegExp('(' + term.replace(/[.*+?^${{}}()|[\\]\\\\]/g,'\\\\$&') + ')', 'gi');
+                displayText = displayText.replace(rx, '<mark>$1</mark>');
+            }});
+        }}
+
+        const div = document.createElement('div');
+        div.className = 'explorer-item';
+        div.innerHTML = `
+            <div class="explorer-meta">
+                <span>${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) · ${{r.rating}}⭐</span>
+                <span>${{r.fmt_date || r.date}}</span>
+            </div>
+            <div>
+                <span class="rev-body clamped">${{displayText}}</span>
+                <span class="read-more">Mehr anzeigen</span>
+                <i class="fas fa-copy copy-btn" title="Kopieren" onclick="copyText(${{JSON.stringify(r.text)}})"></i>
+            </div>
+        `;
+        // show/hide read-more
+        requestAnimationFrame(() => {{
+            const body = div.querySelector('.rev-body');
+            const btn  = div.querySelector('.read-more');
+            if (body.scrollHeight > body.clientHeight + 4) btn.style.display = 'block';
+        }});
+        container.appendChild(div);
+    }});
+}}
+filterData();
+</script>
+</body>
+</html>"""
+
+
+def _render_review_card(r: dict, cls: str) -> str:
+    icon = '<i class="fab fa-apple icon-ios"></i>' if r.get("store") == "ios" else '<i class="fab fa-android icon-android"></i>'
+    return f"""
+    <div class="review-card {cls}">
+        <div class="rev-meta">
+            <span>{icon} <strong>{r.get('app', '–')}</strong></span>
+            <span>{r.get('rating', '?')}★</span>
+        </div>
+        <div class="rev-body clamped">{r.get('text', '')}</div>
+        <span class="read-more">Mehr anzeigen</span>
+    </div>"""
+
+
+def run_analysis_and_generate_html(full_history: list[dict], new_only: list[dict]) -> None:
     trends = calculate_trends(full_history)
-    chart = prepare_chart_data(full_history)
-
-    cache = load_analysis_cache()
+    chart  = prepare_chart_data(full_history)
+    cache  = load_analysis_cache()
     topics, buzzwords, ki_data = get_ai_data_hybrid(full_history, cache)
 
-    seen_texts = set()
-    top_list = []
-    bot_list = []
-
-    candidates_pos = sorted([r for r in full_history if r['rating']>=4 and is_genuine_positive(r)], key=lambda x: len(x['text']), reverse=True)
-    for r in candidates_pos:
-        if len(top_list) >= 3: break
-        if r['text'] not in seen_texts:
-            top_list.append(r)
-            seen_texts.add(r['text'])
-
-    candidates_neg = sorted([r for r in full_history if r['rating']<=2], key=lambda x: len(x['text']), reverse=True)
-    for r in candidates_neg:
-        if len(bot_list) >= 3: break
-        if r['text'] not in seen_texts:
-            bot_list.append(r)
-            seen_texts.add(r['text'])
-
-    if len(top_list) < 1:
-        for r in ki_data.get('topReviews', []):
-            if len(top_list) >= 3: break
-            if r.get('text') not in seen_texts:
-                top_list.append(r)
-                seen_texts.add(r.get('text'))
-
-    if len(bot_list) < 1:
-        for r in ki_data.get('bottomReviews', []):
-            if len(bot_list) >= 3: break
-            if r.get('text') not in seen_texts:
-                bot_list.append(r)
-                seen_texts.add(r.get('text'))
-
-    for r in top_list + bot_list:
-        if not r.get('app'):
-            m = next((x for x in full_history if x['text'][:20] == r.get('text','').strip()[:20]), None)
-            if m: r.update({'app': m['app'], 'store': m['store'], 'rating': m['rating']})
-
-    summary = str(ki_data.get('summary', '')).strip().replace('{','').replace('}','').replace('"','')
-
+    # ── Format dates ──────────────────────────────────────────────────────
     for r in full_history:
-        if 'date' in r:
-            try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
-            except: r['fmt_date'] = r['date']
+        try:
+            r["fmt_date"] = datetime.strptime(r["date"], "%Y-%m-%d").strftime("%d.%m.%Y")
+        except (ValueError, KeyError):
+            r["fmt_date"] = r.get("date", "")
+
+    # ── Build top / bottom voice lists ────────────────────────────────────
+    seen: set[str] = set()
+    top_list, bot_list = [], []
+
+    for r in sorted(
+        [r for r in full_history if r.get("rating", 0) >= 4 and _is_genuine_positive(r)],
+        key=lambda x: len(x["text"]), reverse=True,
+    ):
+        if len(top_list) >= 3: break
+        if r["text"] not in seen:
+            top_list.append(r); seen.add(r["text"])
+
+    for r in sorted(
+        [r for r in full_history if r.get("rating", 0) <= 2],
+        key=lambda x: len(x["text"]), reverse=True,
+    ):
+        if len(bot_list) >= 3: break
+        if r["text"] not in seen:
+            bot_list.append(r); seen.add(r["text"])
+
+    # ── Build HTML snippets ───────────────────────────────────────────────
+    breakdown_html = "".join(
+        f"""<div class="breakdown-row">
+            <strong>{app}</strong>
+            <div class="store-scores">
+                <span><i class="fab fa-apple"></i> {stores.get('ios', 0)}⭐</span>
+                <span><i class="fab fa-android icon-android"></i> {stores.get('android', 0)}⭐</span>
+            </div>
+        </div>"""
+        for app, stores in trends["breakdown"].items()
+    )
+
+    summary_text = str(ki_data.get("summary", "")).strip().replace("{", "").replace("}", "")
+    summary_html = (
+        f'<p class="summary-text">{summary_text}</p>'
+        if summary_text
+        else '<p class="summary-placeholder">Noch keine KI-Analyse – wird beim nächsten Run mit aktivem API-Key erstellt.</p>'
+    )
+
+    topics_html = "".join(f'<span class="tag"># {t}</span>' for t in topics)
 
     max_c = buzzwords[0][1] if buzzwords else 1
-    buzz_html = '<div class="buzz-container">'
-    for w, c in buzzwords:
-        intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{c}</span></span>'
-    buzz_html += '</div>'
+    buzz_html = "".join(
+        f"""<div class="buzz-item" style="--intensity:{min(1.0, w[1]/max_c):.2f};"
+             onclick="setSearch('{w[0]}')">
+            {w[0]} <span class="buzz-count">{w[1]}</span>
+        </div>"""
+        for w in buzzwords
+    )
 
-    breakdown_html = ""
-    for app, stores in trends.get('breakdown', {}).items():
-        ios_score = stores.get('ios', 0)
-        android_score = stores.get('android', 0)
-        breakdown_html += f'<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
-        breakdown_html += f'<span style="font-size:0.9rem"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
+    top_html = "".join(_render_review_card(r, "pos") for r in top_list[:3])
+    bot_html = "".join(_render_review_card(r, "neg") for r in bot_list[:3])
 
-    js_reviews = json.dumps(full_history, ensure_ascii=False)
-    js_labels = json.dumps(chart['labels'])
-    js_pos = json.dumps(chart['pos'])
-    js_neg = json.dumps(chart['neg'])
-    js_neu = json.dumps(chart['neu'])
-
-    html = f"""
-    <!DOCTYPE html>
-    <html lang="de" data-theme="light">
-    <head>
-        <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>App Feedback Pro</title>
-        <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-        <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
-        <style>
-            :root {{ 
-                --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
-                --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-base: 220, 38, 38; 
-            }}
-            [data-theme="dark"] {{ 
-                --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
-                --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-base: 248, 113, 113;
-            }}
-            body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
-            .container {{ max-width: 1100px; margin: 0 auto; }}
-            header {{ display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; }}
-            .theme-btn {{ background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }}
-            
-            .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
-            .card {{ background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }}
-            .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }}
-            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }}
-            
-            .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
-            .summary-box {{ background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
-            
-            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
-            
-            .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
-            .buzz-tag {{ 
-                display: inline-flex; align-items: center; cursor: pointer;
-                padding: 6px 12px; border-radius: 20px; 
-                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
-                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
-            }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
-            .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; }}
-
-            .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
-            .review-card {{ background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
-            .review-card.pos {{ border-top: 4px solid #22c55e; }}
-            .review-card.neg {{ border-top: 4px solid #ef4444; }}
-            
-            .icon-android {{ color: var(--android); }} .icon-ios {{ color: var(--ios); }}
-            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
-            
-            .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
-            
-            .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
-            .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
-            .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
-            .filter-btn {{ padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }}
-            .filter-btn:hover {{ background: rgba(0,0,0,0.05); }}
-            .filter-btn.active {{ background: var(--primary); color: white; }}
-            
-            .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
-            .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
-            .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-            .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
-            .meta {{ font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }}
-        </style>
-    </head>
-    <body>
-        <div class="container">
-            <header>
-                <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro</h1>
-                    <span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span>
-                </div>
-                <button class="theme-btn" onclick="toggleTheme()">🌗</button>
-            </header>
-
-            <div class="kpi-grid">
-                <div class="card">
-                    <div class="kpi-label">Gesamt Ø</div>
-                    <div class="kpi-val">{trends['overall']} ⭐</div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">DETAILS PRO APP</div>
-                    <div style="margin-top:15px;">{breakdown_html}</div>
-                </div>
-                <div class="card">
-                    <div class="kpi-label">Reviews pro Store</div>
-                    <div style="margin-top:10px; font-size:1.1rem;">
-                        <i class="fab fa-apple"></i> {trends['ios_total']} &nbsp;|&nbsp; 
-                        <i class="fab fa-android"></i> {trends['android_total']}
-                    </div>
-                </div>
-            </div>
-
-            <div class="chart-container">
-                <h4 style="margin:0 0 15px 0; opacity:0.7;">Bewertungsverlauf (14 Tage)</h4>
-                <canvas id="trendChart"></canvas>
-            </div>
-            
-            <div class="summary-box">
-                <h3 style="margin-top:0;">🤖 KI-Analyse</h3>
-                <p>{summary}</p>
-            </div>
-
-            <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
-                <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster</h3>
-                    <div class="card" style="min-height:100px;">
-                        {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
-                    </div>
-                </div>
-                <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Häufigste Probleme (KI)</h3>
-                    <div class="card buzz-container">
-                        {buzz_html}
-                    </div>
-                </div>
-            </div>
-
-            <div class="review-grid">
-                <div>
-                    <h3>👍 Top Stimmen</h3>
-                    {''.join([f'''
-                    <div class="review-card pos">
-                        <div class="meta">
-                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
-                            <span>{r.get('rating')}★</span>
-                        </div>
-                        <div class="review-content">
-                            <div class="review-text clamped">{r.get('text')}</div>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
-                        </div>
-                    </div>''' for r in top_list[:3]])}
-                </div>
-                <div>
-                    <h3>⚠️ Kritische Stimmen</h3>
-                    {''.join([f'''
-                    <div class="review-card neg">
-                        <div class="meta">
-                            <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
-                            <span>{r.get('rating')}★</span>
-                        </div>
-                        <div class="review-content">
-                            <div class="review-text clamped">{r.get('text')}</div>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
-                        </div>
-                    </div>''' for r in bot_list[:3]])}
-                </div>
-            </div>
-
-            <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
-            
-            <div style="margin-bottom:20px;">
-                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
-                
-                <div class="filter-row">
-                    <div class="filter-group">
-                        <span class="filter-label">App</span>
-                        <button class="filter-btn active" onclick="setFilter('app', 'all', this)">Alle</button>
-                        <button class="filter-btn" onclick="setFilter('app', 'Nordkurier', this)">NK</button>
-                        <button class="filter-btn" onclick="setFilter('app', 'Schwäbische', this)">SZ</button>
-                    </div>
-                    
-                    <div class="filter-group">
-                        <span class="filter-label">Store</span>
-                        <button class="filter-btn active" onclick="setFilter('store', 'all', this)">Alle</button>
-                        <button class="filter-btn" onclick="setFilter('store', 'ios', this)"><i class="fab fa-apple"></i></button>
-                        <button class="filter-btn" onclick="setFilter('store', 'android', this)"><i class="fab fa-android"></i></button>
-                    </div>
-
-                    <div class="filter-group">
-                        <span class="filter-label">Sort</span>
-                        <button class="filter-btn active" onclick="setSort('newest', this)">Neu</button>
-                        <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
-                        <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
-                    </div>
-                </div>
-            </div>
-
-            <div id="list-container" style="display:grid; gap:15px;"></div>
-        </div>
-
-        <script>
-            const REVIEWS = {js_reviews};
-            let filterApp = 'all';
-            let filterStore = 'all';
-            let currentSort = 'newest';
-
-            const theme = localStorage.getItem('theme') || 'light';
-            document.documentElement.setAttribute('data-theme', theme);
-            
-            function toggleTheme() {{
-                const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
-                document.documentElement.setAttribute('data-theme', newTheme);
-                localStorage.setItem('theme', newTheme);
-                updateChartColors();
-            }}
-
-            const ctx = document.getElementById('trendChart').getContext('2d');
-            let chart = new Chart(ctx, {{
-                type: 'bar',
-                data: {{
-                    labels: {js_labels},
-                    datasets: [
-                        {{ label: 'Positiv (4-5★)', data: {js_pos}, backgroundColor: '#22c55e' }},
-                        {{ label: 'Neutral (3★)', data: {js_neu}, backgroundColor: '#94a3b8' }},
-                        {{ label: 'Negativ (1-2★)', data: {js_neg}, backgroundColor: '#ef4444' }}
-                    ]
-                }},
-                options: {{
-                    responsive: true, maintainAspectRatio: false,
-                    scales: {{ 
-                        x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ color: '#64748b' }} }}, 
-                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }}, ticks: {{ color: '#64748b', padding: 10 }} }} 
-                    }},
-                    plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#64748b' }} }} }}
-                }}
-            }});
-            
-            function updateChartColors() {{
-                const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
-                const textColor = isDark ? '#cbd5e1' : '#64748b';
-                const gridColor = isDark ? '#334155' : '#e2e8f0';
-                
-                chart.options.scales.x.ticks.color = textColor;
-                chart.options.scales.y.ticks.color = textColor;
-                chart.options.scales.y.grid.color = gridColor;
-                chart.options.plugins.legend.labels.color = textColor;
-                chart.update();
-            }}
-            updateChartColors();
-
-            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
-
-            function initReadMore() {{
-                document.querySelectorAll('.review-content').forEach(div => {{
-                    const text = div.querySelector('.review-text');
-                    const btn = div.querySelector('.read-more');
-                    if (text.scrollHeight > text.clientHeight) {{
-                        btn.style.display = 'inline-block';
-                    }}
-                }});
-            }}
-            initReadMore();
-
-            function toggleText(btn) {{
-                const text = btn.previousElementSibling;
-                text.classList.toggle('clamped');
-                btn.innerText = text.classList.contains('clamped') ? 'Mehr anzeigen' : 'Weniger anzeigen';
-            }}
-
-            function setFilter(type, value, btn) {{
-                if (type === 'app') filterApp = value;
-                if (type === 'store') filterStore = value;
-                
-                const group = btn.parentElement;
-                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                
-                filterData();
-            }}
-            
-            function setSort(mode, btn) {{
-                currentSort = mode;
-                const group = btn.parentElement;
-                group.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                filterData();
-            }}
-
-            function setSearch(term) {{
-                const input = document.getElementById('search');
-                input.value = term;
-                filterData();
-                input.scrollIntoView({{behavior: 'smooth'}});
-            }}
-
-            function copyText(text) {{ navigator.clipboard.writeText(text); alert('Text kopiert!'); }}
-
-            function filterData() {{
-                const q = document.getElementById('search').value.toLowerCase().trim();
-                const container = document.getElementById('list-container');
-                container.innerHTML = '';
-
-                let filtered = REVIEWS.filter(r => {{
-                    const appMatch = (filterApp === 'all' || r.app === filterApp);
-                    const storeMatch = (filterStore === 'all' || r.store === filterStore);
-                    const searchMatch = (r.text + r.store + r.app).toLowerCase().includes(q);
-                    return appMatch && storeMatch && searchMatch;
-                }});
-
-                if (currentSort === 'newest') filtered.sort((a, b) => a.date < b.date ? 1 : -1);
-                if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
-                if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
-
-                if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px;">Keine Ergebnisse</div>'; return; }}
-
-                filtered.slice(0, 50).forEach(r => {{
-                    const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
-                    
-                    let displayText = r.text;
-                    if (q.length >= 2) {{
-                        const terms = q.split(' ').filter(t => t.length > 1);
-                        const allFound = terms.every(term => r.text.toLowerCase().includes(term));
-                        
-                        if (allFound) {{
-                            terms.forEach(term => {{
-                                const regex = new RegExp('(' + term + ')', 'gi');
-                                displayText = displayText.replace(regex, '<mark>$1</mark>');
-                            }});
-                        }} else {{
-                            return;
-                        }}
-                    }}
-                    
-                    const div = document.createElement('div');
-                    div.className = 'review-card';
-                    div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
-                            <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
-                            </span>
-                            <span>${{r.fmt_date || r.date}}</span>
-                        </div>
-                        <div style="line-height:1.5;">
-                            <span class="review-text clamped">${{displayText}}</span>
-                            <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
-                            <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
-                        </div>
-                    `;
-                    container.appendChild(div);
-                }});
-            }}
-            
-            filterData();
-        </script>
-    </body>
-    </html>
-    """
+    # ── Render final HTML ─────────────────────────────────────────────────
+    html = _HTML_TEMPLATE.format(
+        update_time    = datetime.now().strftime("%d.%m.%Y %H:%M"),
+        overall        = trends["overall"],
+        ios_total      = trends["ios_total"],
+        android_total  = trends["android_total"],
+        breakdown_html = breakdown_html,
+        summary_html   = summary_html,
+        topics_html    = topics_html,
+        buzz_html      = buzz_html,
+        top_html       = top_html,
+        bot_html       = bot_html,
+        js_reviews     = json.dumps(full_history, ensure_ascii=False),
+        js_labels      = json.dumps(chart["labels"]),
+        js_pos         = json.dumps(chart["pos"]),
+        js_neg         = json.dumps(chart["neg"]),
+        js_neu         = json.dumps(chart["neu"]),
+    )
 
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard Version 34.0 generiert.")
+    log.info("✅ Dashboard generiert → public/index.html")
 
 # ---------------------------------------------------------
-# 7. TEAMS MESSAGECARD (Actionable & Safe)
+# 10. TEAMS NOTIFICATION
 # ---------------------------------------------------------
-def send_teams_notification(new_reviews, webhook_url):
-    if not new_reviews: return
+def send_teams_notification(new_reviews: list[dict], webhook_url: str) -> None:
+    if not new_reviews:
+        return
 
-    top_reviews = new_reviews[:10]
-    pos = sum(1 for r in new_reviews if r['rating']>=4)
-    neu = sum(1 for r in new_reviews if r['rating']==3)
-    neg = sum(1 for r in new_reviews if r['rating']<=2)
+    pos = sum(1 for r in new_reviews if r["rating"] >= 4)
+    neu = sum(1 for r in new_reviews if r["rating"] == 3)
+    neg = sum(1 for r in new_reviews if r["rating"] <= 2)
 
-    # Legacy MessageCard (Beste Unterstützung für Buttons)
     card = {
-        "@type": "MessageCard",
+        "@type":    "MessageCard",
         "@context": "http://schema.org/extensions",
-        "themeColor": "0076D7",
-        "summary": f"Neues App Feedback ({len(new_reviews)})",
+        "themeColor": "c84b31",
+        "summary":  f"Neues App Feedback ({len(new_reviews)})",
         "sections": [
             {
                 "activityTitle": f"🚀 **Neues Feedback ({len(new_reviews)})**",
                 "facts": [
-                    {"name": "Positiv:", "value": str(pos)},
-                    {"name": "Neutral:", "value": str(neu)},
-                    {"name": "Negativ:", "value": str(neg)}
+                    {"name": "Positiv:",  "value": str(pos)},
+                    {"name": "Neutral:",  "value": str(neu)},
+                    {"name": "Negativ:",  "value": str(neg)},
                 ],
-                "markdown": True
+                "markdown": True,
             }
         ],
         "potentialAction": [
             {
                 "@type": "OpenUri",
-                "name": "Zum Dashboard",
-                "targets": [{"os": "default", "uri": "https://Hatozoro.github.io/feedback-agent/"}]
+                "name":  "Zum Dashboard",
+                "targets": [{"os": "default", "uri": "https://Hatozoro.github.io/feedback-agent/"}],
             }
-        ]
+        ],
     }
 
-    # Reviews als Abschnitte hinzufügen
-    for r in top_reviews:
-        icon = "🍏" if r['store'] == 'ios' else "🤖"
-        star = "⭐" * r['rating']
-        section = {
-            "title": f"{icon} {r['app']} ({star})",
-            "text": r['text'],
-            "markdown": True
-        }
-        card['sections'].append(section)
+    for r in new_reviews[:10]:
+        icon = "🍏" if r["store"] == "ios" else "🤖"
+        card["sections"].append({
+            "title": f"{icon} {r['app']} ({'⭐' * r['rating']})",
+            "text":  r["text"],
+            "markdown": True,
+        })
 
     if len(new_reviews) > 10:
-        card['sections'].append({
-            "text": f"... und {len(new_reviews) - 10} weitere auf dem Dashboard.",
-            "markdown": True
+        card["sections"].append({
+            "text": f"… und {len(new_reviews) - 10} weitere auf dem Dashboard.",
+            "markdown": True,
         })
 
     try:
-        requests.post(webhook_url, json=card)
-        print("✅ Enterprise Teams Message gesendet.")
-    except Exception as e:
-        print(f"❌ Teams Fehler: {e}")
+        response = requests.post(webhook_url, json=card, timeout=10)
+        response.raise_for_status()
+        log.info("✅ Teams-Nachricht gesendet.")
+    except requests.RequestException as exc:
+        log.error("Teams-Fehler: %s", exc)
 
+
+# ---------------------------------------------------------
+# 11. ENTRY POINT
+# ---------------------------------------------------------
 if __name__ == "__main__":
     full, new = get_fresh_reviews()
-    save_history({r['id']: r for r in full})
+    save_history({r["id"]: r for r in full})
     run_analysis_and_generate_html(full, new)
 
-    teams = os.getenv("TEAMS_WEBHOOK_URL")
-    if teams: send_teams_notification(new, teams)
+    webhook = os.getenv("TEAMS_WEBHOOK_URL")
+    if webhook:
+        send_teams_notification(new, webhook)
 
-    print("✅ Durchlauf beendet.")
+    log.info("✅ Durchlauf beendet.")
