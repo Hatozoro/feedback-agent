@@ -229,7 +229,7 @@
     <header>
         <div>
             <div class="logo">App Feedback<span>.</span></div>
-            <div class="header-meta">Letztes Update: 13.05.2026 09:34</div>
+            <div class="header-meta">Letztes Update: 13.05.2026 10:02</div>
         </div>
         <button class="theme-btn" onclick="toggleTheme()">🌗</button>
     </header>
@@ -439,7 +439,7 @@ let filterApp   = 'all';
 let filterStore = 'all';
 let currentSort = 'newest';
 
-// ── THEME ──────────────────────────────────────────────────────────────────
+// ── THEME ───────────────────────────────────────────────────────────────
 const saved = localStorage.getItem('theme') || 'light';
 document.documentElement.setAttribute('data-theme', saved);
 
@@ -450,7 +450,7 @@ function toggleTheme() {
     updateChartColors();
 }
 
-// ── CHART ──────────────────────────────────────────────────────────────────
+// ── CHART ───────────────────────────────────────────────────────────────────
 const ctx = document.getElementById('trendChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'bar',
