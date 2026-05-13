@@ -16,7 +16,8 @@ from collections import Counter
 from datetime import datetime, timedelta
 from typing import Any
 
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 from dotenv import load_dotenv
 from app_store_scraper import AppStore
 from google_play_scraper import Sort, reviews as play_reviews
@@ -71,22 +72,18 @@ STOP_WORDS: set[str] = {
 # ---------------------------------------------------------
 # 3. AI INITIALISATION
 # ---------------------------------------------------------
-def _init_ai() -> tuple[Any | None, Any | None]:
-    api_key = os.getenv("GEMINI_API_KEY")
-    if not api_key:
-        log.info("Kein GEMINI_API_KEY gefunden – KI deaktiviert.")
-        return None, None
-    try:
-        genai.configure(api_key=api_key)
-        ai_model = genai.GenerativeModel(
-            model_name="gemini-1.5-flash",
-            generation_config={"response_mime_type": "application/json"},
-        )
-        log.info("✅ Gemini-Modell geladen.")
-        return ai_model, None   # embedder entfernt – wird aktuell nicht genutzt
-    except Exception as exc:
-        log.warning("KI-Start fehlgeschlagen: %s", exc)
-        return None, None
+def _init_ai():  # Type hints vereinfacht für Kompatibilität
+     api_key = os.getenv("GEMINI_API_KEY")
+     if not api_key:
+         log.info("Kein GEMINI_API_KEY gefunden – KI deaktiviert.")
+         return None, None
+     try:
+         client = genai.Client(api_key=api_key)
+         log.info("✅ Gemini-Client geladen.")
+         return client, None
+     except Exception as exc:
+         log.warning("KI-Start fehlgeschlagen: %s", exc)
+         return None, None
 
 model, embedder = _init_ai()
 
@@ -256,42 +253,43 @@ def get_ai_data_hybrid(reviews: list[dict], cache: dict) -> tuple[list, list, di
             texts = [r["text"] for r in reviews[:100] if len(r.get("text", "")) > 10]
 
             # ── Buzzwords ──────────────────────────────────────────────────────
-            resp_buzz = model.generate_content(
-                f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
-Output: JSON-Liste [ {{"term": "Thema", "count": 12}}, ... ]
-Reviews: {json.dumps(texts, ensure_ascii=False)}"""
-            )
-            data_buzz = _parse_json_response(resp_buzz.text)
-            buzzwords = [(i["term"], i["count"]) for i in data_buzz if isinstance(i, dict)]
+                        resp_buzz = model.models.generate_content(
+                            model="gemini-1.5-flash",
+                            contents=f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
+            Output: JSON-Liste [ {{"term": "Thema", "count": 12}}, ... ]
+            Reviews: {json.dumps(texts, ensure_ascii=False)}"""
+                        )
+                        data_buzz = _parse_json_response(resp_buzz.text)
+                        buzzwords = [(i["term"], i["count"]) for i in data_buzz if isinstance(i, dict)]
 
-            # ── Deep Analysis ──────────────────────────────────────────────────
-            sample = [
-                {"text": r["text"], "rating": r["rating"], "store": r["store"], "app": r["app"]}
-                for r in rich[:50]
-            ]
-            resp_deep = model.generate_content(
-                f"""Analysiere diese App-Reviews.
-1. Erstelle 5 kurze Themen-Cluster-Labels (JSON-Liste von Strings).
-2. Schreibe ein Management-Summary auf Deutsch (2-3 Sätze, prägnant).
-3. Wähle die 3 besten positiven und 3 kritischsten negativen Reviews aus.
-Output JSON: {{"topics":["..."],"summary":"...","topReviews":[...],"bottomReviews":[...]}}
-Daten: {json.dumps(sample, ensure_ascii=False)}"""
-            )
-            data_deep   = _parse_json_response(resp_deep.text)
-            topics      = data_deep.get("topics", [])
-            summary     = data_deep.get("summary", "")
-            top_reviews = data_deep.get("topReviews", [])
-            bot_reviews = data_deep.get("bottomReviews", [])
+                        # ── Deep Analysis ──────────────────────────────────────────────────
+                        sample = [
+                            {"text": r["text"], "rating": r["rating"], "store": r["store"], "app": r["app"]}
+                            for r in rich[:50]
+                        ]
+                        resp_deep = model.models.generate_content(
+                            model="gemini-1.5-flash",
+                            contents=f"""Analysiere diese App-Reviews.
+            1. Erstelle 5 kurze Themen-Cluster-Labels (JSON-Liste von Strings).
+            2. Schreibe ein Management-Summary auf Deutsch (2-3 Sätze, prägnant).
+            3. Wähle die 3 besten positiven und 3 kritischsten negativen Reviews aus.
+            Output JSON: {{"topics":["..."],"summary":"...","topReviews":[...],"bottomReviews":[...]}}
+            Daten: {json.dumps(sample, ensure_ascii=False)}"""
+                        )
+                        data_deep   = _parse_json_response(resp_deep.text)
+                        topics      = data_deep.get("topics", [])
+                        summary     = data_deep.get("summary", "")
+                        top_reviews = data_deep.get("topReviews", [])
+                        bot_reviews = data_deep.get("bottomReviews", [])
 
-            log.info("✅ KI-Analyse erfolgreich.")
-            save_analysis_cache({
-                "topics": topics, "buzzwords": buzzwords, "summary": summary,
-                "topReviews": top_reviews, "bottomReviews": bot_reviews,
-                "date": datetime.now().strftime("%Y-%m-%d"),
-            })
-        except Exception as exc:
-            log.warning("KI-Fehler (%s) – nutze Cache/Fallback.", exc)
-
+                        log.info("✅ KI-Analyse erfolgreich.")
+                        save_analysis_cache({
+                            "topics": topics, "buzzwords": buzzwords, "summary": summary,
+                            "topReviews": top_reviews, "bottomReviews": bot_reviews,
+                            "date": datetime.now().strftime("%Y-%m-%d"),
+                        })
+                    except Exception as exc:
+                        log.warning("KI-Fehler (%s) – nutze Cache/Fallback.", exc)
     # ── Fallbacks ──────────────────────────────────────────────────────────────
     if not buzzwords:
         log.info("Nutze lokalen Buzzword-Fallback.")
