@@ -1,15 +1,14 @@
 name: Daily App Feedback Analysis
 
-# Diese Permissions sind notwendig, damit der Bot die gh-pages Branch updaten darf
 permissions:
   contents: write
   pages: write
   id-token: write
 
 on:
-  workflow_dispatch: # Erlaubt manuellen Start per Klick
+  workflow_dispatch:
   schedule:
-    - cron: '0 6 * * *' # Läuft täglich um 07:00 Uhr MEZ
+    - cron: '0 6 * * *'
 
 jobs:
   run-agent:
@@ -22,31 +21,27 @@ jobs:
       - name: Setup Python
         uses: actions/setup-python@v4
         with:
-          python-version: '3.11' # Stabile Version für Faiss/Scraper
+          python-version: '3.11'
 
-      - name: Install Dependencies (Brute Force)
+      - name: Install Dependencies
         run: |
-          python -m pip install --upgrade pip
           python -m pip install --upgrade pip
           pip install google-genai python-dotenv pandas google-play-scraper faiss-cpu sentence-transformers numpy
           pip install app-store-scraper --no-deps
           pip install requests urllib3 certifi
 
-      # HIER wird der Teams-Link und der Gemini-Key an das Python-Skript übergeben!
       - name: Run Agent Script
         env:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: python main.py
 
-      # 1. Commit History Data (Speichert reviews_history.json zurück ins Repo)
       - name: Commit History Data
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
           commit_message: "Data: Update review history"
           file_pattern: data/*.json
 
-      # 2. Deploy Dashboard (Veröffentlicht public/index.html)
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
         with:

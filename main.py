@@ -252,37 +252,37 @@ def get_ai_data_hybrid(reviews: list[dict], cache: dict) -> tuple[list, list, di
             log.info("Starte KI-Analyse …")
             texts = [r["text"] for r in reviews[:100] if len(r.get("text", "")) > 10]
 
-            # ── Buzzwords ──────────────────────────────────────────────────────
-                        resp_buzz = model.models.generate_content(
-                            model="gemini-1.5-flash",
-                            contents=f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
+                    # ── Buzzwords ──────────────────────────────────────────────────────
+                    resp_buzz = model.models.generate_content(
+                        model="gemini-1.5-flash",
+                        contents=f"""Analysiere die Reviews. Identifiziere die 10 häufigsten spezifischen Probleme.
             Output: JSON-Liste [ {{"term": "Thema", "count": 12}}, ... ]
             Reviews: {json.dumps(texts, ensure_ascii=False)}"""
-                        )
-                        data_buzz = _parse_json_response(resp_buzz.text)
-                        buzzwords = [(i["term"], i["count"]) for i in data_buzz if isinstance(i, dict)]
+                    )
+                    data_buzz = _parse_json_response(resp_buzz.text)
+                    buzzwords = [(i["term"], i["count"]) for i in data_buzz if isinstance(i, dict)]
 
-                        # ── Deep Analysis ──────────────────────────────────────────────────
-                        sample = [
-                            {"text": r["text"], "rating": r["rating"], "store": r["store"], "app": r["app"]}
-                            for r in rich[:50]
-                        ]
-                        resp_deep = model.models.generate_content(
-                            model="gemini-1.5-flash",
-                            contents=f"""Analysiere diese App-Reviews.
+                    # ── Deep Analysis ──────────────────────────────────────────────────
+                    sample = [
+                        {"text": r["text"], "rating": r["rating"], "store": r["store"], "app": r["app"]}
+                        for r in rich[:50]
+                    ]
+                    resp_deep = model.models.generate_content(
+                        model="gemini-1.5-flash",
+                        contents=f"""Analysiere diese App-Reviews.
             1. Erstelle 5 kurze Themen-Cluster-Labels (JSON-Liste von Strings).
             2. Schreibe ein Management-Summary auf Deutsch (2-3 Sätze, prägnant).
             3. Wähle die 3 besten positiven und 3 kritischsten negativen Reviews aus.
             Output JSON: {{"topics":["..."],"summary":"...","topReviews":[...],"bottomReviews":[...]}}
             Daten: {json.dumps(sample, ensure_ascii=False)}"""
-                        )
-                        data_deep   = _parse_json_response(resp_deep.text)
-                        topics      = data_deep.get("topics", [])
-                        summary     = data_deep.get("summary", "")
-                        top_reviews = data_deep.get("topReviews", [])
-                        bot_reviews = data_deep.get("bottomReviews", [])
+                    )
+                    data_deep   = _parse_json_response(resp_deep.text)
+                    topics      = data_deep.get("topics", [])
+                    summary     = data_deep.get("summary", "")
+                    top_reviews = data_deep.get("topReviews", [])
+                    bot_reviews = data_deep.get("bottomReviews", [])
 
-                        log.info("✅ KI-Analyse erfolgreich.")
+                    log.info("✅ KI-Analyse erfolgreich.")
                         save_analysis_cache({
                             "topics": topics, "buzzwords": buzzwords, "summary": summary,
                             "topReviews": top_reviews, "bottomReviews": bot_reviews,
