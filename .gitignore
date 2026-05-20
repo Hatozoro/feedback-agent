@@ -7,6 +7,5 @@ __pycache__/
 *.key
 *.pem
 secrets/
-data/
 public/
 *.log
