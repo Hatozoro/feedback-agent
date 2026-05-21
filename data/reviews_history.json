@@ -1,5 +1,29 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Werbung trotz Zeitungsabo?",
+        "date": "2026-05-19",
+        "id": "7b14bb46b93079aeb7254290b7e4a13588b22af337dcc0e622a2255d604141d9"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Trotz Abo für 67 € im Monat erscheinen vollflächige Werbeeinblendungen während dem Lesen von Artikeln. Fände ich in der kostenlosen Version OK, für eingeloggte Kunden finde ich es frech und störend.",
+        "date": "2026-05-18",
+        "id": "66a91faf236e62afa0d9dbc043698d17a1328399b2c52479afaf8f146fa3d731"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Edit 13.5.26: Die ganzseitigen Werbeeinblendungen sind nun ein Grund die grottenschlechte App zu deinstallieren. Edit 12.5.26: Danke für die Antwort. Das Problem besteht leider weiterhin. Stürzt ab, wenn ich eine Artikel lesen möchte. Und mit dem Absturz bringt sie zeitgleich auch eine andere App zum Absturz. Bei mir die Huawei Health App.",
+        "date": "2026-05-13",
+        "id": "c59590373f99aa3da7dc098d5f23268cb8b0be9fb82ff897885f993759d30cc5"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
