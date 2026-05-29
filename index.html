@@ -229,7 +229,7 @@
     <header>
         <div>
             <div class="logo">App Feedback<span>.</span></div>
-            <div class="header-meta">Letztes Update: 28.05.2026 09:53</div>
+            <div class="header-meta">Letztes Update: 29.05.2026 09:43</div>
         </div>
         <button class="theme-btn" onclick="toggleTheme()">🌗</button>
     </header>
@@ -455,11 +455,11 @@ const ctx = document.getElementById('trendChart').getContext('2d');
 const chart = new Chart(ctx, {
     type: 'bar',
     data: {
-        labels: ["15.05.", "16.05.", "17.05.", "18.05.", "19.05.", "20.05.", "21.05.", "22.05.", "23.05.", "24.05.", "25.05.", "26.05.", "27.05.", "28.05."],
+        labels: ["16.05.", "17.05.", "18.05.", "19.05.", "20.05.", "21.05.", "22.05.", "23.05.", "24.05.", "25.05.", "26.05.", "27.05.", "28.05.", "29.05."],
         datasets: [
             { label: 'Positiv (4-5★)', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#22a06b', borderRadius: 3 },
-            { label: 'Neutral (3★)',   data: [0, 1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8', borderRadius: 3 },
-            { label: 'Negativ (1-2★)',data: [0, 0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#e53e3e', borderRadius: 3 },
+            { label: 'Neutral (3★)',   data: [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8', borderRadius: 3 },
+            { label: 'Negativ (1-2★)',data: [0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#e53e3e', borderRadius: 3 },
         ],
     },
     options: {
