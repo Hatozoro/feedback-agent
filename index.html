@@ -4,19 +4,20 @@
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>App Feedback Pro</title>
+        <title>back Pro</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
             :root { 
-                --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
-                --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-base: 220, 38, 38; 
+                --bg: #f8fafc; --text: #1e293b; --card: #ffffff; --border: #e2e8f0; --primary: #2563eb; 
+                --summary: #eff6ff; --ios: #000000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
+                --buzz-base: 37, 99, 235; /* Blau statt Rot für saubere Optik */
+                --pos-color: #22c55e; --neg-color: #ef4444; --neu-color: #94a3b8;
             }
             [data-theme="dark"] { 
-                --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
-                --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-base: 248, 113, 113;
+                --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #3b82f6; 
+                --summary: #1e293b; --ios: #ffffff; --mark-bg: #854d0e; --mark-text: #fef08a;
+                --buzz-base: 59, 130, 246;
             }
             body { font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }
             .container { max-width: 1100px; margin: 0 auto; }
@@ -24,56 +25,57 @@
             .theme-btn { background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }
             
             .kpi-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }
-            .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }
+            .card { background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); }
             .kpi-val { font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }
-            .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }
+            .kpi-label { font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }
             
-            .chart-container { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }
+            .chart-container { background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }
             .summary-box { background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }
             
-            .tag { display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }
+            .tag { display: inline-block; background: rgba(var(--buzz-base), 0.1); border: 1px solid rgba(var(--buzz-base), 0.3); padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.95rem; font-weight: 600; color: var(--primary); }
             
             .buzz-container { display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }
             .buzz-tag { 
                 display: inline-flex; align-items: center; cursor: pointer;
-                padding: 6px 12px; border-radius: 20px; 
-                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
-                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                padding: 6px 14px; border-radius: 20px; 
+                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.15));
+                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.4));
+                color: var(--text); font-weight: 500; transition: transform 0.2s, background-color 0.2s;
             }
-            .buzz-tag:hover { transform: scale(1.05); border-color: var(--primary); }
-            .buzz-tag .count { background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; display:none;} /* Ausgeblendet da Float TF-IDF Score, kann wieder rein wenn gewünscht */
+            .buzz-tag:hover { transform: scale(1.05); background-color: var(--primary); color: white; border-color: var(--primary); }
 
             .review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }
-            .review-card { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
-            .review-card.pos { border-top: 4px solid #22c55e; }
-            .review-card.neg { border-top: 4px solid #ef4444; }
+            @media (max-width: 768px) { .review-grid { grid-template-columns: 1fr; } }
+            .review-card { background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }
+            .review-card.pos { border-top: 4px solid var(--pos-color); }
+            .review-card.neg { border-top: 4px solid var(--neg-color); }
             
             .icon-android { color: var(--android); } .icon-ios { color: var(--ios); }
-            .copy-btn { cursor: pointer; float: right; opacity: 0.5; } .copy-btn:hover { opacity: 1; color: var(--primary); }
+            .copy-btn { cursor: pointer; float: right; opacity: 0.5; transition: opacity 0.2s; } .copy-btn:hover { opacity: 1; color: var(--primary); }
             
-            .search-input { flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }
+            .search-input { flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }
+            .search-input:focus { outline: none; border-color: var(--primary); }
             
             .filter-row { display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }
             .filter-group { display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }
             .filter-label { font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }
-            .filter-btn { padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }
+            .filter-btn { padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s, color 0.2s; }
             .filter-btn:hover { background: rgba(0,0,0,0.05); }
             .filter-btn.active { background: var(--primary); color: white; }
             
-            .review-text { margin-top: 8px; line-height: 1.5; position: relative; }
-            .review-text mark { background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }
+            .review-text { margin-top: 8px; line-height: 1.6; position: relative; font-size: 0.95rem; }
+            .review-text mark { background-color: var(--mark-bg); color: var(--mark-text); padding: 0 4px; border-radius: 3px; font-weight: bold; }
             .review-text.clamped { display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-            .read-more { color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }
-            .meta { font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }
+            .read-more { color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }
+            .meta { font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }
         </style>
     </head>
     <body>
         <div class="container">
             <header>
                 <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro (Regelbasiert)</h1>
-                    <span style="opacity:0.7;">Update: 29.05.2026 13:37</span>
+                    <h1 style="margin:0;">📊 App Feedback Pro </h1>
+                    <span style="opacity:0.7;">Update: 29.05.2026 13:48</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
             </header>
@@ -103,32 +105,32 @@
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 Daten-Zusammenfassung</h3>
-                <p>Die aktuelle Analyse umfasst 260 Reviews. Die durchschnittliche Bewertung liegt bei 1.99 Sternen, was auf ein kritisches Stimmungsbild hindeutet. Besondere Aufmerksamkeit in den Feedbacks erhalten aktuell folgende Themen: Keine, Werbung, Stürzt, Funktioniert.</p>
+                <p style="font-size: 1.1rem;">Die aktuelle Analyse umfasst 260 Reviews. Die durchschnittliche Bewertung liegt bei 1.99 Sternen, was auf ein kritisches Stimmungsbild hindeutet. Besondere Aufmerksamkeit in den Nutzerstimmen erhalten aktuell Bereiche wie: <strong>Werbung & Kosten, Abstürze & Bugs, Bedienung & UI</strong>.</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster (TF-IDF)</h3>
-                    <div class="card" style="min-height:100px;">
-                        <span class="tag"># Keine</span> <span class="tag"># Werbung</span> <span class="tag"># Stürzt</span> <span class="tag"># Funktioniert</span> <span class="tag"># Öffnen</span> 
+                    <h3 style="margin-bottom: 15px;">🔥Themen-Cluster</h3>
+                    <div class="card" style="min-height:100px; display: flex; align-items: center; flex-wrap: wrap;">
+                        <span class="tag"><i class="fas fa-hashtag" style="opacity:0.5; margin-right:4px;"></i>Werbung & Kosten</span> <span class="tag"><i class="fas fa-hashtag" style="opacity:0.5; margin-right:4px;"></i>Abstürze & Bugs</span> <span class="tag"><i class="fas fa-hashtag" style="opacity:0.5; margin-right:4px;"></i>Bedienung & UI</span> <span class="tag"><i class="fas fa-hashtag" style="opacity:0.5; margin-right:4px;"></i>Performance & Speed</span> 
                     </div>
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Relevante Keywords</h3>
+                    <h3 style="margin-bottom: 15px;">🚨Buzzwords</h3>
                     <div class="card buzz-container">
-                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('keine')">keine <span class="count">71</span></span><span class="buzz-tag" style="--intensity:0.9735916746102156;" onclick="setSearch('werbung')">werbung <span class="count">69</span></span><span class="buzz-tag" style="--intensity:0.90625;" onclick="setSearch('stürzt')">stürzt <span class="count">64</span></span><span class="buzz-tag" style="--intensity:0.886658709868974;" onclick="setSearch('funktioniert')">funktioniert <span class="count">63</span></span><span class="buzz-tag" style="--intensity:0.8718088931876152;" onclick="setSearch('öffnen')">öffnen <span class="count">62</span></span><span class="buzz-tag" style="--intensity:0.8209802869157167;" onclick="setSearch('letzten')">letzten <span class="count">58</span></span><span class="buzz-tag" style="--intensity:0.8071282430164679;" onclick="setSearch('seite')">seite <span class="count">57</span></span><span class="buzz-tag" style="--intensity:0.7553355608153639;" onclick="setSearch('problem')">problem <span class="count">53</span></span><span class="buzz-tag" style="--intensity:0.7409676568612429;" onclick="setSearch('besser')">besser <span class="count">52</span></span><span class="buzz-tag" style="--intensity:0.7096295332447748;" onclick="setSearch('behoben')">behoben <span class="count">50</span></span><span class="buzz-tag" style="--intensity:0.6970653007869495;" onclick="setSearch('möglich')">möglich <span class="count">49</span></span><span class="buzz-tag" style="--intensity:0.6834454456997295;" onclick="setSearch('region')">region <span class="count">48</span></span><span class="buzz-tag" style="--intensity:0.6646576462174256;" onclick="setSearch('schade')">schade <span class="count">47</span></span><span class="buzz-tag" style="--intensity:0.6301386225131684;" onclick="setSearch('aktuelles')">aktuelles <span class="count">44</span></span><span class="buzz-tag" style="--intensity:0.6255601376164006;" onclick="setSearch('nervt')">nervt <span class="count">44</span></span></div>
+                        <div class="buzz-container"><span class="buzz-tag" style="--intensity:1.0;" onclick="setSearch('werbung')">Werbung</span><span class="buzz-tag" style="--intensity:0.9308317065907775;" onclick="setSearch('stürzt')">Stürzt</span><span class="buzz-tag" style="--intensity:0.8954563970944495;" onclick="setSearch('öffnen')">Öffnen</span><span class="buzz-tag" style="--intensity:0.8432490830865024;" onclick="setSearch('letzten')">Letzten</span><span class="buzz-tag" style="--intensity:0.8290213074589072;" onclick="setSearch('seite')">Seite</span><span class="buzz-tag" style="--intensity:0.7758237673075501;" onclick="setSearch('problem')">Problem</span><span class="buzz-tag" style="--intensity:0.7610661391058984;" onclick="setSearch('besser')">Besser</span><span class="buzz-tag" style="--intensity:0.728877980113049;" onclick="setSearch('behoben')">Behoben</span><span class="buzz-tag" style="--intensity:0.7159729473508744;" onclick="setSearch('möglich')">Möglich</span><span class="buzz-tag" style="--intensity:0.701983658573654;" onclick="setSearch('region')">Region</span><span class="buzz-tag" style="--intensity:0.6826862467610214;" onclick="setSearch('schade')">Schade</span><span class="buzz-tag" style="--intensity:0.647230906905042;" onclick="setSearch('aktuelles')">Aktuelles</span></div>
                     </div>
                 </div>
             </div>
 
             <div class="review-grid">
                 <div>
-                    <h3>👍 Top Stimmen (Sentiment-Score)</h3>
+                    <h3>👍 Top Stimmen (Score)</h3>
                     
                     <div class="review-card pos">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
-                            <span>5★</span>
+                            <span style="color: var(--pos-color); font-weight: bold;">5★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Die App ist im vergleich zu anderen Nachrichten Apps sehr gut aufgebaut und sehr einfach in der Benutzung. Wenngleich es bei mir leider noch bei der Anmeldung hapert und man dadurch noch keine Artikel speichern kann. Dennoch top 💯</div>
@@ -138,7 +140,7 @@
                     <div class="review-card pos">
                         <div class="meta">
                             <span><i class="fab fa-android icon-android"></i> <strong>Schwäbische</strong></span>
-                            <span>5★</span>
+                            <span style="color: var(--pos-color); font-weight: bold;">5★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Ganz gute App. Nur die Topfmeldungen rasen zu schnell vorbei. Zusätzliche Toopfs empfohlen.</div>
@@ -148,7 +150,7 @@
                     <div class="review-card pos">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
-                            <span>5★</span>
+                            <span style="color: var(--pos-color); font-weight: bold;">5★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Bei der SVZ App hat mir die einseitige Anzeige besser gefallen. Die Ansicht auf dem Tablett war meiner Ansicht leichter und man musste nicht so oft navigieren. Ansonsten gefällt mir die neue App.
@@ -158,12 +160,12 @@ Viele Grüße aus Schwerin</div>
                     </div>
                 </div>
                 <div>
-                    <h3>⚠️ Kritische Stimmen (Sentiment-Score)</h3>
+                    <h3>⚠️ Kritische Stimmen (Score)</h3>
                     
                     <div class="review-card neg">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Schwäbische</strong></span>
-                            <span>1★</span>
+                            <span style="color: var(--neg-color); font-weight: bold;">1★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Die App nervt nur noch! Täglich neu anmelden und beim Lesen einer Ausgabe diese ständigen Cookie-Abfragen ertragen. So langsam reicht’s!!! Die App wird mit jedem Update schlechter. Die Leseansichten und Bedienung sind unhandlich, die einhändige Handhabung ist nahezu unmöglich. Die Versprechen der Entwickler lesen sich dagegen wie ein schlechter Witz und für das nächste Upgrade wird angekündigt, dass ältere Geräte abgehängt werden, Stichwort IOS 15 als Grundvoraussetzung. Ein Grund mehr, das überteuerte Abo zu überdenken! Übrigens, ich lese mit einem neuen iPad und aktuellstem IOS-Betriebssystem, nur um den vorhersehbaren, standardisierten Entwickleranworten vorzubeugen.</div>
@@ -173,7 +175,7 @@ Viele Grüße aus Schwerin</div>
                     <div class="review-card neg">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
-                            <span>1★</span>
+                            <span style="color: var(--neg-color); font-weight: bold;">1★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Mit dem neuesten Update findet man unter den eigentlichen redaktionellen Artikeln dermaßen viel Spam („Auch interessant“) und Werbung, dass ich mich spontan gefragt habe, ob ich mich noch in der richtigen App bewege. So sehe ich Werbung für fragwürdige Onlineshops, die allgemein als unseriös bekannt sind. Auch die Inhalte der anderen, nicht sofort als Reklame erkennbaren Artikel erscheint mir zum größten Teil fragwürdig, verbirgt sich doch hinter  fast allen der Versuch, meist wirkungslose oder überteuerte Produkte zu verkaufen. Das hat in einer seriösen App von einer seriösen Zeitung mit seriöser Berichterstattung nichts zu suchen. Gerne Werbung für regionale Anbieter, aber „Ausverkauf wegen Geschäftsaufgabe“, wo regionale Hersteller  vorgegaukelt und dann billigste Produkte aus China an den Mann oder die Frau gebracht werden sollen?! Das geht gar nicht! 
@@ -188,7 +190,7 @@ Meine in einer früheren Rezension geäußerte Kritik zu den Cookie Einstellunge
                     <div class="review-card neg">
                         <div class="meta">
                             <span><i class="fab fa-apple icon-ios"></i> <strong>Nordkurier</strong></span>
-                            <span>1★</span>
+                            <span style="color: var(--neg-color); font-weight: bold;">1★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">Die App stürzt seit Version 5.7.28 beim Starten ab auf kompatiblen Geräten wie iPhone 5s mit iOS 12. 
@@ -202,10 +204,10 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                 </div>
             </div>
 
-            <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
+            <h2 style="border-top: 1px solid var(--border); padding-top: 30px; margin-top: 40px;">🔎 Explorer</h2>
             
-            <div style="margin-bottom:20px;">
-                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+            <div style="margin-bottom:30px;">
+                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten (z.B. Absturz, Werbung)..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 
                 <div class="filter-row">
                     <div class="filter-group">
@@ -223,7 +225,7 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                     </div>
 
                     <div class="filter-group">
-                        <span class="filter-label">Sort</span>
+                        <span class="filter-label">Sortieren</span>
                         <button class="filter-btn active" onclick="setSort('newest', this)">Neu</button>
                         <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
                         <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
@@ -256,18 +258,18 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                 data: {
                     labels: ["16.05.", "17.05.", "18.05.", "19.05.", "20.05.", "21.05.", "22.05.", "23.05.", "24.05.", "25.05.", "26.05.", "27.05.", "28.05.", "29.05."],
                     datasets: [
-                        { label: 'Positiv (4-5★)', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#22c55e' },
-                        { label: 'Neutral (3★)', data: [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8' },
-                        { label: 'Negativ (1-2★)', data: [0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#ef4444' }
+                        { label: 'Positiv (4-5★)', data: [0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#22c55e', borderRadius: 4 },
+                        { label: 'Neutral (3★)', data: [1, 0, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#94a3b8', borderRadius: 4 },
+                        { label: 'Negativ (1-2★)', data: [0, 0, 1, 1, 0, 1, 0, 0, 0, 0, 0, 0, 0, 0], backgroundColor: '#ef4444', borderRadius: 4 }
                     ]
                 },
                 options: {
                     responsive: true, maintainAspectRatio: false,
                     scales: { 
                         x: { stacked: true, grid: { display: false }, ticks: { color: '#64748b' } }, 
-                        y: { stacked: true, grid: { color: '#e2e8f0' }, ticks: { color: '#64748b', padding: 10 } } 
+                        y: { stacked: true, grid: { color: '#e2e8f0', borderDash: [5, 5] }, ticks: { color: '#64748b', padding: 10 } } 
                     },
-                    plugins: { legend: { position: 'bottom', labels: { color: '#64748b' } } }
+                    plugins: { legend: { position: 'bottom', labels: { color: '#64748b', padding: 20, usePointStyle: true } } }
                 }
             });
             
@@ -284,8 +286,6 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
             }
             updateChartColors();
 
-            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
-
             function initReadMore() {
                 document.querySelectorAll('.review-content').forEach(div => {
                     const text = div.querySelector('.review-text');
@@ -296,16 +296,13 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                 });
             }
 
-            // NEUE ACCORDION-LOGIK HIER: Schließt alle anderen bevor der neue geöffnet wird
             function toggleText(btn) {
                 const text = btn.previousElementSibling;
                 const isClamped = text.classList.contains('clamped');
                 
-                // Alle schliessen
                 document.querySelectorAll('.review-text').forEach(t => t.classList.add('clamped'));
                 document.querySelectorAll('.read-more').forEach(b => b.innerText = 'Mehr anzeigen');
                 
-                // Gewählten öffnen, wenn er vorher zu war
                 if (isClamped) {
                     text.classList.remove('clamped');
                     btn.innerText = 'Weniger anzeigen';
@@ -356,11 +353,14 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                 if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
                 if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
 
-                if (filtered.length === 0) { container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px;">Keine Ergebnisse</div>'; return; }
+                if (filtered.length === 0) { container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:40px; font-size:1.1rem;">Keine Ergebnisse für diese Filterung gefunden.</div>'; return; }
 
                 filtered.slice(0, 50).forEach(r => {
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
+                    let colorClass = r.rating >= 4 ? 'var(--pos-color)' : (r.rating <= 2 ? 'var(--neg-color)' : 'var(--neu-color)');
+                    let borderClass = r.rating >= 4 ? 'border-left: 4px solid var(--pos-color);' : (r.rating <= 2 ? 'border-left: 4px solid var(--neg-color);' : 'border-left: 4px solid var(--neu-color);');
+
                     let displayText = r.text;
                     if (q.length >= 2) {
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -371,21 +371,23 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                                 const regex = new RegExp('(' + term + ')', 'gi');
                                 displayText = displayText.replace(regex, '<mark>$1</mark>');
                             });
-                        } else {
-                            return;
-                        }
+                        } else { return; }
                     }
                     
                     const div = document.createElement('div');
                     div.className = 'review-card';
+                    div.style = borderClass;
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
-                            <span style="display:flex; align-items:center; gap:6px;">
-                                ${icon} <strong>${r.app}</strong> (${r.store.toUpperCase()}) • ${r.rating}⭐
+                        <div class="meta" style="margin-bottom:0;">
+                            <span style="display:flex; align-items:center; gap:6px; font-size: 0.95rem;">
+                                ${icon} <strong>${r.app}</strong> (${r.store.toUpperCase()})
                             </span>
-                            <span>${r.fmt_date || r.date}</span>
+                            <span style="display:flex; align-items:center; gap:10px;">
+                                <span style="opacity:0.7;">${r.fmt_date || r.date}</span>
+                                <span style="color:${colorClass}; font-weight:bold; font-size:1.1rem;">${r.rating}★</span>
+                            </span>
                         </div>
-                        <div class="review-content" style="line-height:1.5;">
+                        <div class="review-content">
                             <div class="review-text clamped">${displayText}</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${r.text.replace(/'/g, "\'")}')"></i>
@@ -394,12 +396,10 @@ Bitte korrigieren Sie wieder den Bug. Ältere Geräte sind aktuell ausgeschlosse
                     container.appendChild(div);
                 });
                 
-                // Neu initialisieren für die gefilterten Items
                 initReadMore();
             }
             
             filterData();
-            // Löst Init Read More nach initialem Aufbau einmalig aus
             setTimeout(initReadMore, 100);
         </script>
     </body>
