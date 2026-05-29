@@ -38,11 +38,21 @@ STOP_WORDS = {
     "app", "apps", "anwendung", "version", "update", "updates", "ios", "android", "handy", "tablet",
     "telefon", "iphone", "ipad", "samsung", "pixel", "gerät", "geräte", "nutzer", "kunde", "kunden",
     "schwäbische", "nordkurier", "zeitung", "artikel", "lesen", "leser", "hallo", "moin", "tag",
-    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern"
+    "also", "alle", "alles", "viele", "zeit", "seit", "wochen", "monaten", "tagen", "jahre", "sterne", "stern",
+    "keine", "kein", "öffnet", "funktioniert", "geht"
 }
 
 POS_WORDS = {"gut", "super", "klasse", "toll", "perfekt", "danke", "schnell", "übersichtlich", "lob", "zufrieden", "schön", "top", "besser"}
-NEG_WORDS = {"schlecht", "fehler", "absturz", "stürzt", "nervt", "werbung", "katastrophe", "langsam", "unbrauchbar", "müll", "schlimm", "teuer", "abo", "friert", "geht nicht"}
+NEG_WORDS = {"schlecht", "fehler", "absturz", "stürzt", "nervt", "werbung", "katastrophe", "langsam", "unbrauchbar", "müll", "schlimm", "teuer", "abo", "friert"}
+
+# Feste Kategorien für sinnvolle Themen-Cluster
+TOPIC_CATEGORIES = {
+    "Abstürze & Bugs": ["absturz", "stürzt", "fehler", "bug", "schließt", "hängt", "friert", "startet nicht", "crash", "weißes bild"],
+    "Werbung & Kosten": ["werbung", "abo", "bezahlen", "teuer", "kosten", "premium", "paywall", "geld", "werbeblocker"],
+    "Performance & Speed": ["langsam", "lädt", "ladezeit", "ruckelt", "performance", "akku", "strom", "dauert"],
+    "Bedienung & UI": ["unübersichtlich", "design", "menü", "schrift", "lesbarkeit", "suchen", "finden", "layout"],
+    "Positives Feedback": ["super", "klasse", "weiter so", "zufrieden", "übersichtlich", "schnell", "gut gemacht"]
+}
 
 # ---------------------------------------------------------
 # 2. DATA MANAGEMENT
@@ -125,60 +135,73 @@ def prepare_chart_data(reviews, days=14):
     return {'labels': fmt_labels, 'pos': [stats[d]['pos'] for d in labels], 'neg': [stats[d]['neg'] for d in labels], 'neu': [stats[d]['neu'] for d in labels]}
 
 def analyze_review_quality(text, rating):
-    """Berechnet einen Quality/Sentiment Score für das Ranking."""
     text_lower = text.lower()
     words = text_lower.split()
-    
+
     pos_hits = sum(1 for w in words if any(p in w for p in POS_WORDS))
     neg_hits = sum(1 for w in words if any(n in w for n in NEG_WORDS))
-    
-    # Basis-Sentiment aus Rating (-2 bis +2)
+
     base_score = (rating - 3) * 2
     sentiment_score = base_score + pos_hits - neg_hits
-    
-    # Textqualität: Längere Texte (bis ca. 40 Wörter) sind besser, danach Cap
+
     quality_bonus = min(len(words) / 20, 2.0)
-    
-    # Kombinierter Score (Positive profitieren von Länge, Negative werden "negativer" durch Länge)
     total_score = sentiment_score + (quality_bonus if sentiment_score >= 0 else -quality_bonus)
-    
+
     return sentiment_score, total_score
 
-def get_tfidf_keywords(reviews, top_n=15):
-    """TF-IDF ähnliche Logik für deutlich bessere Themen-Cluster."""
+def get_smart_topic_clusters(reviews):
+    """Ordnet Reviews sinnvollen Hauptkategorien zu."""
+    cluster_scores = {k: 0 for k in TOPIC_CATEGORIES.keys()}
+
+    for r in reviews:
+        text = r.get('text', '').lower()
+        # Bei negativen Bewertungen (1-2 Sterne) werten wir Bugs und Werbung stärker
+        weight = 2 if r.get('rating', 3) <= 2 else 1
+
+        for category, keywords in TOPIC_CATEGORIES.items():
+            if any(kw in text for kw in keywords):
+                if category == "Positives Feedback" and r.get('rating', 0) < 4:
+                    continue # Sarkasmus-Schutz
+                cluster_scores[category] += weight
+
+    # Sortieren und nur die Kategorien zurückgeben, die tatsächlich Treffer haben
+    sorted_clusters = sorted([(k, v) for k, v in cluster_scores.items() if v > 0], key=lambda x: x[1], reverse=True)
+    return [c[0] for c in sorted_clusters][:4]
+
+def get_tfidf_keywords(reviews, top_n=12):
+    """Nur noch für echte Problem-Wörter (Buzzwords)."""
     doc_freqs = defaultdict(int)
     term_freqs = defaultdict(int)
     total_docs = len(reviews)
-    
+
     if total_docs == 0: return []
 
     for r in reviews:
         text = re.sub(r'[^\w\säöüß]', ' ', r.get('text', '').lower())
-        words = [w for w in text.split() if len(w) > 3 and w not in STOP_WORDS]
+        words = [w for w in text.split() if len(w) > 4 and w not in STOP_WORDS]
         unique_words = set(words)
-        
+
         for w in unique_words: doc_freqs[w] += 1
         for w in words: term_freqs[w] += 1
 
     tfidf_scores = {}
     for w, tf in term_freqs.items():
-        if doc_freqs[w] > 1:  # Muss in mind. 2 Reviews vorkommen
+        if doc_freqs[w] > 2:  # Muss in mind. 3 Reviews vorkommen für Relevanz
             idf = math.log(total_docs / doc_freqs[w])
             tfidf_scores[w] = tf * idf
 
     sorted_words = sorted(tfidf_scores.items(), key=lambda x: x[1], reverse=True)
     return sorted_words[:top_n]
 
-def generate_auto_summary(trends, buzzwords, total_count):
-    """Generiert eine dynamische Zusammenfassung basierend auf den Daten."""
+def generate_auto_summary(trends, topics, total_count):
     if total_count == 0: return "Aktuell sind keine Nutzerbewertungen zur Analyse vorhanden."
-    
+
     avg = trends['overall']
     trend_desc = "sehr positiv" if avg >= 4.0 else ("überwiegend positiv" if avg >= 3.5 else ("durchwachsen" if avg >= 2.5 else "kritisch"))
-    
-    top_issues = ", ".join([w[0].capitalize() for w in buzzwords[:4]]) if buzzwords else "allgemeinen Themen"
-    
-    return f"Die aktuelle Analyse umfasst {total_count} Reviews. Die durchschnittliche Bewertung liegt bei {avg} Sternen, was auf ein {trend_desc}es Stimmungsbild hindeutet. Besondere Aufmerksamkeit in den Feedbacks erhalten aktuell folgende Themen: {top_issues}."
+
+    topics_str = ", ".join(topics[:3]) if topics else "allgemeine Themen"
+
+    return f"Die aktuelle Analyse umfasst {total_count} Reviews. Die durchschnittliche Bewertung liegt bei {avg} Sternen, was auf ein {trend_desc}es Stimmungsbild hindeutet. Besondere Aufmerksamkeit in den Nutzerstimmen erhalten aktuell Bereiche wie: <strong>{topics_str}</strong>."
 
 # ---------------------------------------------------------
 # 4. SCRAPING
@@ -233,10 +256,10 @@ def run_analysis_and_generate_html(full_history):
     trends = calculate_trends(full_history)
     chart = prepare_chart_data(full_history)
 
-    # NLP Features berechnen
-    buzzwords = get_tfidf_keywords(full_history, top_n=15)
-    topics = [w[0].capitalize() for w in buzzwords[:5]]
-    summary = generate_auto_summary(trends, buzzwords, len(full_history))
+    # NLP Features
+    topics = get_smart_topic_clusters(full_history)
+    buzzwords = get_tfidf_keywords(full_history, top_n=12)
+    summary = generate_auto_summary(trends, topics, len(full_history))
 
     # Scoring & Ranking
     for r in full_history:
@@ -245,32 +268,32 @@ def run_analysis_and_generate_html(full_history):
             try: r['fmt_date'] = datetime.strptime(r['date'], '%Y-%m-%d').strftime('%d.%m.%Y')
             except: r['fmt_date'] = r['date']
 
-    # Top/Bottom Listen filtern (ohne Duplikate durch identische Texte)
     seen_texts = set()
     top_list = []
     bot_list = []
-    
+
     sorted_reviews = sorted(full_history, key=lambda x: x['score'], reverse=True)
-    
+
     for r in sorted_reviews:
         if r['score'] > 2 and len(top_list) < 3 and r['text'] not in seen_texts:
             top_list.append(r)
             seen_texts.add(r['text'])
-            
+
     for r in reversed(sorted_reviews):
         if r['score'] < -2 and len(bot_list) < 3 and r['text'] not in seen_texts:
             bot_list.append(r)
             seen_texts.add(r['text'])
 
-    # Fallback falls Filter zu streng
     if not top_list: top_list = sorted([r for r in full_history if r['rating'] >= 4], key=lambda x: x['score'], reverse=True)[:3]
     if not bot_list: bot_list = sorted([r for r in full_history if r['rating'] <= 2], key=lambda x: x['score'])[:3]
+
+    if not topics: topics = ["Allgemeines Feedback"]
 
     max_c = buzzwords[0][1] if buzzwords else 1
     buzz_html = '<div class="buzz-container">'
     for w, c in buzzwords:
         intensity = min(1.0, max(0.1, c / max_c))
-        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w} <span class="count">{int(c)}</span></span>'
+        buzz_html += f'<span class="buzz-tag" style="--intensity:{intensity};" onclick="setSearch(\'{w}\')">{w.capitalize()}</span>'
     buzz_html += '</div>'
 
     breakdown_html = ""
@@ -280,7 +303,6 @@ def run_analysis_and_generate_html(full_history):
         breakdown_html += f'<div style="margin-bottom:8px; padding-bottom:8px; border-bottom:1px solid var(--border);"><strong>{app}</strong><br>'
         breakdown_html += f'<span style="font-size:0.9rem"><i class="fab fa-apple"></i> {ios_score}⭐ &nbsp;|&nbsp; <i class="fab fa-android"></i> {android_score}⭐</span></div>'
 
-    # Unnötige Daten für Frontend entfernen
     clean_history = [{k: v for k, v in r.items() if k not in ['sentiment', 'score']} for r in full_history]
     js_reviews = json.dumps(clean_history, ensure_ascii=False)
 
@@ -290,19 +312,20 @@ def run_analysis_and_generate_html(full_history):
     <head>
         <meta charset="UTF-8">
         <meta name="viewport" content="width=device-width, initial-scale=1.0">
-        <title>App Feedback Pro</title>
+        <title>back Pro</title>
         <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
         <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
         <style>
             :root {{ 
-                --bg: #f8fafc; --text: #1e293b; --card: #fff; --border: #e2e8f0; --primary: #2563eb; 
-                --summary: #eff6ff; --ios: #000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
-                --buzz-base: 220, 38, 38; 
+                --bg: #f8fafc; --text: #1e293b; --card: #ffffff; --border: #e2e8f0; --primary: #2563eb; 
+                --summary: #eff6ff; --ios: #000000; --android: #3DDC84; --mark-bg: #fef08a; --mark-text: #854d0e;
+                --buzz-base: 37, 99, 235; /* Blau statt Rot für saubere Optik */
+                --pos-color: #22c55e; --neg-color: #ef4444; --neu-color: #94a3b8;
             }}
             [data-theme="dark"] {{ 
-                --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #60a5fa; 
-                --summary: #1e293b; --ios: #fff; --mark-bg: #854d0e; --mark-text: #fef08a;
-                --buzz-base: 248, 113, 113;
+                --bg: #0f172a; --text: #f8fafc; --card: #1e293b; --border: #334155; --primary: #3b82f6; 
+                --summary: #1e293b; --ios: #ffffff; --mark-bg: #854d0e; --mark-text: #fef08a;
+                --buzz-base: 59, 130, 246;
             }}
             body {{ font-family: 'Inter', sans-serif; background: var(--bg); color: var(--text); margin: 0; padding: 20px; }}
             .container {{ max-width: 1100px; margin: 0 auto; }}
@@ -310,55 +333,56 @@ def run_analysis_and_generate_html(full_history):
             .theme-btn {{ background: none; border: 1px solid var(--border); color: var(--text); padding: 8px 12px; border-radius: 8px; cursor: pointer; }}
             
             .kpi-grid {{ display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 20px; margin-bottom: 30px; }}
-            .card {{ background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); border: 1px solid var(--border); }}
+            .card {{ background: var(--card); padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); border: 1px solid var(--border); }}
             .kpi-val {{ font-size: 2.5rem; font-weight: 700; color: var(--primary); margin-top: 10px; }}
-            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; }}
+            .kpi-label {{ font-size: 0.9rem; opacity: 0.8; text-transform: uppercase; font-weight: bold; letter-spacing: 0.5px; }}
             
-            .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; }}
+            .chart-container {{ background: var(--card); padding: 20px; border-radius: 12px; border: 1px solid var(--border); margin-bottom: 30px; height: 350px; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.1); }}
             .summary-box {{ background: var(--summary); padding: 25px; border-radius: 12px; border-left: 5px solid var(--primary); margin-bottom: 30px; line-height: 1.6; border: 1px solid var(--border); }}
             
-            .tag {{ display: inline-block; background: var(--card); border: 1px solid var(--border); padding: 6px 14px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.9rem; color: var(--text); }}
+            .tag {{ display: inline-block; background: rgba(var(--buzz-base), 0.1); border: 1px solid rgba(var(--buzz-base), 0.3); padding: 8px 16px; border-radius: 20px; margin: 0 8px 8px 0; font-size: 0.95rem; font-weight: 600; color: var(--primary); }}
             
             .buzz-container {{ display: flex; flex-wrap: wrap; gap: 8px; justify-content: flex-start; }}
             .buzz-tag {{ 
                 display: inline-flex; align-items: center; cursor: pointer;
-                padding: 6px 12px; border-radius: 20px; 
-                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.2));
-                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.5));
-                color: var(--text); font-weight: 500; transition: transform 0.2s;
+                padding: 6px 14px; border-radius: 20px; 
+                background-color: rgba(var(--buzz-base), calc(0.05 + var(--intensity) * 0.15));
+                border: 1px solid rgba(var(--buzz-base), calc(0.2 + var(--intensity) * 0.4));
+                color: var(--text); font-weight: 500; transition: transform 0.2s, background-color 0.2s;
             }}
-            .buzz-tag:hover {{ transform: scale(1.05); border-color: var(--primary); }}
-            .buzz-tag .count {{ background: rgba(0,0,0,0.1); padding: 2px 6px; border-radius: 10px; font-size: 0.75em; margin-left: 8px; display:none;}} /* Ausgeblendet da Float TF-IDF Score, kann wieder rein wenn gewünscht */
+            .buzz-tag:hover {{ transform: scale(1.05); background-color: var(--primary); color: white; border-color: var(--primary); }}
 
             .review-grid {{ display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-bottom: 40px; }}
-            .review-card {{ background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 1px 3px rgba(0,0,0,0.05); }}
-            .review-card.pos {{ border-top: 4px solid #22c55e; }}
-            .review-card.neg {{ border-top: 4px solid #ef4444; }}
+            @media (max-width: 768px) {{ .review-grid {{ grid-template-columns: 1fr; }} }}
+            .review-card {{ background: var(--card); padding: 20px; border-radius: 8px; border: 1px solid var(--border); display: flex; flex-direction: column; gap: 10px; box-shadow: 0 2px 4px rgba(0,0,0,0.05); }}
+            .review-card.pos {{ border-top: 4px solid var(--pos-color); }}
+            .review-card.neg {{ border-top: 4px solid var(--neg-color); }}
             
             .icon-android {{ color: var(--android); }} .icon-ios {{ color: var(--ios); }}
-            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
+            .copy-btn {{ cursor: pointer; float: right; opacity: 0.5; transition: opacity 0.2s; }} .copy-btn:hover {{ opacity: 1; color: var(--primary); }}
             
-            .search-input {{ flex: 1; padding: 12px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); }}
+            .search-input {{ flex: 1; padding: 14px; border: 1px solid var(--border); border-radius: 8px; font-size: 1rem; background: var(--card); color: var(--text); box-shadow: inset 0 2px 4px rgba(0,0,0,0.02); }}
+            .search-input:focus {{ outline: none; border-color: var(--primary); }}
             
             .filter-row {{ display: flex; gap: 10px; margin-top: 15px; flex-wrap: wrap; align-items: center; }}
             .filter-group {{ display: flex; gap: 5px; align-items: center; padding: 4px; background: var(--card); border: 1px solid var(--border); border-radius: 8px; }}
             .filter-label {{ font-size: 0.75rem; opacity: 0.7; text-transform: uppercase; font-weight: bold; margin: 0 8px; }}
-            .filter-btn {{ padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s; }}
+            .filter-btn {{ padding: 8px 16px; border: none; background: transparent; color: var(--text); border-radius: 6px; cursor: pointer; font-size: 0.9rem; transition: background 0.2s, color 0.2s; }}
             .filter-btn:hover {{ background: rgba(0,0,0,0.05); }}
             .filter-btn.active {{ background: var(--primary); color: white; }}
             
-            .review-text {{ margin-top: 8px; line-height: 1.5; position: relative; }}
-            .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 2px; border-radius: 2px; }}
+            .review-text {{ margin-top: 8px; line-height: 1.6; position: relative; font-size: 0.95rem; }}
+            .review-text mark {{ background-color: var(--mark-bg); color: var(--mark-text); padding: 0 4px; border-radius: 3px; font-weight: bold; }}
             .review-text.clamped {{ display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }}
-            .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 5px; font-weight: 600; }}
-            .meta {{ font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; }}
+            .read-more {{ color: var(--primary); cursor: pointer; font-size: 0.9rem; display: none; margin-top: 8px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.5px; }}
+            .meta {{ font-size: 0.85rem; opacity: 0.7; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid var(--border); padding-bottom: 8px; }}
         </style>
     </head>
     <body>
         <div class="container">
             <header>
                 <div>
-                    <h1 style="margin:0;">📊 App Feedback Pro (Regelbasiert)</h1>
+                    <h1 style="margin:0;">📊 App Feedback Pro </h1>
                     <span style="opacity:0.7;">Update: {datetime.now().strftime('%d.%m.%Y %H:%M')}</span>
                 </div>
                 <button class="theme-btn" onclick="toggleTheme()">🌗</button>
@@ -389,18 +413,18 @@ def run_analysis_and_generate_html(full_history):
             
             <div class="summary-box">
                 <h3 style="margin-top:0;">🤖 Daten-Zusammenfassung</h3>
-                <p>{summary}</p>
+                <p style="font-size: 1.1rem;">{summary}</p>
             </div>
 
             <div class="row" style="display:flex; gap:20px; flex-wrap:wrap; margin-bottom:40px;">
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🔥 Themen-Cluster (TF-IDF)</h3>
-                    <div class="card" style="min-height:100px;">
-                        {''.join([f'<span class="tag"># {t}</span> ' for t in topics])}
+                    <h3 style="margin-bottom: 15px;">🔥Themen-Cluster</h3>
+                    <div class="card" style="min-height:100px; display: flex; align-items: center; flex-wrap: wrap;">
+                        {''.join([f'<span class="tag"><i class="fas fa-hashtag" style="opacity:0.5; margin-right:4px;"></i>{t}</span> ' for t in topics])}
                     </div>
                 </div>
                 <div class="col" style="flex:1;">
-                    <h3 style="margin-bottom: 15px;">🚨 Relevante Keywords</h3>
+                    <h3 style="margin-bottom: 15px;">🚨Buzzwords</h3>
                     <div class="card buzz-container">
                         {buzz_html}
                     </div>
@@ -409,12 +433,12 @@ def run_analysis_and_generate_html(full_history):
 
             <div class="review-grid">
                 <div>
-                    <h3>👍 Top Stimmen (Sentiment-Score)</h3>
+                    <h3>👍 Top Stimmen (Score)</h3>
                     {''.join([f'''
                     <div class="review-card pos">
                         <div class="meta">
                             <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
-                            <span>{r.get('rating')}★</span>
+                            <span style="color: var(--pos-color); font-weight: bold;">{r.get('rating')}★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">{r.get('text')}</div>
@@ -423,12 +447,12 @@ def run_analysis_and_generate_html(full_history):
                     </div>''' for r in top_list])}
                 </div>
                 <div>
-                    <h3>⚠️ Kritische Stimmen (Sentiment-Score)</h3>
+                    <h3>⚠️ Kritische Stimmen (Score)</h3>
                     {''.join([f'''
                     <div class="review-card neg">
                         <div class="meta">
                             <span>{'<i class="fab fa-apple icon-ios"></i>' if r.get('store')=='ios' else '<i class="fab fa-android icon-android"></i>'} <strong>{r.get('app')}</strong></span>
-                            <span>{r.get('rating')}★</span>
+                            <span style="color: var(--neg-color); font-weight: bold;">{r.get('rating')}★</span>
                         </div>
                         <div class="review-content">
                             <div class="review-text clamped">{r.get('text')}</div>
@@ -438,10 +462,10 @@ def run_analysis_and_generate_html(full_history):
                 </div>
             </div>
 
-            <h2 style="border-top: 1px solid var(--border); padding-top: 30px;">🔎 Explorer</h2>
+            <h2 style="border-top: 1px solid var(--border); padding-top: 30px; margin-top: 40px;">🔎 Explorer</h2>
             
-            <div style="margin-bottom:20px;">
-                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
+            <div style="margin-bottom:30px;">
+                <input type="text" class="search-input" id="search" placeholder="Suche nach Stichworten (z.B. Absturz, Werbung)..." onkeyup="filterData()" style="width:100%; box-sizing:border-box;">
                 
                 <div class="filter-row">
                     <div class="filter-group">
@@ -459,7 +483,7 @@ def run_analysis_and_generate_html(full_history):
                     </div>
 
                     <div class="filter-group">
-                        <span class="filter-label">Sort</span>
+                        <span class="filter-label">Sortieren</span>
                         <button class="filter-btn active" onclick="setSort('newest', this)">Neu</button>
                         <button class="filter-btn" onclick="setSort('best', this)">Beste</button>
                         <button class="filter-btn" onclick="setSort('worst', this)">Schlechteste</button>
@@ -492,18 +516,18 @@ def run_analysis_and_generate_html(full_history):
                 data: {{
                     labels: {json.dumps(chart['labels'])},
                     datasets: [
-                        {{ label: 'Positiv (4-5★)', data: {json.dumps(chart['pos'])}, backgroundColor: '#22c55e' }},
-                        {{ label: 'Neutral (3★)', data: {json.dumps(chart['neu'])}, backgroundColor: '#94a3b8' }},
-                        {{ label: 'Negativ (1-2★)', data: {json.dumps(chart['neg'])}, backgroundColor: '#ef4444' }}
+                        {{ label: 'Positiv (4-5★)', data: {json.dumps(chart['pos'])}, backgroundColor: '#22c55e', borderRadius: 4 }},
+                        {{ label: 'Neutral (3★)', data: {json.dumps(chart['neu'])}, backgroundColor: '#94a3b8', borderRadius: 4 }},
+                        {{ label: 'Negativ (1-2★)', data: {json.dumps(chart['neg'])}, backgroundColor: '#ef4444', borderRadius: 4 }}
                     ]
                 }},
                 options: {{
                     responsive: true, maintainAspectRatio: false,
                     scales: {{ 
                         x: {{ stacked: true, grid: {{ display: false }}, ticks: {{ color: '#64748b' }} }}, 
-                        y: {{ stacked: true, grid: {{ color: '#e2e8f0' }}, ticks: {{ color: '#64748b', padding: 10 }} }} 
+                        y: {{ stacked: true, grid: {{ color: '#e2e8f0', borderDash: [5, 5] }}, ticks: {{ color: '#64748b', padding: 10 }} }} 
                     }},
-                    plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#64748b' }} }} }}
+                    plugins: {{ legend: {{ position: 'bottom', labels: {{ color: '#64748b', padding: 20, usePointStyle: true }} }} }}
                 }}
             }});
             
@@ -520,8 +544,6 @@ def run_analysis_and_generate_html(full_history):
             }}
             updateChartColors();
 
-            document.querySelectorAll('.filter-group:last-child .filter-btn')[0].classList.add('active');
-
             function initReadMore() {{
                 document.querySelectorAll('.review-content').forEach(div => {{
                     const text = div.querySelector('.review-text');
@@ -532,16 +554,13 @@ def run_analysis_and_generate_html(full_history):
                 }});
             }}
 
-            // NEUE ACCORDION-LOGIK HIER: Schließt alle anderen bevor der neue geöffnet wird
             function toggleText(btn) {{
                 const text = btn.previousElementSibling;
                 const isClamped = text.classList.contains('clamped');
                 
-                // Alle schliessen
                 document.querySelectorAll('.review-text').forEach(t => t.classList.add('clamped'));
                 document.querySelectorAll('.read-more').forEach(b => b.innerText = 'Mehr anzeigen');
                 
-                // Gewählten öffnen, wenn er vorher zu war
                 if (isClamped) {{
                     text.classList.remove('clamped');
                     btn.innerText = 'Weniger anzeigen';
@@ -592,11 +611,14 @@ def run_analysis_and_generate_html(full_history):
                 if (currentSort === 'best') filtered.sort((a, b) => b.rating - a.rating);
                 if (currentSort === 'worst') filtered.sort((a, b) => a.rating - b.rating);
 
-                if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:20px;">Keine Ergebnisse</div>'; return; }}
+                if (filtered.length === 0) {{ container.innerHTML = '<div style="text-align:center;opacity:0.5;padding:40px; font-size:1.1rem;">Keine Ergebnisse für diese Filterung gefunden.</div>'; return; }}
 
                 filtered.slice(0, 50).forEach(r => {{
                     const icon = r.store === 'ios' ? '<i class="fab fa-apple icon-ios"></i>' : '<i class="fab fa-android icon-android"></i>';
                     
+                    let colorClass = r.rating >= 4 ? 'var(--pos-color)' : (r.rating <= 2 ? 'var(--neg-color)' : 'var(--neu-color)');
+                    let borderClass = r.rating >= 4 ? 'border-left: 4px solid var(--pos-color);' : (r.rating <= 2 ? 'border-left: 4px solid var(--neg-color);' : 'border-left: 4px solid var(--neu-color);');
+
                     let displayText = r.text;
                     if (q.length >= 2) {{
                         const terms = q.split(' ').filter(t => t.length > 1);
@@ -607,21 +629,23 @@ def run_analysis_and_generate_html(full_history):
                                 const regex = new RegExp('(' + term + ')', 'gi');
                                 displayText = displayText.replace(regex, '<mark>$1</mark>');
                             }});
-                        }} else {{
-                            return;
-                        }}
+                        }} else {{ return; }}
                     }}
                     
                     const div = document.createElement('div');
                     div.className = 'review-card';
+                    div.style = borderClass;
                     div.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; opacity:0.8; font-size:0.9rem; border-bottom:1px solid var(--border); padding-bottom:8px; margin-bottom:8px;">
-                            <span style="display:flex; align-items:center; gap:6px;">
-                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}}) • ${{r.rating}}⭐
+                        <div class="meta" style="margin-bottom:0;">
+                            <span style="display:flex; align-items:center; gap:6px; font-size: 0.95rem;">
+                                ${{icon}} <strong>${{r.app}}</strong> (${{r.store.toUpperCase()}})
                             </span>
-                            <span>${{r.fmt_date || r.date}}</span>
+                            <span style="display:flex; align-items:center; gap:10px;">
+                                <span style="opacity:0.7;">${{r.fmt_date || r.date}}</span>
+                                <span style="color:${{colorClass}}; font-weight:bold; font-size:1.1rem;">${{r.rating}}★</span>
+                            </span>
                         </div>
-                        <div class="review-content" style="line-height:1.5;">
+                        <div class="review-content">
                             <div class="review-text clamped">${{displayText}}</div>
                             <span class="read-more" onclick="toggleText(this)">Mehr anzeigen</span>
                             <i class="fas fa-copy copy-btn" onclick="copyText('${{r.text.replace(/'/g, "\\'")}}')"></i>
@@ -630,12 +654,10 @@ def run_analysis_and_generate_html(full_history):
                     container.appendChild(div);
                 }});
                 
-                // Neu initialisieren für die gefilterten Items
                 initReadMore();
             }}
             
             filterData();
-            // Löst Init Read More nach initialem Aufbau einmalig aus
             setTimeout(initReadMore, 100);
         </script>
     </body>
@@ -645,7 +667,7 @@ def run_analysis_and_generate_html(full_history):
     os.makedirs("public", exist_ok=True)
     with open("public/index.html", "w", encoding="utf-8") as f:
         f.write(html)
-    print("✅ Dashboard (ohne KI) generiert.")
+    print("✅ Dashboard (ohne KI, mit fixierten Clustern & Farben) generiert.")
 
 # ---------------------------------------------------------
 # 6. TEAMS MESSAGECARD
