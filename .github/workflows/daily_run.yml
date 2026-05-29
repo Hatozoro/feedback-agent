@@ -26,21 +26,20 @@ jobs:
       - name: Install Dependencies
         run: |
           python -m pip install --upgrade pip
-          pip install google-genai python-dotenv pandas google-play-scraper faiss-cpu sentence-transformers numpy
+          pip install python-dotenv google-play-scraper
           pip install app-store-scraper --no-deps
           pip install requests urllib3 certifi
 
       - name: Run Agent Script
         env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           TEAMS_WEBHOOK_URL: ${{ secrets.TEAMS_WEBHOOK_URL }}
         run: python main.py
 
       - name: Commit History Data
         uses: stefanzweifel/git-auto-commit-action@v4
         with:
-          commit_message: "Data: Update review history"
-          file_pattern: data/*.json
+          commit_message: "Data: Update review history und Dashboard"
+          file_pattern: data/*.json public/index.html
 
       - name: Deploy to GitHub Pages
         uses: peaceiris/actions-gh-pages@v3
