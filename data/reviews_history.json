@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 4,
+        "text": "Seit dem letzten Update kommt in der Rubrik Aktuelles Werbung, nachdem man einen Artikel gelesen hat und zurück auf die Gesamtübersicht geht. Das passiert immer nach öffnen der App. Ich bin als zahlender Abbonent nicht bereit unerwünschte Werbung zu akzeptieren. Ich möchte weder irgendwelche Spiele installieren, oder die Bild abonnieren. Bitte die Werbung umgehend beenden. 1.6.26 : Seit dem letzten Update ist die Werbung im Bereich Aktuelles wieder verschwunden.",
+        "date": "2026-06-01",
+        "id": "9a0a6924be408bbd33ec2e7aca0795c58da193a83a4ac7c70f52dc7a49183fe1"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "Diese Informationen sind immer hilfreich und aktuell. Aber die tägliche Zeitung ist nach wie vor unersetzlich. Zum Frühstück die Zeitung lesen",
+        "date": "2026-06-01",
+        "id": "f463b40131bd6d5be655820c7f13e18b2eefeb4f90fdb2de80f776eefa1f3737"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 2,
         "text": "Hatte bisher die App, aber jetzt deinstalliert. Kaum angeklickt kommt aggressive Werbung in Vollformat. Das war vorher wesentlich besser. Also werde ich die SVZ online zukünftig nicht mehr lesen. Gibt zum Glück genügend andere Medien.",
         "date": "2026-05-21",
