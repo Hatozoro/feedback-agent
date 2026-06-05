@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "top",
+        "date": "2026-06-03",
+        "id": "c07a29a121f2c3ea2cff95c773db1511f179e891f5d9a37efccb5c5c74fed704"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 4,
         "text": "Seit dem letzten Update kommt in der Rubrik Aktuelles Werbung, nachdem man einen Artikel gelesen hat und zurück auf die Gesamtübersicht geht. Das passiert immer nach öffnen der App. Ich bin als zahlender Abbonent nicht bereit unerwünschte Werbung zu akzeptieren. Ich möchte weder irgendwelche Spiele installieren, oder die Bild abonnieren. Bitte die Werbung umgehend beenden. 1.6.26 : Seit dem letzten Update ist die Werbung im Bereich Aktuelles wieder verschwunden.",
