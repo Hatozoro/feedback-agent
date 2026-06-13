@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 3,
+        "text": "Die Aktualität lässt leider oft zu wünschen übrig. Viele örtliche Ereignisse kommen oft erst nach 2tagen, da hat man es bereits auf andere Weise erfahren. Das ist ein großes Manko und muss verbessert werden.",
+        "date": "2026-06-12",
+        "id": "e3f0f643020c6fefa640c7d8c2ee5ad628e325533de316ed188854d72513c43e"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "App funktioniert bei mir seit heute nicht mehr wie gewohnt. Sie stürzt beim Start ständig ab.",
