@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "i h freue mich immer wieder über Nachrichten aus Sigmaringen",
+        "date": "2026-06-14",
+        "id": "2e45a9f1717fece5386cef8e7b9f558054c44ca780158dead59f01eca83efa0d"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 3,
         "text": "Die Aktualität lässt leider oft zu wünschen übrig. Viele örtliche Ereignisse kommen oft erst nach 2tagen, da hat man es bereits auf andere Weise erfahren. Das ist ein großes Manko und muss verbessert werden.",
