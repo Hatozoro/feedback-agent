@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Leider ist die Vorlese - Sprachqualität unterirdisch. Das Handling der Seiten immer noch eine kleine Katastrophe. Ständig springen Seiten zurück oder vor. Aber vielleicht passt sich die App ja auch nur der Qualität der Zeitung selbst an.. Dass seit einiger Zeit beim Lesen der aktuellen Meldungen ganzseitige unseriöse Werbung erscheint passt irgendwie zur Qualität der \"Schwäbischen\".",
+        "date": "2026-06-27",
+        "id": "5a8909f83cb7d875f5a05ae1ccd00e60f22ba3afb0aa40bd298b4f1468ac8b0f"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 3,
         "text": "i h freue mich immer wieder über Nachrichten aus Sigmaringen",
         "date": "2026-06-14",
