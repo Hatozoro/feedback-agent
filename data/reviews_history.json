@@ -1,6 +1,30 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "ich will kein Google Konto.",
+        "date": "2026-07-05",
+        "id": "b3cd95ede151057edc526e136e787554bc30fab582eee4343eba1da6b14952ed"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Trotz dem, dass man Abonnent ist und monatlich Geld zahlt wird man mit Werbung nur so zugemüllt. Auch kann man die Artikel teilweise nicht mal lesen, weil sie durch Werbebanner überdeckt ist.",
+        "date": "2026-07-05",
+        "id": "421d52d3ab6d65ac081e0edf4ff0081cf4c8ffeda78d72be85a852926dd519e7"
+    },
+    {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Die Werbeflut in der App ist unerträglich. So mag ich keine Nachrichten lesen.",
+        "date": "2026-07-04",
+        "id": "7eaeeb2460615286bd504070706628954551078dfef27a8c0443cc261c6e3737"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 3,
         "text": "Vor einem Jahr hatte ich schon die reißerischen Überschriften bemängelt. Danach wurde es besser. Danke dafür. (Und die App an sich nach wie vor soweit gut). Aber heute: \"Nachts um 3 Uhr wachen die Kinder auf und fragen nach ihrer abgestochenen Mutter\". Muss das sein? Das hat schon wieder was von B***‐Überschrift...",
@@ -22,6 +46,14 @@
         "text": "Leider ist die Vorlese - Sprachqualität unterirdisch. Das Handling der Seiten immer noch eine kleine Katastrophe. Ständig springen Seiten zurück oder vor. Aber vielleicht passt sich die App ja auch nur der Qualität der Zeitung selbst an.. Dass seit einiger Zeit beim Lesen der aktuellen Meldungen ganzseitige unseriöse Werbung erscheint passt irgendwie zur Qualität der \"Schwäbischen\".",
         "date": "2026-06-27",
         "id": "5a8909f83cb7d875f5a05ae1ccd00e60f22ba3afb0aa40bd298b4f1468ac8b0f"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Seit längerem fällt mir auf, dass die Qualität der Artikel deutlich gesunken ist. Zum Beispiel kann es sein, dass in der Überschrift oder der Einleitung eine Frage gestellt ist, die aber gar nicht beantwortet oder darauf Bezug genommen wird. Auch kommen vermehrt viele Rechtschreibfehler oder doppelte gleiche Passagen in einem Artikel vor. \nWas mich als Abonnent sehr stört ist, dass ich online immer Werbung eingeblendet bekomme, die dann zum Teil auch den Text des Artikels verdeckt. Ich bezahle schon ein digitales Abo und da erwarte ich dass ich auch online im Netz die Angebote werbefrei nutzen kann. Wir als Familie sind wirklich am überlegen, ob wir das Abo weiterhin behalten wollen.",
+        "date": "2026-06-27",
+        "id": "89196265e16349ca72aab8455d678360c4ef078a5f04ad865a0cf2c327d22bb9"
     },
     {
         "store": "android",
