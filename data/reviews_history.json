@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Nordkurier",
+        "rating": 5,
+        "text": "Mit dem Nordkurier ist man immer auf dem Laufenden.",
+        "date": "2026-07-14",
+        "id": "51ba00fcfd88d80a48bee8ea4de1af53a2bab41d79c02d7563f4101de95b0bd4"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Betrifft Android Handy Warum???? Warum kann man nicht mehr von Artikel zu Artikel wischen? Jedesmal wieder zurück auf die Hauptseite und den nächsten anklicken. Ist echt nervig am Handy!!!",
+        "date": "2026-07-13",
+        "id": "fd806637118c45819701df23a7ed9c912cf92b925e8d353d81b0365ccc800183"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
         "rating": 1,
         "text": "ich will kein Google Konto.",
         "date": "2026-07-05",
