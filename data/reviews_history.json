@@ -3,9 +3,33 @@
         "store": "android",
         "app": "Nordkurier",
         "rating": 5,
+        "text": "OK ! 👍",
+        "date": "2026-07-17",
+        "id": "8762c7044dced0d1f04ed82fab4bc6ae33d067a0d7510cb9e6d93f09bbe9f0c0"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Warum???? Warum kann man nicht mehr von Artikel zu Artikel wischen? Jedesmal wieder zurück auf die Hauptseite und den nächsten anklicken. Ist echt nervig am Handy!!! Nicht praktikabel! Ich will schnell die Informationen und nicht ständig hin und her wischen!",
+        "date": "2026-07-17",
+        "id": "e4cb19371e27d98351c7033573ca651b20fcf480cffde8e51f0876570bf20339"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
         "text": "Mit dem Nordkurier ist man immer auf dem Laufenden.",
         "date": "2026-07-14",
         "id": "51ba00fcfd88d80a48bee8ea4de1af53a2bab41d79c02d7563f4101de95b0bd4"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "In unregelmäßigen Abständen kommt es zu Störungen, die kein Lesen der Zeitung ermöglichen. Aktuell schließt die App auf dem iPad beim Umblättern. Auf Störungsmeldungen aus der App heraus an den Support erfolgt keine Rückmeldung.",
+        "date": "2026-07-14",
+        "id": "c6267d45f53aa9ff98662c9c159a67dca09d32e2b54d6ef01c45e6ed20c95cb6"
     },
     {
         "store": "android",
