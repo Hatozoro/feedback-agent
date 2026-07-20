@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Seit dem neuen Update kann ich mit dem Handy nicht mehr einen einzelnen Artikel groß anschauen und dann zum nächsten Artikel nach rechts wischen. Muss immer wieder zurück und den neuen Artikel anklicken. Beim Tablet geht es weiterhin, wahrscheinlich wegen dem Format. Was für ein Schwachsinn.",
+        "date": "2026-07-19",
+        "id": "2826b6e5d0ecbddb041cec5a006e0d322336bd525b68b9226edd19b133e61fe0"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "OK ! 👍",
