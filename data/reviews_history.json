@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Die Nordkurier App wird immer schlechter, fast nach jedem 2. Artikel kommt Werbung. Ohne Werbung ist nur mit Contenpass möglich, warum kann man nicht mit Abo bezahlen?",
+        "date": "2026-07-26",
+        "id": "6c5b1159dc652c37448dd3437622e4944c20913b3f6061a6d710c8aa40463928"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Seit dem neuen Update kann ich mit dem Handy nicht mehr einen einzelnen Artikel groß anschauen und dann zum nächsten Artikel nach rechts wischen. Muss immer wieder zurück und den neuen Artikel anklicken. Beim Tablet geht es weiterhin, wahrscheinlich wegen dem Format. Was für ein Schwachsinn.",
