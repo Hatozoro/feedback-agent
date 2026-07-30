@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "sehr gut",
+        "date": "2026-07-29",
+        "id": "d058c81ec6ce6c8e95c0e6734ad0d2b7ace686f27ca3e5317193baa4cba6b68c"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Die Nordkurier App wird immer schlechter, fast nach jedem 2. Artikel kommt Werbung. Ohne Werbung ist nur mit Contenpass möglich, warum kann man nicht mit Abo bezahlen?",
