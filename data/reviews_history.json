@@ -9,6 +9,14 @@
     },
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Leider funktioniert seit einiger Zeit das Durchblättern der einzelnen Artikel nicht mehr. Jeder Artikel muss einzeln geöffnet werden, nach dem Lesen mit der Zurücktaste auf die Übersichtsseite, um den nächsten Artikel zu lesen. Gerade mit dem Handy nicht mehr komfortabel, da der Artikel nicht angelesen werden kann. Problem in der App gemeldet, keinerlei Reaktion. Schade, es sollen doch mehr Leser zur digitalen Version wechseln, dann muss dort aber auch der Service stimmen",
+        "date": "2026-07-29",
+        "id": "002f21e3f456857b08a4ed8eca83dfbd46ed061382de7343c2d5c392f4206334"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "Die Nordkurier App wird immer schlechter, fast nach jedem 2. Artikel kommt Werbung. Ohne Werbung ist nur mit Contenpass möglich, warum kann man nicht mit Abo bezahlen?",
