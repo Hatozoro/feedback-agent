@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Immer diese nervige Werbungen, für das ich auch noch bezahle.",
+        "date": "2026-08-02",
+        "id": "f7917bc9774994e308519f1230306030447b36e947c5792c9ccaf6e4690afb7e"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "App stürzt nach 3 Minuten sofort ab !!",
+        "date": "2026-08-01",
+        "id": "36903e33e3b12851aab49c3ab02b77177d0e7194ce3b140f0386926a0caacbb2"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "sehr gut",
         "date": "2026-07-29",
