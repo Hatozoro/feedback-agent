@@ -1,6 +1,22 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Wenn ich im Browser (Firefox & Samsung) den Nordkurier lesen will kommt der Hinweis Sie sind nicht angemeldet. Zum Anmelden werde ich auf die Nordkurier-App geleitet. Dort kann ich mich anmelden, aber die Anmeldung wird nicht zum Browser weitergeleitet. Ich kann also nicht im Browser die Nordkurier lesen und die PDF-Datei herunterladen. - Welches Gefühl beschreibt am besten Ihre Reaktion auf diesen Artikel - was soll diese schwach.... Leiste? Wann wird endlich der oben beschr. Fehler korrigiert?",
+        "date": "2026-08-11",
+        "id": "a3b32478ea693cd43bff74d4b1fb0b42df23e7e4f0103a0e55d7a45929166703"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 3,
+        "text": "Die Nordkurier App war mal gut, aber zurzeit ist sie nicht mehr zu gebrauchen.Beim hochschieben zittert alles so das man nichts mehr lesen kann.",
+        "date": "2026-08-11",
+        "id": "a2391d39df00fe7097a7ae34b1be6969d60179fd01813a6403990ae4098167fb"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Seit ein paar Tagen beendet sich die App kurz nach dem Start spontan spätestens nach dem dritten Umblättern. Auf meinem Android-Tablet ist es somit nicht mehr möglich, die Zeitung in der App zu lesen, nur noch im Browser.",
