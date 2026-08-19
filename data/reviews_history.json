@@ -3,6 +3,22 @@
         "store": "android",
         "app": "Nordkurier",
         "rating": 1,
+        "text": "....wurde die Vorlesefunktion entfernt?",
+        "date": "2026-08-17",
+        "id": "f5c472c2d2522fe827c804c466cc3abe5cfd2dc8a1a57d5168c06694fb12278e"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "Nicht schlecht gemacht. Es nervt allerdings sehr, dass sich die App nicht merkt was zuletzt gelesen wurde. Bei Unterbrechungen des Lesens muss mann immer wieder ganz vorne anfangen.",
+        "date": "2026-08-17",
+        "id": "f1ce11bc4fb7730693ffc4a0d4876a94f8f12be2dab94ed62880a6358e433e1a"
+    },
+    {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
         "text": "Wenn ich im Browser (Firefox & Samsung) den Nordkurier lesen will kommt der Hinweis Sie sind nicht angemeldet. Zum Anmelden werde ich auf die Nordkurier-App geleitet. Dort kann ich mich anmelden, aber die Anmeldung wird nicht zum Browser weitergeleitet. Ich kann also nicht im Browser die Nordkurier lesen und die PDF-Datei herunterladen. - Welches Gefühl beschreibt am besten Ihre Reaktion auf diesen Artikel - was soll diese schwach.... Leiste? Wann wird endlich der oben beschr. Fehler korrigiert?",
         "date": "2026-08-11",
         "id": "a3b32478ea693cd43bff74d4b1fb0b42df23e7e4f0103a0e55d7a45929166703"
