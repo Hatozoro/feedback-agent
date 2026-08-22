@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "FINERG WEG!!!! EINFACH NUR GIERIG WAS HIER ABGEZOGEN WIRD !!!!!!!!!!! TONNENWEISE WERBUNG DIE SICH NICHT WEG KLICKEN LÄSST UND STÄNDIG DIE GANZEN ARTIKEL UNLESERLICH MACHT!!!!!! FINGER WEG VON DIESER ZEITUNG",
+        "date": "2026-08-20",
+        "id": "ec8d537984bad3257caebd8b2aaf4503abb83fab98cbf0c85574aba5b5e16ee9"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 1,
         "text": "....wurde die Vorlesefunktion entfernt?",
