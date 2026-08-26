@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "Im Querformat stürzt die App bei dem Wechsel von Seite 2/3 auf 3/4 ab. Ein Schwenk des iPad auf Hochformat erlaubt es, die Seiten bis zum Schluss zu scrollen.",
+        "date": "2026-08-22",
+        "id": "cd8107d34d91f02c064efce1c9208107765b8c469985f39a4f371c7b8a52389f"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
