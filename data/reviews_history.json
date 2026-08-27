@@ -2,6 +2,22 @@
     {
         "store": "ios",
         "app": "Schwäbische",
+        "rating": 2,
+        "text": "Die Schwäbische ist bei Weitem nicht mehr was der ZAK mal war. Eigentlich ärgere ich mich täglich über dieses Schriftwerk. Großteils ohne Inhalt. Eineinhalb Kochzeiten, die einen ernsthaften Leser überhaupt nicht interessieren, das Blatt dürftig füllen. Wenn ich dieses Abo nicht geschenkt bekäme , hätte ich es schon längst abbestellt. Wenn Sie die Zeitung so weiterführen, hat sie keine große Zukunft. Vielleicht wollen Sie das so",
+        "date": "2026-08-25",
+        "id": "944a5abaa26e8d51fb076ba9280de8952e050b6b34f465c40fbbc75cc25d36a4"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "die App fordert mich dauernd auf: Bitte aktivieren Sie ihr bestehendes Abo. Ich geb die Daten ein. Aber ich krieg nur das Angebot: Sie wollen ihr Passwort ändern? Nein, ich will das Abo aktivieren!!",
+        "date": "2026-08-25",
+        "id": "0d1c88aca7e128f630bdf543c33b254eccfa1aa545ea9120715e0e8bb94361c3"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
         "rating": 4,
         "text": "Im Querformat stürzt die App bei dem Wechsel von Seite 2/3 auf 3/4 ab. Ein Schwenk des iPad auf Hochformat erlaubt es, die Seiten bis zum Schluss zu scrollen.",
         "date": "2026-08-22",
