@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "sehr zufrieden",
+        "date": "2026-08-31",
+        "id": "a829511ffb98a17172e4af963e24c80ecb87602b22086f11a24e41d8539b947d"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 2,
