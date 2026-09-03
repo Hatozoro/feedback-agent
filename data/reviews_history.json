@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 4,
+        "text": "Die Nordkurier App ist für mich der \" sogenannte \" Zeitungsersatz und ich finde sie gut , weil es Informationen und Neuigkeiten aus meiner Stadt und meinem Umfeld gibt . Leider ist die Werbung in letzter Zeit sehr viel mehr geworden , deshalb 1 Stern Abzug . Das hat aber nichts mit Informationen und Neuigkeiten zu tun , das ist und bleibt hoffentlich weiter so gut .",
+        "date": "2026-09-01",
+        "id": "112452b10333c2d529ee13311adf7f7cb034aaa9d4dc9c5be41d404e4930fb9a"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 5,
         "text": "sehr zufrieden",
