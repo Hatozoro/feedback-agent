@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Ich habe heute keine Zeitung bekommen. Am Telefom wird man mit KI abgespeist, einen Menschen erreichst du gleich gar nicht. Geschehnisse aus unserer Region, die am Tag später im SchwaBo erscheinen, die kommen hier gar nicht. Also für die ganze Zeitung eigentlich 0 Punkte.",
+        "date": "2026-09-07",
+        "id": "3517432d96e60d8aa7570996a39518887a7ad89b9a25d59e521ffa927d8943b8"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 4,
         "text": "Die Nordkurier App ist für mich der \" sogenannte \" Zeitungsersatz und ich finde sie gut , weil es Informationen und Neuigkeiten aus meiner Stadt und meinem Umfeld gibt . Leider ist die Werbung in letzter Zeit sehr viel mehr geworden , deshalb 1 Stern Abzug . Das hat aber nichts mit Informationen und Neuigkeiten zu tun , das ist und bleibt hoffentlich weiter so gut .",
