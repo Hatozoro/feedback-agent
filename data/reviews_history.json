@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "super app",
+        "date": "2026-09-13",
+        "id": "362418e4e7b8f2f25fb023badd0f9b2452a515b2d51c06e974b3931fac5d07ce"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "Ich habe heute keine Zeitung bekommen. Am Telefom wird man mit KI abgespeist, einen Menschen erreichst du gleich gar nicht. Geschehnisse aus unserer Region, die am Tag später im SchwaBo erscheinen, die kommen hier gar nicht. Also für die ganze Zeitung eigentlich 0 Punkte.",
