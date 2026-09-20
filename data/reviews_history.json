@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Neuerdings kann man keine Screenshots mehr machen. Was soll das denn? Ich kann eine ganze Seite mit irgendwem teilen, kann aber für mich nicht einen kleinen Ausschnitt abspeichern? Völlig unverständlich. Insgesamt ist die App immer noch viel schlechter als die Vorversion, die ich nach wie vor auf meinem Tablet nutze. Da kann man mit einem kleinen Schubser weiter wischen, hier muss ich mit dem Finger über den halben Bildschirm fahren. Das Zoom läuft bei der alten Version auch viel flüssiger.",
+        "date": "2026-09-18",
+        "id": "3f7e678e6692f1a93f3cab53bf4fda2151b515e4accc7452c3b56cfdd158142b"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "😀👍",
