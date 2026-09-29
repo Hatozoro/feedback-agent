@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 5,
+        "text": "👍",
+        "date": "2026-09-28",
+        "id": "c9ed3952fabc852f41dcd2838a409243d18fd8d962b94bf7a85e68499cd9dbb0"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 2,
         "text": "Schlecht ist: Zum Umblättern muss man fast über die ganze Seite wischen. Im gezoomten Bild schieben ist ruckelig. Screenshots sind neuerdings nicht mehr möglich. Weiterblättern im Lesemodus nicht mehr möglich. Ladezeit lange, etc... All das hat die alte Version von 2024 nicht. Die flutscht einfach, darum verwende ich sie weiterhin auf meinem Tablet. Schaffen es Ihre Programmierer nicht, die neue Version ebenso flutschen zu lassen? Früher ging es doch auch? Dann würde ich gerne wieder umstellen.",
         "date": "2026-09-20",
