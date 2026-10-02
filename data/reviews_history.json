@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Eigentlich wollte ich mich nur anmelden. Passwort und Email stimmen nicht. Okay Passwort zurücksetzen. Email stimmt schonmal. Passwort vergeben, also jetzt anmelden. Das gleiche Spiel wieder, Email und Passwort. Nach nun drei mal das gleiche Prozedere gebe ich auf. Wenn ihr keine neuen Abonnenten wollt, schreibt es am besten mit dazu.😠",
+        "date": "2026-10-01",
+        "id": "006a570936d2ac67f7600ffa08e811884231204025eafcbc53f6c73f525d40a1"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "👍",
         "date": "2026-09-28",
