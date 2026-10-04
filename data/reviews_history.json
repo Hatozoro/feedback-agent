@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Diese ständige anmelden nervt nur noch. Teilweise 2 3 mal die Woche muss ich mich anmelden weil die App mich abmeldet. \nSelten so was schlechtes gesehen.",
+        "date": "2026-10-02",
+        "id": "02782a2f10fed3d8422ef2db94f2a79b843f1b3d51d74ed2acee3c0aa71947c3"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
