@@ -1,5 +1,29 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "Die neue Regelung finde ich nicht so gut durchdacht, man weiß garnicht mehr, wann man die Zeitung lesen soll.",
+        "date": "2026-10-08",
+        "id": "5704d1818070538b722490240b566cca30539650bca3fa7476cd5d1e897e6705"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "nur leider ist wollte Wangener Zeitungen nicht Ravensburger",
+        "date": "2026-10-08",
+        "id": "6aa1d96a8e421a38e2d7f49f251c58666acdfdf6fda9cb6c42a520e87b2e2001"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Datenschutz und Cookies Abfrage - es ist unmöglich, dass ich bei jedem Start gefragt werde, wie ich meinen Datenschutz halten will. Vermutlich passt der App meine Einstellung nicht, aber diese bei jedem Start zu hinterfragen ist penetrant und unverschämt. Anpassen!!! Ferner nervt mich die Fokussierung von Videos etc., ich will Zeitung und nicht Insta oder YT light. Warum muss ich aus Abonnent eigentlich diese furchtbare und elende Werbung ertragen?! Furchtbar...",
+        "date": "2026-10-07",
+        "id": "83a37f894be55f3d0b5ff6a77980118c30f135ff310af46b0607d70134131afc"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
