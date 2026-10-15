@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Hallo Welt",
+        "date": "2026-10-14",
+        "id": "376e7348c40db8e68609ef5ddd540fa20c4bd3e51cf478d97b3c1dfb2a03030a"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "Die neue Regelung finde ich nicht so gut durchdacht, man weiß garnicht mehr, wann man die Zeitung lesen soll.",
