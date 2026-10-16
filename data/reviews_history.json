@@ -8,6 +8,22 @@
         "id": "376e7348c40db8e68609ef5ddd540fa20c4bd3e51cf478d97b3c1dfb2a03030a"
     },
     {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Eigentlich nur abbestellen  wenig regionaler Bezug in allen Bereichen sehr Mecklenburg lastig",
+        "date": "2026-10-13",
+        "id": "334a7efeb6c5d5f6c07c5f66c913a879685d9d369388d41176ecdd2bf22033b8"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 3,
+        "text": "Berichte haben viele Schreibfehler und das in Zeiten von Rechtschreibprüfungen. Bilder passen oft mal nicht zum Bericht. Sportteil…Naja.",
+        "date": "2026-10-13",
+        "id": "5ab8d1f3b6fb002da946515454568de6046d97587388540bf63868717d6e4dde"
+    },
+    {
         "store": "android",
         "app": "Nordkurier",
         "rating": 5,
