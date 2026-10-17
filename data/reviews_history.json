@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 3,
+        "text": "Ich vermisse die Suchanfage für sämtliche Fragen",
+        "date": "2026-10-15",
+        "id": "d047dbd78686ef6de99f57b10aeeb8941d2320f813cf1026c828464d8fb5848d"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "Hallo Welt",
         "date": "2026-10-14",
