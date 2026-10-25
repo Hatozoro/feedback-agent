@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Nordkurier",
+        "rating": 3,
+        "text": "In der letzten Zeit berichtet der Nordkurier etwas kritischer, was positiv zu werten ist. Allerdings ist die Zeitung an manchen Tagen mit Werbung so überladen, dass wir am Überlegen sind, sie abzubestellen. Die Online-Versionen ist soweit in Ordnung, da die Meldungen recht aktuell sind. Was man von der Papierausgabe nicht behaupten kann. Auch wenn den Lesern suggeriert wird, dass sie jetzt die Zeitung sogar einen Tag früher bekommen, ist genau das Gegenteil der Fall und als Leser wird man damit nur verschaukelt. Das Schlimme daran ist, dass die Verantwortlichen beim Nordkurier auch noch denken, die Leser würden das glauben.\nIn der Papierausgabe ist, außer die Traueranzeigen, nichts aktuell. Da stehen z. B. am Dienstag die aktuellen Informieren von vergangenen Donnerstag drin.",
+        "date": "2026-10-23",
+        "id": "a723f66badd10070d60f4776b4282c2b936408c747f1ccd97e0c41dad02f3418"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 3,
