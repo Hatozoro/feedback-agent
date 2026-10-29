@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Nordkurier",
+        "rating": 5,
+        "text": "immer bestens Informiert. Tschüss OZ.",
+        "date": "2026-10-27",
+        "id": "1117f4cfd14227146a643568cfd46f4ca829e1ba5990d9c5d9833332f3e1e9a3"
+    },
+    {
         "store": "ios",
         "app": "Nordkurier",
         "rating": 4,
