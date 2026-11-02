@@ -1,6 +1,14 @@
 [
     {
         "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Jederzeit Zeitung lesen, super.",
+        "date": "2026-11-01",
+        "id": "bd9197eb43dac631197424f9afca4c0c6152bf730070dc104f486f6353eb479a"
+    },
+    {
+        "store": "android",
         "app": "Nordkurier",
         "rating": 5,
         "text": "immer bestens Informiert. Tschüss OZ.",
