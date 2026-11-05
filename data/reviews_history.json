@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Mit Werbung überladen. Drittklassiger Journalismus.",
+        "date": "2026-11-03",
+        "id": "57ac95a8eb137f7e4644ce9751d76d51b74640c6730cdb161ece68117a6ba71e"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "Jederzeit Zeitung lesen, super.",
         "date": "2026-11-01",
