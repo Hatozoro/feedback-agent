@@ -2,6 +2,14 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 5,
+        "text": "Eine gute E-Paper",
+        "date": "2026-11-14",
+        "id": "e314f194e386ed8d106805febb3a270a52c0d26b3d5fe40afa3e77a64b96e0c1"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 1,
         "text": "Mit Werbung überladen. Drittklassiger Journalismus.",
         "date": "2026-11-03",
