@@ -1,5 +1,13 @@
 [
     {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 1,
+        "text": "Es macht keinen Spaß, eine „alte“ Zeitung zu bekommen! Gedruckt am Mittag für den nächsten Tag……. Zum Abgewöhnen!!!!",
+        "date": "2026-11-15",
+        "id": "5a71151a6ebdb33c0e45690add515848cc9f5a0af65d3a6616d9a85cdb4d6228"
+    },
+    {
         "store": "android",
         "app": "Schwäbische",
         "rating": 5,
