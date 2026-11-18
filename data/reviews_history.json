@@ -1,5 +1,13 @@
 [
     {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 5,
+        "text": "Ein prima Informationskanal, die Schwäbische ;-)",
+        "date": "2026-11-16",
+        "id": "d84bd7b639e4cd81d5a988a6fbce7a7c908b8620595f2054bef0f7595c7b75a2"
+    },
+    {
         "store": "ios",
         "app": "Schwäbische",
         "rating": 1,
