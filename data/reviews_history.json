@@ -2,6 +2,22 @@
     {
         "store": "android",
         "app": "Schwäbische",
+        "rating": 1,
+        "text": "Anmeldung verlangt Bestätigungsemail, die nicht kommt. Erneutes senden bringt ebenfalls nichts. Bestätigungsemail kommt nach 10 min. und funktioniert dann nicht. Diletantische Umsetzung",
+        "date": "2026-11-21",
+        "id": "61b8801dc9d5f255a4cf2a91903f0b79902d930828998c42d0983d8ca79c17da"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 2,
+        "text": "Bei meiner Version zeigt es mir die regionalen Traueranzeigen entweder erst im Laufe des Tages oder erst in den nächsten Tagen an. Und dies schon seit Jahren. Mir wurde versichert dies würde von ihnen gelöst. Bei meinem Browser ist alles ok. Alle anderen Apps funktionieren .",
+        "date": "2026-11-21",
+        "id": "5b1cff4d1ea084e7a1d4c6b0af0e010a123e146eb92e9cac1246f98981a651c7"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
         "rating": 5,
         "text": "Ein prima Informationskanal, die Schwäbische ;-)",
         "date": "2026-11-16",
