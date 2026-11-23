@@ -3,6 +3,14 @@
         "store": "android",
         "app": "Schwäbische",
         "rating": 1,
+        "text": "zu viel Werbung",
+        "date": "2026-11-22",
+        "id": "093a6916a1f0a17a6fc99e235ac41e8fb64b1065cb1c6379b57b5fa18b59ee45"
+    },
+    {
+        "store": "android",
+        "app": "Schwäbische",
+        "rating": 1,
         "text": "Anmeldung verlangt Bestätigungsemail, die nicht kommt. Erneutes senden bringt ebenfalls nichts. Bestätigungsemail kommt nach 10 min. und funktioniert dann nicht. Diletantische Umsetzung",
         "date": "2026-11-21",
         "id": "61b8801dc9d5f255a4cf2a91903f0b79902d930828998c42d0983d8ca79c17da"
