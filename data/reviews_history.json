@@ -1,6 +1,22 @@
 [
     {
         "store": "android",
+        "app": "Nordkurier",
+        "rating": 1,
+        "text": "Ich bin mit der App nicht zufrieden, sehr lange Ladezeiten trotz Glasfaseranschluss. Die alte App der Schweriner Volkszeitung hat ohne Glasfaser besser bedeutend besser funktioniert.",
+        "date": "2026-11-24",
+        "id": "b1d3a36861fb449741e8731f358d9a345fe8340d750783ae0c95524460434f73"
+    },
+    {
+        "store": "ios",
+        "app": "Schwäbische",
+        "rating": 4,
+        "text": "Warum blenden sie mir Werbeanzeigen ein, ich bezahle doch!?",
+        "date": "2026-11-23",
+        "id": "c0a502b7f1c462722d2e38dfe6086b12e5f509a304f0e4b24c6758cae3c0e2cd"
+    },
+    {
+        "store": "android",
         "app": "Schwäbische",
         "rating": 1,
         "text": "zu viel Werbung",
